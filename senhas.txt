@@ -1,0 +1,2 @@
+servidor: https://cloud.digitalocean.com/
+senha: Dojo1!@Site

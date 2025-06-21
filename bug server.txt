@@ -1,0 +1,1071 @@
+DEBUG - DB_PASSWORD: Dojo@Sql159357
+DEBUG - DB_HOST: localhost
+DEBUG - Connection string: mysql+pymysql://root:Dojo@Sql159357@localhost:3306/poker_academy
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/dist-packages/pymysql/connections.py", line 613, in connect
+    sock = socket.create_connection(
+  File "/usr/lib/python3.10/socket.py", line 824, in create_connection
+    for res in getaddrinfo(host, port, 0, SOCK_STREAM):
+  File "/usr/lib/python3.10/socket.py", line 955, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno -2] Name or service not known
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/engine/base.py", line 3280, in _wrap_pool_connect
+    return fn()
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/pool/base.py", line 310, in connect
+    return _ConnectionFairy._checkout(self)
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/pool/base.py", line 868, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/pool/base.py", line 476, in checkout
+    rec = pool._do_get()
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/pool/impl.py", line 145, in _do_get
+    with util.safe_reraise():
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/util/langhelpers.py", line 70, in __exit__
+    compat.raise_(
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/util/compat.py", line 208, in raise_
+    raise exception
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/pool/impl.py", line 143, in _do_get
+    return self._create_connection()
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/pool/base.py", line 256, in _create_connection
+    return _ConnectionRecord(self)
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/pool/base.py", line 371, in __init__
+    self.__connect()
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/pool/base.py", line 665, in __connect
+    with util.safe_reraise():
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/util/langhelpers.py", line 70, in __exit__
+    compat.raise_(
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/util/compat.py", line 208, in raise_
+    raise exception
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/pool/base.py", line 661, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/engine/create.py", line 590, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/engine/default.py", line 597, in connect
+    return self.dbapi.connect(*cargs, **cparams)
+  File "/usr/local/lib/python3.10/dist-packages/pymysql/connections.py", line 353, in __init__
+    self.connect()
+  File "/usr/local/lib/python3.10/dist-packages/pymysql/connections.py", line 664, in connect
+    raise exc
+pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on 'Sql159357@localhost' ([Errno -2] Name or service not known)")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/Dojo_Deploy/poker-academy-backend/poker_academy_api/src/main.py", line 84, in <module>
+    db.create_all()
+  File "/usr/local/lib/python3.10/dist-packages/flask_sqlalchemy/__init__.py", line 1094, in create_all
+    self._execute_for_all_tables(app, bind, 'create_all')
+  File "/usr/local/lib/python3.10/dist-packages/flask_sqlalchemy/__init__.py", line 1086, in _execute_for_all_tables
+    op(bind=self.get_engine(app, bind), **extra)
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/sql/schema.py", line 4916, in create_all
+    bind._run_ddl_visitor(
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/engine/base.py", line 3146, in _run_ddl_visitor
+    with self.begin() as conn:
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/engine/base.py", line 3062, in begin
+    conn = self.connect(close_with_result=close_with_result)
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/engine/base.py", line 3234, in connect
+    return self._connection_cls(self, close_with_result=close_with_result)
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/engine/base.py", line 96, in __init__
+    else engine.raw_connection()
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/engine/base.py", line 3313, in raw_connection
+    return self._wrap_pool_connect(self.pool.connect, _connection)
+  File "/usr/local/lib/python3.10/dist-packages/sqlalchemy/engine/base.py", line 3283, in _wrap_pool_connect
+[detached from 29330.frontend]
+root@poker-academy-server:~/Dojo_Deploy/poker-academy-backend/poker_academy_api/src# mysql -u root -p poker_academy
+Enter password: 
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 21
+Server version: 8.0.42-0ubuntu0.22.04.1 (Ubuntu)
+
+Copyright (c) 2000, 2025, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> DESCRIBE users;
++---------------+-------------------------+------+-----+-------------------+-----------------------------------------------+
+| Field         | Type                    | Null | Key | Default           | Extra                                         |
++---------------+-------------------------+------+-----+-------------------+-----------------------------------------------+
+| id            | int                     | NO   | PRI | NULL              | auto_increment                                |
+| name          | varchar(100)            | NO   | MUL | NULL              |                                               |
+| username      | varchar(100)            | NO   | UNI | NULL              |                                               |
+| email         | varchar(100)            | NO   | UNI | NULL              |                                               |
+| password_hash | varchar(255)            | NO   |     | NULL              |                                               |
+| type          | enum('admin','student') | NO   | MUL | student           |                                               |
+| particao_id   | int                     | NO   | MUL | NULL              |                                               |
+| register_date | datetime                | NO   |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED                             |
+| last_login    | datetime                | YES  |     | NULL              |                                               |
+| created_at    | datetime                | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED                             |
+| updated_at    | datetime                | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED on update CURRENT_TIMESTAMP |
++---------------+-------------------------+------+-----+-------------------+-----------------------------------------------+
+11 rows in set (0.01 sec)
+
+mysql> SELECT * FROM users;
++----+---------------+----------+------------------------+--------------------------------------------------------------+---------+-------------+---------------------+------------+---------------------+---------------------+
+| id | name          | username | email                  | password_hash                                                | type    | particao_id | register_date       | last_login | created_at          | updated_at          |
++----+---------------+----------+------------------------+--------------------------------------------------------------+---------+-------------+---------------------+------------+---------------------+---------------------+
+|  1 | Administrador | admin    | admin@pokeracademy.com | $2b$12$dOmIj2KnNKo1cAirC.FAguG/LZlpnwVVE8ZnZ.XyDx9ZdD36O4b9C | admin   |           1 | 2025-06-18 22:23:23 | NULL       | 2025-06-18 22:23:23 | 2025-06-18 22:23:23 |
+|  2 | Aluno Teste   | aluno    | aluno@pokeracademy.com | $2b$12$dOmIj2KnNKo1cAirC.FAguG/LZlpnwVVE8ZnZ.XyDx9ZdD36O4b9C | student |           1 | 2025-06-18 22:23:23 | NULL       | 2025-06-18 22:23:23 | 2025-06-18 22:23:23 |
++----+---------------+----------+------------------------+--------------------------------------------------------------+---------+-------------+---------------------+------------+---------------------+---------------------+
+2 rows in set (0.00 sec)
+
+mysql> exit;
+Bye
+root@poker-academy-server:~/Dojo_Deploy/poker-academy-backend/poker_academy_api/src# curl http://142.93.206.128:5000/api/health
+<!doctype html>
+<html lang=en>
+  <head>
+    <title>NameError: name 'datetime' is not defined
+ // Werkzeug Debugger</title>
+    <link rel="stylesheet" href="?__debugger__=yes&amp;cmd=resource&amp;f=style.css">
+    <link rel="shortcut icon"
+        href="?__debugger__=yes&amp;cmd=resource&amp;f=console.png">
+    <script src="?__debugger__=yes&amp;cmd=resource&amp;f=debugger.js"></script>
+    <script>
+      var CONSOLE_MODE = false,
+          EVALEX = true,
+          EVALEX_TRUSTED = false,
+          SECRET = "atcKKYKYjF8cyaERUIm1";
+    </script>
+  </head>
+  <body style="background-color: #fff">
+    <div class="debugger">
+<h1>NameError</h1>
+<div class="detail">
+  <p class="errormsg">NameError: name &#39;datetime&#39; is not defined
+</p>
+</div>
+<h2 class="traceback">Traceback <em>(most recent call last)</em></h2>
+<div class="traceback">
+  <h3></h3>
+  <ul><li><div class="frame" id="frame-140510955386832">
+  <h4>File <cite class="filename">"/root/Dojo_Deploy/poker-academy-backend/poker_academy_api/src/main.py"</cite>,
+      line <em class="line">69</em>,
+      in <code class="function">health_check</code></h4>
+  <div class="source "><pre class="line before"><span class="ws">        </span># Testar conexão com banco</pre>
+<pre class="line before"><span class="ws">        </span>from sqlalchemy import text</pre>
+<pre class="line before"><span class="ws">        </span>db.session.execute(text(&#39;SELECT 1&#39;))</pre>
+<pre class="line before"><span class="ws">        </span>return jsonify({</pre>
+<pre class="line before"><span class="ws">            </span>&#39;status&#39;: &#39;healthy&#39;,</pre>
+<pre class="line current"><span class="ws">            </span>&#39;timestamp&#39;: datetime.utcnow().isoformat(),</pre>
+<pre class="line after"><span class="ws">            </span>&#39;database&#39;: &#39;connected&#39;,</pre>
+<pre class="line after"><span class="ws">            </span>&#39;message&#39;: &#39;API está funcionando!&#39;</pre>
+<pre class="line after"><span class="ws">        </span>}), 200</pre>
+<pre class="line after"><span class="ws">    </span>except Exception as e:</pre>
+<pre class="line after"><span class="ws">        </span>return jsonify({</pre></div>
+</div>
+
+<li><div class="exc-divider">During handling of the above exception, another exception occurred:</div>
+<li><div class="frame" id="frame-140510956900464">
+  <h4>File <cite class="filename">"/usr/local/lib/python3.10/dist-packages/flask/app.py"</cite>,
+      line <em class="line">2548</em>,
+      in <code class="function">__call__</code></h4>
+  <div class="source library"><pre class="line before"><span class="ws">    </span>def __call__(self, environ: dict, start_response: t.Callable) -&gt; t.Any:</pre>
+<pre class="line before"><span class="ws">        </span>&#34;&#34;&#34;The WSGI server calls the Flask application object as the</pre>
+<pre class="line before"><span class="ws">        </span>WSGI application. This calls :meth:`wsgi_app`, which can be</pre>
+<pre class="line before"><span class="ws">        </span>wrapped to apply middleware.</pre>
+<pre class="line before"><span class="ws">        </span>&#34;&#34;&#34;</pre>
+<pre class="line current"><span class="ws">        </span>return self.wsgi_app(environ, start_response)</pre></div>
+</div>
+
+<li><div class="frame" id="frame-140510955381792">
+  <h4>File <cite class="filename">"/usr/local/lib/python3.10/dist-packages/flask/app.py"</cite>,
+      line <em class="line">2528</em>,
+      in <code class="function">wsgi_app</code></h4>
+  <div class="source library"><pre class="line before"><span class="ws">            </span>try:</pre>
+<pre class="line before"><span class="ws">                </span>ctx.push()</pre>
+<pre class="line before"><span class="ws">                </span>response = self.full_dispatch_request()</pre>
+<pre class="line before"><span class="ws">            </span>except Exception as e:</pre>
+<pre class="line before"><span class="ws">                </span>error = e</pre>
+<pre class="line current"><span class="ws">                </span>response = self.handle_exception(e)</pre>
+<pre class="line after"><span class="ws">            </span>except:  # noqa: B001</pre>
+<pre class="line after"><span class="ws">                </span>error = sys.exc_info()[1]</pre>
+<pre class="line after"><span class="ws">                </span>raise</pre>
+<pre class="line after"><span class="ws">            </span>return response(environ, start_response)</pre>
+<pre class="line after"><span class="ws">        </span>finally:</pre></div>
+</div>
+
+<li><div class="frame" id="frame-140510955381904">
+  <h4>File <cite class="filename">"/usr/local/lib/python3.10/dist-packages/flask_cors/extension.py"</cite>,
+      line <em class="line">176</em>,
+      in <code class="function">wrapped_function</code></h4>
+  <div class="source library"><pre class="line before"><span class="ws">        </span># Wrap exception handlers with cross_origin</pre>
+<pre class="line before"><span class="ws">        </span># These error handlers will still respect the behavior of the route</pre>
+<pre class="line before"><span class="ws">        </span>if options.get(&#39;intercept_exceptions&#39;, True):</pre>
+<pre class="line before"><span class="ws">            </span>def _after_request_decorator(f):</pre>
+<pre class="line before"><span class="ws">                </span>def wrapped_function(*args, **kwargs):</pre>
+<pre class="line current"><span class="ws">                    </span>return cors_after_request(app.make_response(f(*args, **kwargs)))</pre>
+<pre class="line after"><span class="ws">                </span>return wrapped_function</pre>
+<pre class="line after"><span class="ws"></span> </pre>
+<pre class="line after"><span class="ws">            </span>if hasattr(app, &#39;handle_exception&#39;):</pre>
+<pre class="line after"><span class="ws">                </span>app.handle_exception = _after_request_decorator(</pre>
+<pre class="line after"><span class="ws">                    </span>app.handle_exception)</pre></div>
+</div>
+
+<li><div class="frame" id="frame-140510955384816">
+  <h4>File <cite class="filename">"/usr/local/lib/python3.10/dist-packages/flask/app.py"</cite>,
+      line <em class="line">2525</em>,
+      in <code class="function">wsgi_app</code></h4>
+  <div class="source library"><pre class="line before"><span class="ws">        </span>ctx = self.request_context(environ)</pre>
+<pre class="line before"><span class="ws">        </span>error: t.Optional[BaseException] = None</pre>
+<pre class="line before"><span class="ws">        </span>try:</pre>
+<pre class="line before"><span class="ws">            </span>try:</pre>
+<pre class="line before"><span class="ws">                </span>ctx.push()</pre>
+<pre class="line current"><span class="ws">                </span>response = self.full_dispatch_request()</pre>
+<pre class="line after"><span class="ws">            </span>except Exception as e:</pre>
+<pre class="line after"><span class="ws">                </span>error = e</pre>
+<pre class="line after"><span class="ws">                </span>response = self.handle_exception(e)</pre>
+<pre class="line after"><span class="ws">            </span>except:  # noqa: B001</pre>
+<pre class="line after"><span class="ws">                </span>error = sys.exc_info()[1]</pre></div>
+</div>
+
+<li><div class="frame" id="frame-140510955384928">
+  <h4>File <cite class="filename">"/usr/local/lib/python3.10/dist-packages/flask/app.py"</cite>,
+      line <em class="line">1822</em>,
+      in <code class="function">full_dispatch_request</code></h4>
+  <div class="source library"><pre class="line before"><span class="ws">            </span>request_started.send(self)</pre>
+<pre class="line before"><span class="ws">            </span>rv = self.preprocess_request()</pre>
+<pre class="line before"><span class="ws">            </span>if rv is None:</pre>
+<pre class="line before"><span class="ws">                </span>rv = self.dispatch_request()</pre>
+<pre class="line before"><span class="ws">        </span>except Exception as e:</pre>
+<pre class="line current"><span class="ws">            </span>rv = self.handle_user_exception(e)</pre>
+<pre class="line after"><span class="ws">        </span>return self.finalize_request(rv)</pre>
+<pre class="line after"><span class="ws"></span> </pre>
+<pre class="line after"><span class="ws">    </span>def finalize_request(</pre>
+<pre class="line after"><span class="ws">        </span>self,</pre>
+<pre class="line after"><span class="ws">        </span>rv: t.Union[ft.ResponseReturnValue, HTTPException],</pre></div>
+</div>
+
+<li><div class="frame" id="frame-140510955385040">
+  <h4>File <cite class="filename">"/usr/local/lib/python3.10/dist-packages/flask_cors/extension.py"</cite>,
+      line <em class="line">176</em>,
+      in <code class="function">wrapped_function</code></h4>
+  <div class="source library"><pre class="line before"><span class="ws">        </span># Wrap exception handlers with cross_origin</pre>
+<pre class="line before"><span class="ws">        </span># These error handlers will still respect the behavior of the route</pre>
+<pre class="line before"><span class="ws">        </span>if options.get(&#39;intercept_exceptions&#39;, True):</pre>
+<pre class="line before"><span class="ws">            </span>def _after_request_decorator(f):</pre>
+<pre class="line before"><span class="ws">                </span>def wrapped_function(*args, **kwargs):</pre>
+<pre class="line current"><span class="ws">                    </span>return cors_after_request(app.make_response(f(*args, **kwargs)))</pre>
+<pre class="line after"><span class="ws">                </span>return wrapped_function</pre>
+<pre class="line after"><span class="ws"></span> </pre>
+<pre class="line after"><span class="ws">            </span>if hasattr(app, &#39;handle_exception&#39;):</pre>
+<pre class="line after"><span class="ws">                </span>app.handle_exception = _after_request_decorator(</pre>
+<pre class="line after"><span class="ws">                    </span>app.handle_exception)</pre></div>
+</div>
+
+<li><div class="frame" id="frame-140510955385152">
+  <h4>File <cite class="filename">"/usr/local/lib/python3.10/dist-packages/flask/app.py"</cite>,
+      line <em class="line">1820</em>,
+      in <code class="function">full_dispatch_request</code></h4>
+  <div class="source library"><pre class="line before"><span class="ws"></span> </pre>
+<pre class="line before"><span class="ws">        </span>try:</pre>
+<pre class="line before"><span class="ws">            </span>request_started.send(self)</pre>
+<pre class="line before"><span class="ws">            </span>rv = self.preprocess_request()</pre>
+<pre class="line before"><span class="ws">            </span>if rv is None:</pre>
+<pre class="line current"><span class="ws">                </span>rv = self.dispatch_request()</pre>
+<pre class="line after"><span class="ws">        </span>except Exception as e:</pre>
+<pre class="line after"><span class="ws">            </span>rv = self.handle_user_exception(e)</pre>
+<pre class="line after"><span class="ws">        </span>return self.finalize_request(rv)</pre>
+<pre class="line after"><span class="ws"></span> </pre>
+<pre class="line after"><span class="ws">    </span>def finalize_request(</pre></div>
+</div>
+
+<li><div class="frame" id="frame-140510955385264">
+  <h4>File <cite class="filename">"/usr/local/lib/python3.10/dist-packages/flask/app.py"</cite>,
+      line <em class="line">1796</em>,
+      in <code class="function">dispatch_request</code></h4>
+  <div class="source library"><pre class="line before"><span class="ws">            </span>and req.method == &#34;OPTIONS&#34;</pre>
+<pre class="line before"><span class="ws">        </span>):</pre>
+<pre class="line before"><span class="ws">            </span>return self.make_default_options_response()</pre>
+<pre class="line before"><span class="ws">        </span># otherwise dispatch to the handler for that endpoint</pre>
+<pre class="line before"><span class="ws">        </span>view_args: t.Dict[str, t.Any] = req.view_args  # type: ignore[assignment]</pre>
+<pre class="line current"><span class="ws">        </span>return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)</pre>
+<pre class="line after"><span class="ws"></span> </pre>
+<pre class="line after"><span class="ws">    </span>def full_dispatch_request(self) -&gt; Response:</pre>
+<pre class="line after"><span class="ws">        </span>&#34;&#34;&#34;Dispatches the request and on top of that performs request</pre>
+<pre class="line after"><span class="ws">        </span>pre and postprocessing as well as HTTP exception catching and</pre>
+<pre class="line after"><span class="ws">        </span>error handling.</pre></div>
+</div>
+
+<li><div class="frame" id="frame-140510955385376">
+  <h4>File <cite class="filename">"/root/Dojo_Deploy/poker-academy-backend/poker_academy_api/src/main.py"</cite>,
+      line <em class="line">76</em>,
+      in <code class="function">health_check</code></h4>
+  <div class="source "><pre class="line before"><span class="ws">            </span>&#39;message&#39;: &#39;API está funcionando!&#39;</pre>
+<pre class="line before"><span class="ws">        </span>}), 200</pre>
+<pre class="line before"><span class="ws">    </span>except Exception as e:</pre>
+<pre class="line before"><span class="ws">        </span>return jsonify({</pre>
+<pre class="line before"><span class="ws">            </span>&#39;status&#39;: &#39;unhealthy&#39;,</pre>
+<pre class="line current"><span class="ws">            </span>&#39;timestamp&#39;: datetime.utcnow().isoformat(),</pre>
+<pre class="line after"><span class="ws">            </span>&#39;database&#39;: &#39;disconnected&#39;,</pre>
+<pre class="line after"><span class="ws">            </span>&#39;error&#39;: str(e),</pre>
+<pre class="line after"><span class="ws">            </span>&#39;message&#39;: &#39;API com problemas!&#39;</pre>
+<pre class="line after"><span class="ws">        </span>}), 500</pre>
+<pre class="line after"><span class="ws"></span> </pre></div>
+</div>
+</ul>
+  <blockquote>NameError: name &#39;datetime&#39; is not defined
+</blockquote>
+</div>
+
+<div class="plain">
+    <p>
+      This is the Copy/Paste friendly version of the traceback.
+    </p>
+    <textarea cols="50" rows="10" name="code" readonly>Traceback (most recent call last):
+  File &#34;/root/Dojo_Deploy/poker-academy-backend/poker_academy_api/src/main.py&#34;, line 69, in health_check
+    &#39;timestamp&#39;: datetime.utcnow().isoformat(),
+NameError: name &#39;datetime&#39; is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File &#34;/usr/local/lib/python3.10/dist-packages/flask/app.py&#34;, line 2548, in __call__
+    return self.wsgi_app(environ, start_response)
+  File &#34;/usr/local/lib/python3.10/dist-packages/flask/app.py&#34;, line 2528, in wsgi_app
+    response = self.handle_exception(e)
+  File &#34;/usr/local/lib/python3.10/dist-packages/flask_cors/extension.py&#34;, line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+  File &#34;/usr/local/lib/python3.10/dist-packages/flask/app.py&#34;, line 2525, in wsgi_app
+    response = self.full_dispatch_request()
+  File &#34;/usr/local/lib/python3.10/dist-packages/flask/app.py&#34;, line 1822, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File &#34;/usr/local/lib/python3.10/dist-packages/flask_cors/extension.py&#34;, line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+  File &#34;/usr/local/lib/python3.10/dist-packages/flask/app.py&#34;, line 1820, in full_dispatch_request
+    rv = self.dispatch_request()
+  File &#34;/usr/local/lib/python3.10/dist-packages/flask/app.py&#34;, line 1796, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+  File &#34;/root/Dojo_Deploy/poker-academy-backend/poker_academy_api/src/main.py&#34;, line 76, in health_check
+    &#39;timestamp&#39;: datetime.utcnow().isoformat(),
+NameError: name &#39;datetime&#39; is not defined
+</textarea>
+</div>
+<div class="explanation">
+  The debugger caught an exception in your WSGI application.  You can now
+  look at the traceback which led to the error.  <span class="nojavascript">
+  If you enable JavaScript you can also use additional features such as code
+  execution (if the evalex feature is enabled), automatic pasting of the
+  exceptions and much more.</span>
+</div>
+      <div class="footer">
+        Brought to you by <strong class="arthur">DON'T PANIC</strong>, your
+        friendly Werkzeug powered traceback interpreter.
+      </div>
+    </div>
+[detached from 29190.backend]
+root@poker-academy-server:~/Dojo_Deploy/poker-academy-backend/poker_academy_api/src# mysql -u root -p poker_academy
+Enter password: 
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 26
+Server version: 8.0.42-0ubuntu0.22.04.1 (Ubuntu)
+
+Copyright (c) 2000, 2025, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> SELECT id, name, email, password_hash, type FROM users;
++----+---------------+------------------------+--------------------------------------------------------------+---------+
+| id | name          | email                  | password_hash                                                | type    |
++----+---------------+------------------------+--------------------------------------------------------------+---------+
+|  1 | Administrador | admin@pokeracademy.com | $2b$12$dOmIj2KnNKo1cAirC.FAguG/LZlpnwVVE8ZnZ.XyDx9ZdD36O4b9C | admin   |
+|  2 | Aluno Teste   | aluno@pokeracademy.com | $2b$12$dOmIj2KnNKo1cAirC.FAguG/LZlpnwVVE8ZnZ.XyDx9ZdD36O4b9C | student |
++----+---------------+------------------------+--------------------------------------------------------------+---------+
+2 rows in set (0.00 sec)
+
+mysql> python3 -c "
+    "> from werkzeug.security import generate_password_hash
+    "> import pymysql
+    "> 
+    "> connection = pymysql.connect(
+    ">     host='localhost',
+    ">     user='root',
+    ">     password='Dojo@Sql159357',
+    ">     database='poker_academy'
+    "> )
+    "> 
+    "> cursor = connection.cursor()
+    "> new_password = generate_password_hash('admin123')
+    "> cursor.execute('UPDATE users SET password_hash = %s WHERE email = %s', (new_password, 'admin@pokeracademy.com'))
+    "> connection.commit()
+    "> connection.close()
+    "> print('Senha do admin atualizada para: admin123')
+    "> "
+    -> 
+    -> curl -X POST http://142.93.206.128:5000/api/auth/login \
+    ->   -H "Content-Type: application/json" \
+    ->   -d '{"email":"admin@pokeracademy.com","password":"admin123"}'
+    -> 
+    -> EXIT;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'python3 -c "
+from werkzeug.security import generate_password_hash
+import pymysql' at line 1
+mysql> EXIT;^C
+mysql> exit;
+Bye
+root@poker-academy-server:~/Dojo_Deploy/poker-academy-backend/poker_academy_api/src# cd ~/Dojo_Deploy/poker-academy-backend/poker_academy_api/src
+cat auth.py
+# src/auth.py
+import jwt
+from datetime import datetime, timedelta
+from functools import wraps
+from flask import request, jsonify, current_app
+from werkzeug.security import generate_password_hash, check_password_hash
+from src.models import Users, db
+
+class AuthService:
+    @staticmethod
+    def hash_password(password):
+        """Hash a password using werkzeug"""
+        return generate_password_hash(password, method='pbkdf2:sha256')
+
+    @staticmethod
+    def verify_password(password, hashed_password):
+        """Verify a password against its hash"""
+        return check_password_hash(hashed_password, password)
+    
+    @staticmethod
+    def generate_token(user_id, user_type):
+        """Generate JWT token for user"""
+        payload = {
+            'user_id': user_id,
+            'user_type': user_type,
+            'exp': datetime.utcnow() + timedelta(hours=24),
+            'iat': datetime.utcnow()
+        }
+        return jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
+    
+    @staticmethod
+    def verify_token(token):
+        """Verify JWT token and return payload"""
+        try:
+            payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            return payload
+        except jwt.ExpiredSignatureError:
+            return None
+        except jwt.InvalidTokenError:
+            return None
+    
+    @staticmethod
+    def authenticate_user(email, password):
+        """Authenticate user with email and password"""
+        user = Users.query.filter_by(email=email).first()
+        if user and AuthService.verify_password(password, user.password_hash):
+            # Update last login
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+            return user
+        return None
+
+def token_required(f):
+    """Decorator to require valid JWT token"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        # Check for token in Authorization header
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            try:
+                token = auth_header.split(" ")[1]  # Bearer <token>
+            except IndexError:
+                return jsonify({'error': 'Token format invalid'}), 401
+        
+        if not token:
+            return jsonify({'error': 'Token is missing'}), 401
+        
+        try:
+            payload = AuthService.verify_token(token)
+            if payload is None:
+                return jsonify({'error': 'Token is invalid or expired'}), 401
+            
+            current_user = Users.query.get(payload['user_id'])
+            if not current_user:
+                return jsonify({'error': 'User not found'}), 401
+                
+        except Exception as e:
+            return jsonify({'error': 'Token verification failed'}), 401
+        
+        return f(current_user, *args, **kwargs)
+    
+    return decorated
+
+def admin_required(f):
+    """Decorator to require admin role"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            try:
+                token = auth_header.split(" ")[1]
+            except IndexError:
+                return jsonify({'error': 'Token format invalid'}), 401
+        
+        if not token:
+            return jsonify({'error': 'Token is missing'}), 401
+        
+        try:
+            payload = AuthService.verify_token(token)
+            if payload is None:
+                return jsonify({'error': 'Token is invalid or expired'}), 401
+            
+            current_user = Users.query.get(payload['user_id'])
+            if not current_user:
+                return jsonify({'error': 'User not found'}), 401
+            
+            if current_user.type.value != 'admin':
+                return jsonify({'error': 'Admin access required'}), 403
+                
+        except Exception as e:
+            return jsonify({'error': 'Token verification failed'}), 401
+        
+        return f(current_user, *args, **kwargs)
+    
+    return decorated
+root@poker-academy-server:~/Dojo_Deploy/poker-academy-backend/poker_academy_api/src# nano auth.py
+root@poker-academy-server:~/Dojo_Deploy/poker-academy-backend/poker_academy_api/src# cd ~/Dojo_Deploy/poker-academy-backend/poker_academy_api/src
+cat auth.py
+# src/auth.py
+import jwt
+from datetime import datetime, timedelta
+from functools import wraps
+from flask import request, jsonify, current_app
+import bcrypt
+from src.models import Users, db
+
+class AuthService:
+    @staticmethod
+    def hash_password(password):
+         return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    
+
+    @staticmethod
+    def verify_password(password, hashed_password):
+        return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+    
+    
+    
+    @staticmethod
+    def generate_token(user_id, user_type):
+        """Generate JWT token for user"""
+        payload = {
+            'user_id': user_id,
+            'user_type': user_type,
+            'exp': datetime.utcnow() + timedelta(hours=24),
+            'iat': datetime.utcnow()
+        }
+        return jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
+    
+    @staticmethod
+    def verify_token(token):
+        """Verify JWT token and return payload"""
+        try:
+            payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            return payload
+        except jwt.ExpiredSignatureError:
+            return None
+        except jwt.InvalidTokenError:
+            return None
+    
+    @staticmethod
+    def authenticate_user(email, password):
+        """Authenticate user with email and password"""
+        user = Users.query.filter_by(email=email).first()
+        if user and AuthService.verify_password(password, user.password_hash):
+            # Update last login
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+            return user
+        return None
+
+def token_required(f):
+    """Decorator to require valid JWT token"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+[detached from 29330.frontend]
+root@poker-academy-server:~/Dojo_Deploy/poker-academy-backend/poker_academy_api/src# curl http://142.93.206.128:3000
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="icon" href="/favicon.png"/><link rel="shortcut icon" href="/favicon.png"/><link rel="apple-touch-icon" href="/favicon.png"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#E53E3E"/><meta name="description" content="Dojo Poker Academy - Plataforma de ensino de poker online"/><link rel="manifest" href="/manifest.json"/><title>Dojo Poker Academy</title><script defer="defer" src="/static/js/main.c7a6bce7.js"></script><link href="/static/css/main.f49e0d26.css" rel="stylesheet"></head><body><noscript>You need to enable JavaScript to run this appcd ~/Dojo_Deploy/poker-academyiv></body></html>root@poker-academy-server:~/Dojo_Deploy/poker-academy-backend/poker_academy_api/src# cd ~/Dojo_Deploy/poker-academy
+find . -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | xargs grep -l "localhost\|127.0.0.1\|api" | head -5
+./node_modules/object-hash/index.js
+./node_modules/undici-types/index.d.ts
+./node_modules/undici-types/mock-call-history.d.ts
+./node_modules/http-proxy-agent/dist/agent.d.ts
+./node_modules/http-proxy-agent/dist/agent.js
+xargs: grep: terminated by signal 13
+root@poker-academy-server:~/Dojo_Deploy/poker-academy# cd ~/Dojo_Deploy/poker-academy
+find ./src -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | xargs grep -l "localhost\|127.0.0.1\|5000\|api" 2>/dev/null
+./src/services/api.js
+./src/context/AuthContext.js
+./src/components/shared/VideoPlayer.js
+./src/components/admin/Analytics.js
+./src/components/admin/StudentManagement.js
+./src/components/admin/ClassManagement.js
+./src/components/student/Favorites.js
+./src/components/student/History.js
+./src/components/student/Catalog.js
+root@poker-academy-server:~/Dojo_Deploy/poker-academy# find ./src -name "*config*" -o -name "*api*" -o -name "*service*"
+./src/services
+./src/services/api.js
+root@poker-academy-server:~/Dojo_Deploy/poker-academy# ls -la | grep env
+cat .env 2>/dev/null || echo "Arquivo .env não encontrado"
+Arquivo .env não encontrado
+root@poker-academy-server:~/Dojo_Deploy/poker-academy# grep -r "http://.*:5000" ./src/ 2>/dev/null || echo "Não encontrou URLs com :5000"
+grep -r "localhost" ./src/ 2>/dev/null | head -3
+./src/services/api.js:const API_BASE_URL = 'http://localhost:5000';
+./src/context/AuthContext.js:const API_BASE_URL = 'http://localhost:5000';
+./src/components/shared/VideoPlayer.js:    const videoUrl = `http://localhost:5000/api/videos/${classData.video_path}?token=${token}`;
+./src/components/admin/StudentManagement.js:      const response = await fetch('http://localhost:5000/api/particoes');
+./src/components/admin/ClassManagement.js:      const response = await fetch('http://localhost:5000/api/classes/upload-video', {
+./src/services/api.js:const API_BASE_URL = 'http://localhost:5000';
+./src/context/AuthContext.js:const API_BASE_URL = 'http://localhost:5000';
+./src/components/shared/VideoPlayer.js:    const videoUrl = `http://localhost:5000/api/videos/${classData.video_path}?token=${token}`;
+root@poker-academy-server:~/Dojo_Deploy/poker-academy# grep -r "http://.*:5000" ./src/ 2>/dev/null || echo "Não encontrou URLs com :5000"
+grep -r "localhost" ./src/ 2>/dev/null | head -3
+./src/services/api.js:const API_BASE_URL = 'http://localhost:5000';
+./src/context/AuthContext.js:const API_BASE_URL = 'http://localhost:5000';
+./src/components/shared/VideoPlayer.js:    const videoUrl = `http://localhost:5000/api/videos/${classData.video_path}?token=${token}`;
+./src/components/admin/StudentManagement.js:      const response = await fetch('http://localhost:5000/api/particoes');
+./src/components/admin/ClassManagement.js:      const response = await fetch('http://localhost:5000/api/classes/upload-video', {
+./src/services/api.js:const API_BASE_URL = 'http://localhost:5000';
+./src/context/AuthContext.js:const API_BASE_URL = 'http://localhost:5000';
+./src/components/shared/VideoPlayer.js:    const videoUrl = `http://localhost:5000/api/videos/${classData.video_path}?token=${token}`;
+root@poker-academy-server:~/Dojo_Deploy/poker-academy# ^C
+root@poker-academy-server:~/Dojo_Deploy/poker-academy# cat ./src/services/api.js
+// src/services/api.js
+const API_BASE_URL = 'http://localhost:5000';
+
+// Variável global para armazenar o token temporariamente
+let currentToken = null;
+
+// Função para definir o token
+export const setApiToken = (token) => {
+  currentToken = token;
+  // Persistir no sessionStorage para manter durante a sessão
+  if (token) {
+    sessionStorage.setItem('poker_academy_token', token);
+  } else {
+    sessionStorage.removeItem('poker_academy_token');
+  }
+};
+
+// Função para obter o token
+export const getToken = () => {
+  // Se não temos token na memória, tentar recuperar do sessionStorage
+  if (!currentToken) {
+    currentToken = sessionStorage.getItem('poker_academy_token');
+  }
+  return currentToken;
+};
+
+// Função para fazer requisições autenticadas
+const apiRequest = async (endpoint, options = {}) => {
+  const token = getToken();
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...options.headers,
+    },
+    ...options,
+  };
+
+  try {
+    const response = await fetch(url, config);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Erro na requisição');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+// Serviços de Classes
+export const classService = {
+  // Listar todas as aulas
+  getAll: () => apiRequest('/api/classes'),
+  
+  // Obter detalhes de uma aula
+  getById: (id) => apiRequest(`/api/classes/${id}`),
+  
+  // Criar nova aula (admin)
+  create: (classData) => apiRequest('/api/classes', {
+    method: 'POST',
+    body: JSON.stringify(classData),
+  }),
+  
+  // Atualizar aula (admin)
+  update: (id, classData) => apiRequest(`/api/classes/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(classData),
+  }),
+  
+  // Deletar aula (admin)
+  delete: (id) => apiRequest(`/api/classes/${id}`, {
+    method: 'DELETE',
+  }),
+  
+  // Obter progresso da aula
+  getProgress: (id) => apiRequest(`/api/classes/${id}/progress`),
+
+  // Atualizar progresso da aula
+  updateProgress: (id, progressData) => apiRequest(`/api/classes/${id}/progress`, {
+    method: 'POST',
+    body: JSON.stringify(progressData),
+  }),
+
+  // Registrar visualização da aula
+  registerView: (id) => apiRequest(`/api/classes/${id}/view`, {
+    method: 'POST',
+  }),
+
+  // Obter estatísticas de visualizações (admin)
+  getViewStats: (id) => apiRequest(`/api/classes/${id}/views`),
+
+  // Obter histórico de aulas assistidas
+  getHistory: () => apiRequest('/api/classes/history'),
+
+  // Obter lista de instrutores (admins)
+  getInstructors: () => apiRequest('/api/instructors'),
+};
+
+// Serviços de Analytics
+export const analyticsService = {
+  // Obter estatísticas do painel (admin)
+  getStats: () => apiRequest('/api/analytics/stats'),
+};
+
+// Serviços de Usuários
+export const userService = {
+  // Listar todos os usuários (admin)
+  getAll: () => apiRequest('/api/users'),
+  
+  // Criar novo usuário (admin)
+  create: (userData) => apiRequest('/api/users', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  }),
+  
+  // Atualizar usuário (admin)
+  update: (id, userData) => apiRequest(`/api/users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(userData),
+  }),
+  
+  // Deletar usuário (admin)
+  delete: (id) => apiRequest(`/api/users/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Serviços de Favoritos
+export const favoritesService = {
+  // Listar favoritos do usuário
+  getAll: () => apiRequest('/api/favorites'),
+  
+  // Adicionar aos favoritos
+  add: (classId) => apiRequest(`/api/favorites/${classId}`, {
+    method: 'POST',
+  }),
+  
+  // Remover dos favoritos
+  remove: (classId) => apiRequest(`/api/favorites/${classId}`, {
+    method: 'DELETE',
+  }),
+  
+  // Verificar se está nos favoritos
+  check: (classId) => apiRequest(`/api/favorites/${classId}/check`),
+};
+
+// Serviços de Playlists
+export const playlistService = {
+  // Listar playlists do usuário
+  getAll: () => apiRequest('/api/playlists'),
+  
+  // Obter detalhes de uma playlist
+  getById: (id) => apiRequest(`/api/playlists/${id}`),
+  
+  // Criar nova playlist
+  create: (playlistData) => apiRequest('/api/playlists', {
+    method: 'POST',
+    body: JSON.stringify(playlistData),
+  }),
+  
+  // Deletar playlist
+  delete: (id) => apiRequest(`/api/playlists/${id}`, {
+    method: 'DELETE',
+  }),
+  
+  // Adicionar aula à playlist
+  addClass: (playlistId, classId) => apiRequest(`/api/playlists/${playlistId}/classes/${classId}`, {
+    method: 'POST',
+  }),
+  
+  // Remover aula da playlist
+  removeClass: (playlistId, classId) => apiRequest(`/api/playlists/${playlistId}/classes/${classId}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Serviços de Autenticação
+export const authService = {
+  // Login
+  login: (email, password) => apiRequest('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  }),
+  
+  // Registro
+  register: (userData) => apiRequest('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  }),
+  
+  // Verificar token
+  verify: () => apiRequest('/api/auth/verify'),
+  
+  // Logout
+  logout: () => apiRequest('/api/auth/logout', {
+    method: 'POST',
+  }),
+[detached from 29330.frontend]
+root@poker-academy-server:~/Dojo_Deploy/poker-academy# cat ./src/services/api.js
+// src/services/api.js
+const API_BASE_URL = 'http://142.93.206.128:5000';
+
+// Variável global para armazenar o token temporariamente
+let currentToken = null;
+
+// Função para definir o token
+export const setApiToken = (token) => {
+  currentToken = token;
+  // Persistir no sessionStorage para manter durante a sessão
+  if (token) {
+    sessionStorage.setItem('poker_academy_token', token);
+  } else {
+    sessionStorage.removeItem('poker_academy_token');
+  }
+};
+
+// Função para obter o token
+export const getToken = () => {
+  // Se não temos token na memória, tentar recuperar do sessionStorage
+  if (!currentToken) {
+    currentToken = sessionStorage.getItem('poker_academy_token');
+  }
+  return currentToken;
+};
+
+// Função para fazer requisições autenticadas
+const apiRequest = async (endpoint, options = {}) => {
+  const token = getToken();
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...options.headers,
+    },
+    ...options,
+  };
+
+  try {
+    const response = await fetch(url, config);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Erro na requisição');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+// Serviços de Classes
+export const classService = {
+  // Listar todas as aulas
+  getAll: () => apiRequest('/api/classes'),
+  
+  // Obter detalhes de uma aula
+  getById: (id) => apiRequest(`/api/classes/${id}`),
+  
+  // Criar nova aula (admin)
+  create: (classData) => apiRequest('/api/classes', {
+    method: 'POST',
+    body: JSON.stringify(classData),
+  }),
+  
+  // Atualizar aula (admin)
+  update: (id, classData) => apiRequest(`/api/classes/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(classData),
+  }),
+  
+  // Deletar aula (admin)
+  delete: (id) => apiRequest(`/api/classes/${id}`, {
+    method: 'DELETE',
+  }),
+  
+  // Obter progresso da aula
+  getProgress: (id) => apiRequest(`/api/classes/${id}/progress`),
+
+  // Atualizar progresso da aula
+  updateProgress: (id, progressData) => apiRequest(`/api/classes/${id}/progress`, {
+    method: 'POST',
+    body: JSON.stringify(progressData),
+  }),
+
+  // Registrar visualização da aula
+  registerView: (id) => apiRequest(`/api/classes/${id}/view`, {
+    method: 'POST',
+  }),
+
+  // Obter estatísticas de visualizações (admin)
+  getViewStats: (id) => apiRequest(`/api/classes/${id}/views`),
+
+  // Obter histórico de aulas assistidas
+  getHistory: () => apiRequest('/api/classes/history'),
+
+  // Obter lista de instrutores (admins)
+  getInstructors: () => apiRequest('/api/instructors'),
+};
+
+// Serviços de Analytics
+export const analyticsService = {
+  // Obter estatísticas do painel (admin)
+  getStats: () => apiRequest('/api/analytics/stats'),
+};
+
+// Serviços de Usuários
+export const userService = {
+  // Listar todos os usuários (admin)
+  getAll: () => apiRequest('/api/users'),
+  
+  // Criar novo usuário (admin)
+  create: (userData) => apiRequest('/api/users', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  }),
+  
+  // Atualizar usuário (admin)
+  update: (id, userData) => apiRequest(`/api/users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(userData),
+  }),
+  
+  // Deletar usuário (admin)
+  delete: (id) => apiRequest(`/api/users/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Serviços de Favoritos
+export const favoritesService = {
+  // Listar favoritos do usuário
+  getAll: () => apiRequest('/api/favorites'),
+  
+  // Adicionar aos favoritos
+  add: (classId) => apiRequest(`/api/favorites/${classId}`, {
+    method: 'POST',
+  }),
+  
+  // Remover dos favoritos
+  remove: (classId) => apiRequest(`/api/favorites/${classId}`, {
+    method: 'DELETE',
+  }),
+  
+  // Verificar se está nos favoritos
+  check: (classId) => apiRequest(`/api/favorites/${classId}/check`),
+};
+
+// Serviços de Playlists
+export const playlistService = {
+  // Listar playlists do usuário
+  getAll: () => apiRequest('/api/playlists'),
+  
+  // Obter detalhes de uma playlist
+  getById: (id) => apiRequest(`/api/playlists/${id}`),
+  
+  // Criar nova playlist
+  create: (playlistData) => apiRequest('/api/playlists', {
+    method: 'POST',
+    body: JSON.stringify(playlistData),
+  }),
+  
+  // Deletar playlist
+  delete: (id) => apiRequest(`/api/playlists/${id}`, {
+    method: 'DELETE',
+  }),
+  
+  // Adicionar aula à playlist
+  addClass: (playlistId, classId) => apiRequest(`/api/playlists/${playlistId}/classes/${classId}`, {
+    method: 'POST',
+  }),
+  
+  // Remover aula da playlist
+  removeClass: (playlistId, classId) => apiRequest(`/api/playlists/${playlistId}/classes/${classId}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Serviços de Autenticação
+export const authService = {
+  // Login
+  login: (email, password) => apiRequest('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  }),
+  
+  // Registro
+  register: (userData) => apiRequest('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  }),
+  
+  // Verificar token
+  verify: () => apiRequest('/api/auth/verify'),
+  
+  // Logout
+  logout: () => apiRequest('/api/auth/logout', {
+    method: 'POST',
+  }),
+};
+
+export default {
+  classService,
+  userService,
+  favoritesService,
+  playlistService,
+  authService,
+  analyticsService,
+};
