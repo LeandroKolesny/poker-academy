@@ -40,9 +40,15 @@ class AuthService:
             return None
     
     @staticmethod
-    def authenticate_user(email, password):
-        """Authenticate user with email and password"""
-        user = Users.query.filter_by(email=email).first()
+    def authenticate_user(username_or_email, password):
+        """Authenticate user with username or email and password"""
+        # Tentar primeiro por username
+        user = Users.query.filter_by(username=username_or_email).first()
+
+        # Se não encontrou por username, tentar por email
+        if not user:
+            user = Users.query.filter_by(email=username_or_email).first()
+
         if user and AuthService.verify_password(password, user.password_hash):
             # Update last login
             user.last_login = datetime.utcnow()

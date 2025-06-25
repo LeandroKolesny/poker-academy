@@ -11,6 +11,7 @@ from src.auth import token_required, admin_required
 from datetime import datetime
 from sqlalchemy import desc
 import os
+import re
 from werkzeug.utils import secure_filename
 
 class_bp = Blueprint("class_bp", __name__)
@@ -106,8 +107,8 @@ def create_class(current_user):
             name=data["name"],
             instructor=data["instructor"],
             date=date_obj,
-            category=data["category"],
-            video_type=data["video_type"],
+            category=data.get("category"),  # Categoria agora é opcional
+            video_type=data.get("video_type", "local"),
             video_path=data.get("video_path"),
             priority=data.get("priority", 5),
             views=data.get("views", 0)
@@ -503,4 +504,245 @@ def serve_video_public(current_user, filename):
         print(f"Erro ao servir vídeo: {e}")
         current_app.logger.error(f"Erro ao servir vídeo: {e}", exc_info=True)
         return jsonify(error="Erro ao carregar vídeo"), 500
+
+# Rota para upload completo (vídeo + dados da aula)
+@class_bp.route("/api/classes/upload-complete", methods=["POST"])
+@admin_required
+def upload_complete_class(current_user):
+    """
+    Upload completo: recebe arquivo de vídeo + dados da aula em FormData
+    """
+    print("🚀 Rota de upload completo chamada!")
+    try:
+        # Verificar se há arquivo de vídeo
+        if 'video' not in request.files:
+            return jsonify(error="Nenhum arquivo de vídeo enviado"), 400
+
+        file = request.files['video']
+        if file.filename == '':
+            return jsonify(error="Nenhum arquivo selecionado"), 400
+
+        if not file or not allowed_file(file.filename):
+            return jsonify(error="Tipo de arquivo não permitido"), 400
+
+        # Obter dados do formulário
+        name = request.form.get('name')
+        instructor = request.form.get('instructor')
+        date_str = request.form.get('date')
+        category = request.form.get('category', '')  # Categoria opcional
+        priority = request.form.get('priority', '5')
+        video_type = request.form.get('video_type', 'local')
+
+        print(f"📝 Dados recebidos: name={name}, instructor={instructor}, date={date_str}, category={category}")
+
+        # Validar campos obrigatórios
+        if not name or not instructor or not date_str:
+            return jsonify(error="Campos obrigatórios: name, instructor, date"), 400
+
+        # Gerar nome seguro para o arquivo
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
+        filename = timestamp + filename
+
+        # Salvar arquivo
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(filepath)
+        print(f"💾 Arquivo salvo: {filepath}")
+
+        # Converter data string para objeto date
+        try:
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            # Tentar formato brasileiro
+            try:
+                date_obj = datetime.strptime(date_str, "%d/%m/%Y").date()
+            except ValueError:
+                return jsonify(error="Formato de data inválido. Use YYYY-MM-DD"), 400
+
+        # Criar nova aula no banco
+        # Se categoria estiver vazia, usar um valor padrão
+        final_category = category if category and category.strip() else 'Geral'
+
+        new_class = Classes(
+            name=name,
+            instructor=instructor,
+            date=date_obj,
+            category=final_category,  # Sempre enviar uma categoria válida
+            video_type=video_type,
+            video_path=filename,  # Salvar apenas o nome do arquivo
+            priority=int(priority),
+            views=0
+        )
+
+        db.session.add(new_class)
+        db.session.commit()
+
+        print(f"✅ Aula criada com sucesso: ID={new_class.id}")
+
+        return jsonify({
+            'message': 'Aula criada com sucesso',
+            'class': new_class.to_dict(),
+            'filename': filename
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro no upload completo: {e}")
+        current_app.logger.error(f"Erro no upload completo: {e}", exc_info=True)
+        return jsonify(error=f"Erro ao criar aula: {str(e)}"), 500
+
+# Rota para auto-import de aulas
+@class_bp.route("/api/classes/auto-import", methods=["POST"])
+@admin_required
+def auto_import_classes(current_user):
+    """
+    Auto-import de aulas a partir de arquivo de texto
+    Formato esperado: Data - Instrutor - Nome da aula
+    Exemplo: 21.01.25 - Eiji - Mystery bounty
+    """
+    try:
+        if 'file' not in request.files:
+            return jsonify({"error": "Nenhum arquivo enviado"}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "Nenhum arquivo selecionado"}), 400
+
+        # Ler conteúdo do arquivo
+        content = file.read().decode('utf-8')
+        lines = content.strip().split('\n')
+
+        parsed_classes = []
+        errors = []
+
+        for line_num, line in enumerate(lines, 1):
+            line = line.strip()
+            if not line:  # Pular linhas vazias
+                continue
+
+            try:
+                # Parse do formato: Data - Instrutor - Nome da aula
+                # Exemplo: 21.01.25 - Eiji - Mystery bounty
+                parts = line.split(' - ')
+
+                if len(parts) < 3:
+                    errors.append(f"Linha {line_num}: Formato inválido. Use: Data - Instrutor - Nome da aula")
+                    continue
+
+                date_str = parts[0].strip()
+                instructor = parts[1].strip()
+                class_name = ' - '.join(parts[2:]).strip()  # Caso o nome tenha " - "
+
+                # Parse da data (formato: dd.mm.yy ou dd.mm.yyyy)
+                date_obj = parse_date(date_str)
+                if not date_obj:
+                    errors.append(f"Linha {line_num}: Data inválida '{date_str}'. Use formato dd.mm.yy ou dd.mm.yyyy")
+                    continue
+
+                # Verificar se instrutor existe
+                instructor_exists = Users.query.filter_by(name=instructor, type=UserType.admin).first()
+                if not instructor_exists:
+                    errors.append(f"Linha {line_num}: Instrutor '{instructor}' não encontrado")
+                    continue
+
+                parsed_classes.append({
+                    'line': line_num,
+                    'date': date_obj.strftime('%Y-%m-%d'),
+                    'instructor': instructor,
+                    'name': class_name,
+                    'original_line': line
+                })
+
+            except Exception as e:
+                errors.append(f"Linha {line_num}: Erro ao processar - {str(e)}")
+
+        return jsonify({
+            "success": True,
+            "parsed_classes": parsed_classes,
+            "errors": errors,
+            "total_lines": len(lines),
+            "valid_classes": len(parsed_classes),
+            "error_count": len(errors)
+        })
+
+    except Exception as e:
+        return jsonify({"error": f"Erro ao processar arquivo: {str(e)}"}), 500
+
+# Rota para confirmar import das aulas
+@class_bp.route("/api/classes/confirm-import", methods=["POST"])
+@admin_required
+def confirm_import_classes(current_user):
+    """
+    Confirma o import das aulas parseadas
+    """
+    try:
+        data = request.get_json()
+        classes_to_import = data.get('classes', [])
+
+        if not classes_to_import:
+            return jsonify({"error": "Nenhuma aula para importar"}), 400
+
+        imported_classes = []
+        errors = []
+
+        for class_data in classes_to_import:
+            try:
+                # Converter data string para objeto date
+                date_obj = datetime.strptime(class_data["date"], "%Y-%m-%d").date()
+
+                # Criar nova aula
+                new_class = Classes(
+                    name=class_data["name"],
+                    instructor=class_data["instructor"],
+                    date=date_obj,
+                    category=None,  # Categoria vazia por padrão
+                    video_type="local",
+                    video_path=None,
+                    priority=5,
+                    views=0
+                )
+
+                db.session.add(new_class)
+                imported_classes.append({
+                    'name': class_data["name"],
+                    'instructor': class_data["instructor"],
+                    'date': class_data["date"]
+                })
+
+            except Exception as e:
+                errors.append(f"Erro ao importar '{class_data.get('name', 'N/A')}': {str(e)}")
+
+        if imported_classes:
+            db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "imported_count": len(imported_classes),
+            "imported_classes": imported_classes,
+            "errors": errors
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Erro ao importar aulas: {str(e)}"}), 500
+
+def parse_date(date_str):
+    """
+    Parse de data nos formatos: dd.mm.yy ou dd.mm.yyyy
+    Retorna objeto date ou None se inválido
+    """
+    try:
+        # Tentar formato dd.mm.yyyy
+        if len(date_str.split('.')) == 3:
+            day, month, year = date_str.split('.')
+
+            # Se ano tem 2 dígitos, assumir 20xx
+            if len(year) == 2:
+                year = '20' + year
+
+            return datetime.strptime(f"{day}.{month}.{year}", "%d.%m.%Y").date()
+
+        return None
+    except:
+        return None
 

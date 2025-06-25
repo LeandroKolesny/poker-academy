@@ -93,12 +93,12 @@ export const AuthProvider = ({ children }) => {
 
 
   // Função para realizar login
-  const login = async (email, password) => {
+  const login = async (username, password) => {
     setLoading(true);
     setError('');
 
     try {
-      console.log('🔄 Tentando login para:', email);
+      console.log('🔄 Tentando login para:', username);
       console.log('🌐 URL da API:', `${API_BASE_URL}/api/auth/login`);
 
       const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -106,7 +106,7 @@ export const AuthProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: username, password }), // Enviar como 'email' para compatibilidade
       });
 
       console.log('📡 Resposta recebida:', response.status, response.statusText);

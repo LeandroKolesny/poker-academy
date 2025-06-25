@@ -2,7 +2,7 @@
 // src/components/admin/ClassManagement.js
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrash, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faTrash, faSpinner, faUpload, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { classService, getToken } from '../../services/api';
 
 const ClassManagement = () => {
@@ -19,7 +19,7 @@ const ClassManagement = () => {
   const initialFormData = {
     name: '',
     instructor: '',
-    category: 'preflop',
+    category: '',  // Categoria agora é opcional
     date: new Date().toISOString().split('T')[0],
     priority: 5,
     video_path: '',
@@ -29,6 +29,14 @@ const ClassManagement = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Estados para auto-import de vídeos
+  const [showAutoImport, setShowAutoImport] = useState(false);
+  const [importFiles, setImportFiles] = useState([]);
+  const [parsedClasses, setParsedClasses] = useState([]);
+  const [importErrors, setImportErrors] = useState([]);
+  const [importLoading, setImportLoading] = useState(false);
+  const [multiUploadProgress, setMultiUploadProgress] = useState({});
 
   const fetchClasses = async () => {
     setLoading(true);
@@ -91,7 +99,7 @@ const ClassManagement = () => {
     setFormData({
       name: cls.name || '',
       instructor: cls.instructor || '',
-      category: cls.category || 'preflop',
+      category: cls.category || '',  // Categoria pode ser vazia
       date: dateValue,
       priority: cls.priority || 5,
       video_path: cls.video_path || '',
@@ -320,7 +328,212 @@ const ClassManagement = () => {
       'torneos': 'Torneios',
       'cash': 'Cash Game'
     };
-    return categories[category] || category;
+    return categories[category] || category || 'Sem categoria';
+  };
+
+  // Funções para auto-import de vídeos
+  const handleAutoImport = () => {
+    setShowAutoImport(true);
+    // NÃO resetar os estados quando reabre o modal
+    // setImportFiles([]);
+    // setParsedClasses([]);
+    // setImportErrors([]);
+    // setMultiUploadProgress({});
+  };
+
+  const clearImportData = () => {
+    setImportFiles([]);
+    setParsedClasses([]);
+    setImportErrors([]);
+    setMultiUploadProgress({});
+  };
+
+  const handleImportFilesChange = (e) => {
+    const files = Array.from(e.target.files);
+
+    // ADICIONAR aos arquivos existentes em vez de substituir, evitando duplicatas
+    const existingNames = importFiles.map(f => f.name);
+    const newFiles = files.filter(f => !existingNames.includes(f.name));
+    const allFiles = [...importFiles, ...newFiles];
+    setImportFiles(allFiles);
+
+    console.log(`📁 Arquivos selecionados: ${files.length}, Novos: ${newFiles.length}, Total: ${allFiles.length}`);
+
+    // Parse dos nomes dos arquivos (incluindo os novos)
+    const parsed = [];
+    const errors = [];
+
+    allFiles.forEach((file, index) => {
+      try {
+        // Remover extensão do arquivo
+        const fileName = file.name.replace(/\.[^/.]+$/, "");
+
+        // Parse do formato: Data - Instrutor - Nome da aula
+        const parts = fileName.split(' - ');
+
+        if (parts.length < 3) {
+          errors.push(`Arquivo ${file.name}: Formato inválido. Use: Data - Instrutor - Nome da aula`);
+          return;
+        }
+
+        const dateStr = parts[0].trim();
+        const instructor = parts[1].trim();
+        const className = parts.slice(2).join(' - ').trim();
+
+        // Parse da data (formato: dd.mm.yy ou dd.mm.yyyy)
+        const dateObj = parseVideoDate(dateStr);
+        if (!dateObj) {
+          errors.push(`Arquivo ${file.name}: Data inválida '${dateStr}'. Use formato dd.mm.yy ou dd.mm.yyyy`);
+          return;
+        }
+
+        parsed.push({
+          file: file,
+          index: index,
+          date: dateObj,
+          instructor: instructor,
+          name: className,
+          fileName: file.name,
+          size: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+        });
+
+      } catch (error) {
+        errors.push(`Arquivo ${file.name}: Erro ao processar - ${error.message}`);
+      }
+    });
+
+    setParsedClasses(parsed);
+    setImportErrors(errors);
+  };
+
+  const parseVideoDate = (dateStr) => {
+    try {
+      if (dateStr.includes('.')) {
+        const parts = dateStr.split('.');
+        if (parts.length === 3) {
+          let [day, month, year] = parts;
+
+          // Se ano tem 2 dígitos, assumir 20xx
+          if (year.length === 2) {
+            year = '20' + year;
+          }
+
+          const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          return date.toISOString().split('T')[0]; // Retorna YYYY-MM-DD
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  const uploadVideosWithProgress = async () => {
+    if (parsedClasses.length === 0) {
+      alert('Nenhum vídeo válido para upload');
+      return;
+    }
+
+    setImportLoading(true);
+    const results = [];
+
+    for (const classData of parsedClasses) {
+      try {
+        // Criar FormData para este vídeo
+        const formData = new FormData();
+        formData.append('video', classData.file);
+        formData.append('name', classData.name);
+        formData.append('instructor', classData.instructor);
+        formData.append('date', classData.date);
+        formData.append('category', ''); // Categoria vazia
+        formData.append('priority', '5');
+        formData.append('video_type', 'local');
+
+        // Upload com progresso
+        const result = await uploadVideoWithProgress(formData, classData.index);
+        results.push(result);
+
+      } catch (error) {
+        console.error(`Erro no upload de ${classData.fileName}:`, error);
+        results.push({ success: false, fileName: classData.fileName, error: error.message });
+      }
+    }
+
+    // Mostrar resultados
+    const successful = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
+
+    console.log('📊 Resultados do upload:', { successful, failed, results });
+
+    if (failed > 0) {
+      const failedFiles = results.filter(r => !r.success).map(r => r.fileName || 'Arquivo desconhecido').join(', ');
+      alert(`Upload concluído com problemas!\n✅ Sucessos: ${successful}\n❌ Falhas: ${failed}\n\nArquivos com erro: ${failedFiles}`);
+    } else {
+      alert(`🎉 Upload concluído com sucesso!\n✅ ${successful} vídeos enviados!`);
+    }
+
+    if (successful > 0) {
+      clearImportData(); // Limpar dados após sucesso
+      setShowAutoImport(false);
+      fetchClasses(); // Recarregar lista de aulas
+    }
+
+    setImportLoading(false);
+  };
+
+  const uploadVideoWithProgress = (formData, fileIndex) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      // Monitorar progresso
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = Math.round((e.loaded / e.total) * 100);
+          setMultiUploadProgress(prev => ({
+            ...prev,
+            [fileIndex]: percentComplete
+          }));
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 200 || xhr.status === 201) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            console.log(`✅ Upload ${fileIndex} concluído:`, response);
+            resolve({ success: true, response });
+          } catch (e) {
+            console.log(`✅ Upload ${fileIndex} concluído (texto):`, xhr.responseText);
+            resolve({ success: true, response: xhr.responseText });
+          }
+        } else {
+          try {
+            const errorResponse = JSON.parse(xhr.responseText);
+            console.error(`❌ Erro upload ${fileIndex}:`, errorResponse);
+            reject(new Error(errorResponse.error || `HTTP ${xhr.status}: ${xhr.statusText}`));
+          } catch (e) {
+            console.error(`❌ Erro upload ${fileIndex}:`, xhr.statusText);
+            reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+          }
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        console.error(`❌ Erro de conexão upload ${fileIndex}`);
+        reject(new Error('Erro de conexão durante o upload'));
+      });
+
+      xhr.addEventListener('abort', () => {
+        console.error(`❌ Upload ${fileIndex} cancelado`);
+        reject(new Error('Upload cancelado'));
+      });
+
+      // Usar novo endpoint de upload completo
+      xhr.open('POST', 'http://localhost:5000/api/classes/upload-complete');
+      const token = localStorage.getItem('token');
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.send(formData);
+    });
   };
 
   // Função para formatar data sem problemas de timezone
@@ -355,12 +568,21 @@ const ClassManagement = () => {
     <div className="p-6 text-white min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold text-red-400">Gestão de Aulas</h2>
-        <button
-          className="bg-red-400 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition-colors duration-150"
-          onClick={handleAddClass}
-        >
-          <FontAwesomeIcon icon={faPlus} className="mr-2" /> Nova Aula
-        </button>
+        <div className="flex gap-3">
+          <button
+            className="bg-red-400 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition-colors duration-150"
+            onClick={handleAddClass}
+          >
+            <FontAwesomeIcon icon={faPlus} className="mr-2" /> Nova Aula
+          </button>
+
+          <button
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition-colors duration-150"
+            onClick={handleAutoImport}
+          >
+            <FontAwesomeIcon icon={faUpload} className="mr-2" /> Auto Import
+          </button>
+        </div>
       </div>
 
       <div className="mb-6">
@@ -482,15 +704,15 @@ const ClassManagement = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="category" className="block mb-1 text-sm font-medium text-gray-300">Categoria</label>
-                  <select 
-                    id="category" 
+                  <label htmlFor="category" className="block mb-1 text-sm font-medium text-gray-300">Categoria (opcional)</label>
+                  <select
+                    id="category"
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-poker-red" 
-                    required
+                    className="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-poker-red"
                   >
+                    <option value="">Sem categoria</option>
                     <option value="preflop">Pré-Flop</option>
                     <option value="postflop">Pós-Flop</option>
                     <option value="mental">Mental Game</option>
@@ -641,6 +863,158 @@ const ClassManagement = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Auto Import */}
+      {showAutoImport && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-red-400">Auto Import de Aulas</h3>
+              <button
+                onClick={() => setShowAutoImport(false)}
+                className="text-gray-400 hover:text-white text-2xl"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <h4 className="text-lg font-medium text-white mb-3">Formato dos Vídeos:</h4>
+              <div className="bg-gray-700 p-4 rounded-lg mb-4">
+                <p className="text-gray-300 mb-2">Nome dos arquivos deve seguir o formato:</p>
+                <code className="text-green-400 bg-gray-900 px-2 py-1 rounded">
+                  Data - Instrutor - Nome da aula.mp4
+                </code>
+                <p className="text-gray-300 mt-2 mb-2">Exemplos:</p>
+                <div className="text-green-400 bg-gray-900 p-2 rounded font-mono text-sm">
+                  21.01.25 - Eiji - Mystery bounty.mp4<br/>
+                  22.01.25 - João - Estratégias de torneio.avi<br/>
+                  23.01.25 - Maria - Cash game avançado.mov
+                </div>
+                <p className="text-yellow-400 mt-2 text-sm">
+                  ⚠️ Formatos aceitos: MP4, AVI, MOV, WMV, FLV, WEBM, MKV (máx. 500MB cada)
+                </p>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Selecionar Múltiplos Vídeos:
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="file"
+                    accept=".mp4,.avi,.mov,.wmv,.flv,.webm,.mkv"
+                    multiple
+                    onChange={handleImportFilesChange}
+                    className="flex-1 bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  />
+                  {parsedClasses.length > 0 && (
+                    <button
+                      onClick={clearImportData}
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                      title="Limpar todos os vídeos"
+                    >
+                      🗑️ Limpar
+                    </button>
+                  )}
+                </div>
+                <p className="text-gray-400 text-sm mt-1">
+                  Segure Ctrl (Windows) ou Cmd (Mac) para selecionar múltiplos arquivos
+                  {parsedClasses.length > 0 && (
+                    <span className="text-green-400 ml-2">
+                      • {parsedClasses.length} vídeo(s) carregado(s)
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Resultados do processamento */}
+            {(parsedClasses.length > 0 || importErrors.length > 0) && (
+              <div className="border-t border-gray-600 pt-6">
+                <h4 className="text-lg font-medium text-white mb-4">Resultados do Processamento:</h4>
+
+                {/* Erros */}
+                {importErrors.length > 0 && (
+                  <div className="mb-6">
+                    <h5 className="text-red-400 font-medium mb-2">Erros encontrados ({importErrors.length}):</h5>
+                    <div className="bg-red-900 bg-opacity-30 border border-red-500 rounded-lg p-4 max-h-40 overflow-y-auto">
+                      {importErrors.map((error, index) => (
+                        <p key={index} className="text-red-300 text-sm mb-1">{error}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Vídeos válidos */}
+                {parsedClasses.length > 0 && (
+                  <div className="mb-6">
+                    <h5 className="text-green-400 font-medium mb-2">Vídeos válidos para upload ({parsedClasses.length}):</h5>
+                    <div className="bg-gray-700 rounded-lg max-h-80 overflow-y-auto">
+                      <div className="space-y-3 p-4">
+                        {parsedClasses.map((cls, index) => (
+                          <div key={index} className="bg-gray-600 rounded-lg p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <h6 className="text-white font-medium">{cls.name}</h6>
+                                <p className="text-gray-300 text-sm">
+                                  📅 {formatDateForDisplay(cls.date)} | 👨‍🏫 {cls.instructor} | 📁 {cls.size}
+                                </p>
+                                <p className="text-gray-400 text-xs mt-1">{cls.fileName}</p>
+                              </div>
+                            </div>
+
+                            {/* Barra de progresso */}
+                            {multiUploadProgress[index] !== undefined && (
+                              <div className="mt-3">
+                                <div className="flex justify-between text-sm text-gray-300 mb-1">
+                                  <span>Upload em progresso...</span>
+                                  <span>{multiUploadProgress[index]}%</span>
+                                </div>
+                                <div className="w-full bg-gray-800 rounded-full h-2">
+                                  <div
+                                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${multiUploadProgress[index]}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 mt-4">
+                      <button
+                        onClick={uploadVideosWithProgress}
+                        disabled={importLoading}
+                        className="bg-green-500 hover:bg-green-600 disabled:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors duration-200 flex items-center"
+                      >
+                        {importLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Fazendo Upload...
+                          </>
+                        ) : (
+                          `🚀 Fazer Upload (${parsedClasses.length} vídeos)`
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => setShowAutoImport(false)}
+                        disabled={importLoading}
+                        className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors duration-200"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -19,16 +19,22 @@ def login():
         if not data:
             return jsonify({"error": "Dados não fornecidos"}), 400
         
-        email = data.get('email')
+        # Aceitar tanto 'email' quanto 'username' no campo de login
+        username_or_email = data.get('email') or data.get('username')
         password = data.get('password')
-        
-        if not email or not password:
-            return jsonify({"error": "Email e senha são obrigatórios"}), 400
-        
+
+        if not username_or_email or not password:
+            return jsonify({"error": "Username/Email e senha são obrigatórios"}), 400
+
+        print(f"🔐 Tentativa de login: {username_or_email}")
+
         # Authenticate user
-        user = AuthService.authenticate_user(email, password)
+        user = AuthService.authenticate_user(username_or_email, password)
         if not user:
-            return jsonify({"error": "Email ou senha inválidos"}), 401
+            print(f"❌ Login falhou para: {username_or_email}")
+            return jsonify({"error": "Username/Email ou senha inválidos"}), 401
+
+        print(f"✅ Login bem-sucedido: {user.username} ({user.name})")
         
         # Generate token
         token = AuthService.generate_token(user.id, user.type.value)

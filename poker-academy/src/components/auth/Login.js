@@ -7,7 +7,7 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import DojoLogo from '../shared/DojoLogo';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { login, loading, error } = useAuth();
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const success = await login(email, password);
+    const success = await login(username, password);
 
     if (success) {
       // Redirecionar manualmente após login bem-sucedido
@@ -41,16 +41,16 @@ const Login = () => {
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-white font-medium mb-2">
-              Email
+            <label htmlFor="username" className="block text-white font-medium mb-2">
+              Username
             </label>
             <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full bg-gray-500 border border-gray-400 text-white px-4 py-3 rounded-modern focus:ring-2 focus:ring-primary-red focus:border-primary-red transition-all duration-200 placeholder-gray-300"
-              placeholder="Digite seu email"
+              placeholder="Digite seu username"
               required
             />
           </div>

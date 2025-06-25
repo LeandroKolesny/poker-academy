@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash, faLock, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { authService } from '../../services/authService';
+import { authService } from '../../services/api';
 
 const ChangePassword = () => {
   const [formData, setFormData] = useState({

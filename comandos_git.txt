@@ -1,0 +1,57 @@
+🚀 COMANDOS GIT - EXECUTE UM POR VEZ NO POWERSHELL
+================================================================
+
+📁 1. NAVEGAR PARA A PASTA DO PROJETO:
+cd "C:\Users\Usuario\Desktop\site_Dojo_Final"
+
+🔧 2. INICIALIZAR GIT (só na primeira vez):
+git init
+
+👤 3. CONFIGURAR SEU NOME E EMAIL:
+git config --global user.name "Seu Nome"
+git config --global user.email "seu-email@exemplo.com"
+
+📋 4. ADICIONAR TODOS OS ARQUIVOS:
+git add .
+
+💾 5. FAZER PRIMEIRO COMMIT:
+git commit -m "Primeiro commit - Sistema Poker Academy"
+
+🌐 6. CONECTAR COM GITHUB (substitua pela sua URL):
+git remote add origin https://github.com/SEU-USUARIO/poker-academy.git
+
+📤 7. ENVIAR PARA GITHUB:
+git push -u origin main
+
+================================================================
+🔄 PARA ATUALIZAÇÕES FUTURAS (depois do primeiro setup):
+
+📋 1. ADICIONAR MUDANÇAS:
+git add .
+
+💾 2. SALVAR MUDANÇAS:
+git commit -m "Descrição das mudanças"
+
+📤 3. ENVIAR PARA SERVIDOR:
+git push
+
+================================================================
+🖥️ NO SERVIDOR (comandos SSH):
+
+📥 1. PRIMEIRA VEZ - CLONAR PROJETO:
+git clone https://github.com/SEU-USUARIO/poker-academy.git
+
+🔄 2. ATUALIZAÇÕES - PUXAR MUDANÇAS:
+cd poker-academy
+git pull
+
+================================================================
+📱 ALTERNATIVA FÁCIL - GITHUB DESKTOP:
+
+1. Baixe: https://desktop.github.com/
+2. Instale e faça login
+3. Clique "Add an Existing Repository"
+4. Selecione sua pasta do projeto
+5. Use interface visual para commits e push
+
+================================================================

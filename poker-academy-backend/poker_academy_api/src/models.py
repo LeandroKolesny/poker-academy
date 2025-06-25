@@ -79,7 +79,7 @@ class Classes(db.Model):
     name = db.Column(db.String(200), nullable=False)
     instructor = db.Column(db.String(100), nullable=False)
     date = db.Column(db.Date, nullable=False) # Mantido como Date
-    category = db.Column(SQLAlchemyEnum(ClassCategory), nullable=False)
+    category = db.Column(SQLAlchemyEnum(ClassCategory), nullable=True)  # Categoria agora é opcional
     video_type = db.Column(SQLAlchemyEnum(VideoType), nullable=False, default=VideoType.local)
     video_path = db.Column(db.String(255), nullable=True)
     priority = db.Column(db.Integer, nullable=False, default=5)
