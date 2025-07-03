@@ -14,6 +14,10 @@ RUN npm ci --only=production
 # Copiar código fonte
 COPY . .
 
+# Definir variável de ambiente para produção
+ENV NODE_ENV=production
+ENV REACT_APP_ENV=production
+
 # Build da aplicação para produção
 RUN npm run build
 
