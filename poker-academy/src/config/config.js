@@ -14,21 +14,21 @@ const environments = {
     ENVIRONMENT: 'development'
   },
   production: {
-    API_BASE_URL: 'http://localhost:5000',
-    FRONTEND_URL: 'http://localhost:3000',
-    WEBSOCKET_URL: 'ws://localhost:5000',
+    API_BASE_URL: '/api',
+    FRONTEND_URL: 'http://142.93.206.128',
+    WEBSOCKET_URL: 'ws://142.93.206.128:5000',
     ENVIRONMENT: 'production'
   },
   server: {
-    API_BASE_URL: 'http://localhost:5000',
-    FRONTEND_URL: 'http://localhost:3000',
-    WEBSOCKET_URL: 'ws://localhost:5000',
+    API_BASE_URL: '/api',
+    FRONTEND_URL: 'https://grinders.com.br',
+    WEBSOCKET_URL: 'wss://grinders.com.br',
     ENVIRONMENT: 'server'
   },
   domain: {
-    API_BASE_URL: 'http://localhost:5000',
-    FRONTEND_URL: 'http://localhost:3000',
-    WEBSOCKET_URL: 'ws://localhost:5000',
+    API_BASE_URL: '/api',
+    FRONTEND_URL: 'https://cardroomgrinders.com.br',
+    WEBSOCKET_URL: 'wss://cardroomgrinders.com.br',
     ENVIRONMENT: 'domain'
   }
 };
