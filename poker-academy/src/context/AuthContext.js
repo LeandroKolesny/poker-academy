@@ -1,8 +1,7 @@
 // src/context/AuthContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { setApiToken, getToken } from '../services/api';
-
-const API_BASE_URL = 'http://localhost:5000';
+import appConfig from '../config/config';
 
 // Criando o contexto de autenticação
 export const AuthContext = createContext();
@@ -26,7 +25,7 @@ export const AuthProvider = ({ children }) => {
       if (savedToken) {
         try {
           // Verificar se o token ainda é válido
-          const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+          const response = await fetch(`${appConfig.API_BASE_URL}${appConfig.API_ENDPOINTS.VERIFY}`, {
             headers: {
               'Authorization': `Bearer ${savedToken}`,
             },
@@ -68,7 +67,7 @@ export const AuthProvider = ({ children }) => {
 
       if (currentToken) {
         try {
-          const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+          const response = await fetch(`${appConfig.API_BASE_URL}${appConfig.API_ENDPOINTS.VERIFY}`, {
             headers: {
               'Authorization': `Bearer ${currentToken}`,
             },
@@ -99,9 +98,9 @@ export const AuthProvider = ({ children }) => {
 
     try {
       console.log('🔄 Tentando login para:', username);
-      console.log('🌐 URL da API:', `${API_BASE_URL}/api/auth/login`);
+      console.log('🌐 URL da API:', `${appConfig.API_BASE_URL}${appConfig.API_ENDPOINTS.LOGIN}`);
 
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(`${appConfig.API_BASE_URL}${appConfig.API_ENDPOINTS.LOGIN}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -157,7 +156,7 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+      const response = await fetch(`${appConfig.API_BASE_URL}${appConfig.API_ENDPOINTS.CHANGE_PASSWORD}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faTrash, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { userService } from '../../services/api';
+import appConfig from '../../config/config';
 
 const StudentManagement = () => {
   const [students, setStudents] = useState([]);
@@ -43,7 +44,7 @@ const StudentManagement = () => {
   // Buscar partições da API
   const fetchParticoes = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/particoes');
+      const response = await fetch(`${appConfig.API_BASE_URL}${appConfig.API_ENDPOINTS.PARTICOES}`);
       if (response.ok) {
         const data = await response.json();
         console.log("Partições carregadas:", data); // Debug

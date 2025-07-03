@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faTrash, faSpinner, faUpload, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { classService, getToken } from '../../services/api';
+import appConfig from '../../config/config';
 
 const ClassManagement = () => {
   const [classes, setClasses] = useState([]);
@@ -225,7 +226,7 @@ const ClassManagement = () => {
         });
 
         // Configurar e enviar requisição
-        xhr.open('POST', 'http://localhost:5000/api/classes/upload-video');
+        xhr.open('POST', `${appConfig.API_BASE_URL}${appConfig.API_ENDPOINTS.UPLOAD_VIDEO}`);
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         xhr.send(formDataUpload);
       });
@@ -529,7 +530,7 @@ const ClassManagement = () => {
       });
 
       // Usar novo endpoint de upload completo
-      xhr.open('POST', 'http://localhost:5000/api/classes/upload-complete');
+      xhr.open('POST', `${appConfig.API_BASE_URL}${appConfig.API_ENDPOINTS.UPLOAD_COMPLETE}`);
       const token = localStorage.getItem('token');
       xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       xhr.send(formData);

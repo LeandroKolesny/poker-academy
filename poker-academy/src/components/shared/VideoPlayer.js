@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons';
 import { classService } from '../../services/api';
 import { getToken } from '../../services/api';
+import appConfig from '../../config/config';
 
 const VideoPlayer = ({ classData, onViewRegistered }) => {
   const [isWatching, setIsWatching] = useState(false);
@@ -165,7 +166,7 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
   if (classData.video_path) {
     // Usar rota com token para autenticação
     const token = getToken();
-    const videoUrl = `http://localhost:5000/api/videos/${classData.video_path}?token=${token}`;
+    const videoUrl = `${appConfig.API_BASE_URL}/videos/${classData.video_path}?token=${token}`;
     console.log('URL do vídeo:', videoUrl);
 
     return (
