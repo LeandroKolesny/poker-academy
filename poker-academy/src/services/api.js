@@ -1,5 +1,5 @@
 // src/services/api.js
-const API_BASE_URL = 'http://localhost:5000';
+import appConfig from '../config/config';
 
 // Variável global para armazenar o token temporariamente
 let currentToken = null;
@@ -27,7 +27,7 @@ export const getToken = () => {
 // Função para fazer requisições autenticadas
 const apiRequest = async (endpoint, options = {}) => {
   const token = getToken();
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${appConfig.API_BASE_URL}${endpoint}`;
 
   const config = {
     headers: {
@@ -46,7 +46,7 @@ const apiRequest = async (endpoint, options = {}) => {
       console.log('🔄 Token expirado, tentando renovar...');
 
       // Verificar se o token realmente expirou
-      const verifyResponse = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+      const verifyResponse = await fetch(`${appConfig.API_BASE_URL}/api/auth/verify`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
