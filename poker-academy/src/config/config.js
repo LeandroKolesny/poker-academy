@@ -95,47 +95,47 @@ const appConfig = {
   // URLs de API construídas dinamicamente
   API_ENDPOINTS: {
     // Autenticação
-    LOGIN: '/api/auth/login',
-    REGISTER: '/api/auth/register',
-    VERIFY: '/api/auth/verify',
-    LOGOUT: '/api/auth/logout',
-    CHANGE_PASSWORD: '/api/auth/change-password',
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    VERIFY: '/auth/verify',
+    LOGOUT: '/auth/logout',
+    CHANGE_PASSWORD: '/auth/change-password',
     
     // Classes
-    CLASSES: '/api/classes',
-    CLASS_BY_ID: (id) => `/api/classes/${id}`,
-    CLASS_PROGRESS: (id) => `/api/classes/${id}/progress`,
-    CLASS_VIEW: (id) => `/api/classes/${id}/view`,
-    CLASS_VIEWS: (id) => `/api/classes/${id}/views`,
-    CLASSES_HISTORY: '/api/classes/history',
-    UPLOAD_VIDEO: '/api/classes/upload-video',
-    UPLOAD_COMPLETE: '/api/classes/upload-complete',
-    
+    CLASSES: '/classes',
+    CLASS_BY_ID: (id) => `/classes/${id}`,
+    CLASS_PROGRESS: (id) => `/classes/${id}/progress`,
+    CLASS_VIEW: (id) => `/classes/${id}/view`,
+    CLASS_VIEWS: (id) => `/classes/${id}/views`,
+    CLASSES_HISTORY: '/classes/history',
+    UPLOAD_VIDEO: '/classes/upload-video',
+    UPLOAD_COMPLETE: '/classes/upload-complete',
+
     // Usuários
-    USERS: '/api/users',
-    USER_BY_ID: (id) => `/api/users/${id}`,
-    
+    USERS: '/users',
+    USER_BY_ID: (id) => `/users/${id}`,
+
     // Favoritos
-    FAVORITES: '/api/favorites',
-    FAVORITE_BY_ID: (id) => `/api/favorites/${id}`,
-    FAVORITE_CHECK: (id) => `/api/favorites/${id}/check`,
-    
+    FAVORITES: '/favorites',
+    FAVORITE_BY_ID: (id) => `/favorites/${id}`,
+    FAVORITE_CHECK: (id) => `/favorites/${id}/check`,
+
     // Playlists
-    PLAYLISTS: '/api/playlists',
-    PLAYLIST_BY_ID: (id) => `/api/playlists/${id}`,
-    PLAYLIST_ADD_CLASS: (playlistId, classId) => `/api/playlists/${playlistId}/classes/${classId}`,
-    
+    PLAYLISTS: '/playlists',
+    PLAYLIST_BY_ID: (id) => `/playlists/${id}`,
+    PLAYLIST_ADD_CLASS: (playlistId, classId) => `/playlists/${playlistId}/classes/${classId}`,
+
     // Analytics
-    ANALYTICS_STATS: '/api/analytics/stats',
-    
+    ANALYTICS_STATS: '/analytics/stats',
+
     // Instrutores
-    INSTRUCTORS: '/api/instructors',
-    
+    INSTRUCTORS: '/instructors',
+
     // Partições
-    PARTICOES: '/api/particoes',
-    
+    PARTICOES: '/particoes',
+
     // Vídeos
-    VIDEO_STREAM: (videoPath, token) => `/api/videos/${videoPath}?token=${token}`,
+    VIDEO_STREAM: (videoPath, token) => `/videos/${videoPath}?token=${token}`,
   }
 };
 
