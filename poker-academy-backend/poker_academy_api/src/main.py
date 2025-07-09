@@ -24,15 +24,20 @@ app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000", "http://localhost:3001"], supports_credentials=True)
 
 # Configuração do banco de dados MySQL
-DB_USERNAME = os.getenv("DB_USERNAME", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "3306")
-DB_NAME = os.getenv("DB_NAME", "poker_academy")
-SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    # Usar DATABASE_URL se disponível (Docker)
+    app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+else:
+    # Fallback para variáveis individuais (desenvolvimento local)
+    DB_USERNAME = os.getenv("DB_USERNAME", "root")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PORT = os.getenv("DB_PORT", "3306")
+    DB_NAME = os.getenv("DB_NAME", "poker_academy")
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
 
-# Configuração do banco de dados MySQL
-app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = SECRET_KEY
 app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500MB max file size
