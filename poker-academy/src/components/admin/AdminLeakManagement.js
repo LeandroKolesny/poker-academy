@@ -13,6 +13,7 @@ const AdminLeakManagement = () => {
     const [uploading, setUploading] = useState(false);
     const [uploadingMonth, setUploadingMonth] = useState(null);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [improvements, setImprovements] = useState({});
 
     const months = [
         { key: 'jan', name: 'Janeiro' },
@@ -72,7 +73,17 @@ const AdminLeakManagement = () => {
         try {
             setLoadingLeaks(true);
             const response = await api.get(`/admin/student/${selectedStudent.id}/leaks?year=${selectedYear}`);
-            setStudentLeaks(response.data.leaks || {});
+            const leaks = response.data.leaks || {};
+            setStudentLeaks(leaks);
+
+            // Carregar melhorias existentes
+            const existingImprovements = {};
+            Object.keys(leaks).forEach(month => {
+                if (leaks[month].improvements) {
+                    existingImprovements[month] = leaks[month].improvements;
+                }
+            });
+            setImprovements(existingImprovements);
         } catch (error) {
             console.error('Erro ao buscar leaks do aluno:', error);
             alert('Erro ao carregar análises do aluno');
@@ -114,6 +125,7 @@ const AdminLeakManagement = () => {
             formData.append('file', file);
             formData.append('month', month);
             formData.append('year', selectedYear);
+            formData.append('improvements', improvements[month] || '');
 
             const response = await fetch(`https://cardroomgrinders.com.br/api/admin/student/${selectedStudent.id}/leaks/upload`, {
                 method: 'POST',
@@ -152,6 +164,13 @@ const AdminLeakManagement = () => {
         }
         // Limpar o input para permitir reenvio do mesmo arquivo
         event.target.value = '';
+    };
+
+    const handleImprovementChange = (month, value) => {
+        setImprovements(prev => ({
+            ...prev,
+            [month]: value
+        }));
     };
 
     if (loading) {
@@ -276,6 +295,16 @@ const AdminLeakManagement = () => {
                                                                     <small className="text-muted d-block">
                                                                         {new Date(studentLeaks[month.key].created_at).toLocaleDateString('pt-BR')}
                                                                     </small>
+
+                                                                    {/* Melhorias existentes */}
+                                                                    {studentLeaks[month.key].improvements && (
+                                                                        <div className="mt-2 p-2 bg-light rounded">
+                                                                            <small className="fw-bold text-primary d-block">Melhorias:</small>
+                                                                            <small className="text-muted">
+                                                                                {studentLeaks[month.key].improvements}
+                                                                            </small>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             ) : (
                                                                 <div className="no-leak text-center py-2">
@@ -289,6 +318,18 @@ const AdminLeakManagement = () => {
                                                                 </div>
                                                             )}
                                                             
+                                                            {/* Campo de Melhorias */}
+                                                            <div className="improvements-section mt-2">
+                                                                <textarea
+                                                                    className="form-control form-control-sm"
+                                                                    placeholder="Principais melhorias para este mês..."
+                                                                    value={improvements[month.key] || ''}
+                                                                    onChange={(e) => handleImprovementChange(month.key, e.target.value)}
+                                                                    rows="2"
+                                                                    style={{ fontSize: '0.75rem' }}
+                                                                />
+                                                            </div>
+
                                                             {/* Botão de Upload */}
                                                             <div className="upload-button mt-2">
                                                                 <input
@@ -299,7 +340,7 @@ const AdminLeakManagement = () => {
                                                                     style={{ display: 'none' }}
                                                                     disabled={uploading}
                                                                 />
-                                                                <label 
+                                                                <label
                                                                     htmlFor={`leak-file-${month.key}`}
                                                                     className={`btn btn-sm ${studentLeaks[month.key] ? 'btn-outline-primary' : 'btn-primary'} w-100 ${uploading ? 'disabled' : ''}`}
                                                                 >

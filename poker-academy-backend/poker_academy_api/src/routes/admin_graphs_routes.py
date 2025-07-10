@@ -154,7 +154,8 @@ def upload_student_leak_admin(current_user, student_id):
         # Verificar dados
         month = request.form.get('month')
         year = request.form.get('year', datetime.now().year, type=int)
-        
+        improvements = request.form.get('improvements', '')  # Campo opcional para melhorias
+
         if not month or month not in [m.value for m in MonthEnum]:
             return jsonify({'error': 'Mês inválido'}), 400
         
@@ -200,9 +201,10 @@ def upload_student_leak_admin(current_user, student_id):
             old_file_path = os.path.join(upload_folder, os.path.basename(existing_leak.image_url))
             if os.path.exists(old_file_path):
                 os.remove(old_file_path)
-            
+
             # Atualizar registro
             existing_leak.image_url = image_url
+            existing_leak.improvements = improvements
             existing_leak.uploaded_by = current_user.id
             existing_leak.updated_at = datetime.utcnow()
         else:
@@ -212,6 +214,7 @@ def upload_student_leak_admin(current_user, student_id):
                 month=MonthEnum(month),
                 year=year,
                 image_url=image_url,
+                improvements=improvements,
                 uploaded_by=current_user.id
             )
             db.session.add(new_leak)
