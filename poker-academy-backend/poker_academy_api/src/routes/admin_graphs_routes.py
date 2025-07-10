@@ -28,26 +28,32 @@ def get_students_by_partition(current_user):
     """Buscar alunos organizados por partição (apenas admin)"""
     try:
         # Verificar se é admin
-        if current_user.type.value != 'admin':
-            return jsonify({'error': 'Acesso negado'}), 403
+        user_type = current_user.type.value if hasattr(current_user.type, 'value') else str(current_user.type)
+        print(f"🔍 Verificando tipo de usuário: {user_type} (user_id: {current_user.id})")
+
+        if user_type != 'admin':
+            return jsonify({'error': f'Acesso negado. Tipo de usuário: {user_type}'}), 403
         
         # Buscar partições ativas com seus alunos
         partitions = Particoes.query.filter_by(ativa=True).all()
-        
+        print(f"📊 Encontradas {len(partitions)} partições ativas")
+
         result = []
         for partition in partitions:
             students = Users.query.filter_by(
                 particao_id=partition.id,
                 type='student'
             ).all()
-            
+            print(f"📊 Partição {partition.nome}: {len(students)} alunos")
+
             result.append({
                 'id': partition.id,
                 'nome': partition.nome,
                 'descricao': partition.descricao,
                 'students': [student.to_dict() for student in students]
             })
-        
+
+        print(f"📊 Retornando {len(result)} partições com alunos")
         return jsonify({
             'success': True,
             'partitions': result
