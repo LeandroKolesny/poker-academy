@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
     particao_id INT NOT NULL,
     register_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_login DATETIME NULL,
+    first_login BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (particao_id) REFERENCES particoes(id)
 );
 
