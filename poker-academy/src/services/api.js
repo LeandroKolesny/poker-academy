@@ -29,9 +29,16 @@ const apiRequest = async (endpoint, options = {}) => {
   const token = getToken();
   const url = `${appConfig.API_BASE_URL}${endpoint}`;
 
+  console.log(`🔐 Fazendo requisição para: ${url}`);
+  console.log(`🔐 Token disponível: ${token ? 'SIM' : 'NÃO'}`);
+  if (token) {
+    console.log(`🔐 Token (primeiros 20 chars): ${token.substring(0, 20)}...`);
+  }
+
   const config = {
     headers: {
-      'Content-Type': 'application/json',
+      // Só adicionar Content-Type se não for FormData
+      ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options.headers,
     },
@@ -246,12 +253,20 @@ export const authService = {
 // Exportar funções básicas da API também
 const api = {
   get: (url, options = {}) => apiRequest(url, { method: 'GET', ...options }),
-  post: (url, data, options = {}) => apiRequest(url, {
-    method: 'POST',
-    body: data instanceof FormData ? data : JSON.stringify(data),
-    headers: data instanceof FormData ? {} : { 'Content-Type': 'application/json' },
-    ...options
-  }),
+  post: (url, data, options = {}) => {
+    const isFormData = data instanceof FormData;
+    return apiRequest(url, {
+      method: 'POST',
+      body: isFormData ? data : JSON.stringify(data),
+      headers: {
+        // Para FormData, não definir Content-Type (deixar o browser definir)
+        // Para JSON, definir Content-Type
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+        ...options.headers
+      },
+      ...options
+    });
+  },
   put: (url, data, options = {}) => apiRequest(url, {
     method: 'PUT',
     body: JSON.stringify(data),
