@@ -8,6 +8,7 @@ from flask import Flask, jsonify, request
 from dotenv import load_dotenv
 from flask_cors import CORS
 from datetime import datetime
+from urllib.parse import quote_plus
 
 project_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(project_folder, ".env"))
@@ -38,7 +39,7 @@ else:
     DB_HOST = os.getenv("DB_HOST", "localhost")
     DB_PORT = os.getenv("DB_PORT", "3306")
     DB_NAME = os.getenv("DB_NAME", "poker_academy")
-    connection_string = f"mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+    connection_string = f"mysql+pymysql://{DB_USERNAME}:{quote_plus(DB_PASSWORD)}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
     print(f"Usando variáveis individuais: {connection_string}")
     app.config["SQLALCHEMY_DATABASE_URI"] = connection_string
 
