@@ -49,6 +49,21 @@ const History = () => {
   };
 
   // Função para formatar data
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return 'N/A';
+
+    // Se a data está no formato YYYY-MM-DD, criar Date com timezone local
+    if (typeof dateString === 'string' && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [year, month, day] = dateString.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      return date.toLocaleDateString('pt-BR');
+    }
+
+    // Fallback para outros formatos
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  // Função para formatar data
   const formatLastWatched = (dateString) => {
     if (!dateString) return 'Nunca';
 
