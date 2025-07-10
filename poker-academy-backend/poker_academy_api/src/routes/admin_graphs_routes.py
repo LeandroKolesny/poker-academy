@@ -165,8 +165,15 @@ def upload_student_leak_admin(current_user, student_id):
         print(f"🔍 improvements: '{improvements}'")
         print(f"🔍 form data: {dict(request.form)}")
 
-        if not improvements_only:
+        if improvements_only:
+            # Apenas melhorias, sem arquivo
+            print("🔍 Modo apenas melhorias ativado")
+            if not improvements.strip():
+                return jsonify({'error': 'Melhorias não podem estar vazias'}), 400
+            file = None  # Não há arquivo
+        else:
             # Upload normal com arquivo
+            print("🔍 Modo upload com arquivo")
             if 'file' not in request.files:
                 return jsonify({'error': 'Nenhum arquivo enviado'}), 400
 
@@ -176,13 +183,9 @@ def upload_student_leak_admin(current_user, student_id):
 
             if not allowed_file(file.filename):
                 return jsonify({'error': 'Tipo de arquivo não permitido'}), 400
-        else:
-            # Apenas melhorias, sem arquivo
-            if not improvements.strip():
-                return jsonify({'error': 'Melhorias não podem estar vazias'}), 400
         
         # Processar arquivo apenas se não for apenas melhorias
-        if not improvements_only:
+        if file is not None:
             # Verificar tamanho do arquivo
             file.seek(0, os.SEEK_END)
             file_size = file.tell()
@@ -202,10 +205,12 @@ def upload_student_leak_admin(current_user, student_id):
 
             # URL relativa para o arquivo
             image_url = f"/api/uploads/leaks/{filename}"
+            print(f"🔍 Arquivo salvo: {image_url}")
         else:
             # Apenas melhorias, sem arquivo
             image_url = None
             filename = None
+            print("🔍 Sem arquivo, apenas melhorias")
         
         # Verificar se já existe análise para este mês/ano
         existing_leak = StudentLeaks.query.filter_by(
@@ -215,19 +220,24 @@ def upload_student_leak_admin(current_user, student_id):
         ).first()
         
         if existing_leak:
-            # Se não for apenas melhorias, deletar arquivo antigo
-            if not improvements_only and existing_leak.image_url:
+            print(f"🔍 Atualizando registro existente")
+            # Se há arquivo novo, deletar arquivo antigo
+            if file is not None and existing_leak.image_url:
                 old_file_path = os.path.join(get_upload_folder(), os.path.basename(existing_leak.image_url))
                 if os.path.exists(old_file_path):
                     os.remove(old_file_path)
+                    print(f"🔍 Arquivo antigo removido: {old_file_path}")
 
             # Atualizar registro
-            if not improvements_only:
+            if file is not None:
                 existing_leak.image_url = image_url
+                print(f"🔍 Imagem atualizada: {image_url}")
             existing_leak.improvements = improvements
             existing_leak.uploaded_by = current_user.id
             existing_leak.updated_at = datetime.utcnow()
+            print(f"🔍 Melhorias atualizadas: {improvements}")
         else:
+            print(f"🔍 Criando novo registro")
             # Criar novo registro
             new_leak = StudentLeaks(
                 student_id=student_id,
@@ -238,6 +248,7 @@ def upload_student_leak_admin(current_user, student_id):
                 uploaded_by=current_user.id
             )
             db.session.add(new_leak)
+            print(f"🔍 Novo registro criado com imagem: {image_url}, melhorias: {improvements}")
         
         db.session.commit()
         

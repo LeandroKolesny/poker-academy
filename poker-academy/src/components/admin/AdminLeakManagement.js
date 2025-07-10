@@ -112,6 +112,7 @@ const AdminLeakManagement = () => {
             formData.append('month', month);
             formData.append('year', selectedYear);
             formData.append('improvements', improvements[month] || '');
+            // NÃO adicionar improvements_only=true quando há arquivo
 
             const response = await fetch(`https://cardroomgrinders.com.br/api/admin/student/${selectedStudent.id}/leaks/upload`, {
                 method: 'POST',
