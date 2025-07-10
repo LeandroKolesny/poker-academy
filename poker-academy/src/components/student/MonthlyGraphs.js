@@ -33,7 +33,7 @@ const MonthlyGraphs = () => {
     const fetchGraphs = async () => {
         try {
             setLoading(true);
-            const response = await api.get(`/student/graphs?year=${selectedYear}`);
+            const response = await api.get(`/api/student/graphs?year=${selectedYear}`);
             setGraphs(response.data.graphs || {});
         } catch (error) {
             console.error('Erro ao buscar gráficos:', error);
@@ -68,7 +68,7 @@ const MonthlyGraphs = () => {
             formData.append('month', month);
             formData.append('year', selectedYear);
 
-            const response = await api.post('/student/graphs/upload', formData, {
+            const response = await api.post('/api/student/graphs/upload', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
