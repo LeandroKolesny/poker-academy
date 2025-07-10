@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faUsers, faUpload, faCalendarAlt, faImage, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faUpload, faImage, faUsers, faCalendarAlt, faEye, faSave } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import Loading from '../shared/Loading';
 
@@ -45,21 +45,9 @@ const AdminLeakManagement = () => {
             setLoading(true);
             const response = await api.get('/admin/students-by-partition');
             console.log('📊 Resposta da API:', response.data);
-
-            if (response.data.success && response.data.partitions) {
-                setPartitions(response.data.partitions);
-            } else if (response.data.error) {
-                console.error('❌ Erro da API:', response.data.error);
-                alert(`Erro: ${response.data.error}`);
-                setPartitions([]);
-            } else {
-                console.error('❌ Resposta inesperada:', response.data);
-                alert('Resposta inesperada da API');
-                setPartitions([]);
-            }
+            setPartitions(response.data.partitions || []);
         } catch (error) {
             console.error('❌ Erro ao buscar partições:', error);
-            console.error('❌ Detalhes do erro:', error.response?.data);
             alert(`Erro ao carregar partições: ${error.response?.data?.error || error.message}`);
             setPartitions([]);
         } finally {
@@ -75,7 +63,7 @@ const AdminLeakManagement = () => {
             const response = await api.get(`/admin/student/${selectedStudent.id}/leaks?year=${selectedYear}`);
             const leaks = response.data.leaks || {};
             setStudentLeaks(leaks);
-
+            
             // Carregar melhorias existentes
             const existingImprovements = {};
             Object.keys(leaks).forEach(month => {
@@ -95,19 +83,18 @@ const AdminLeakManagement = () => {
     const handleStudentSelect = (student) => {
         setSelectedStudent(student);
         setStudentLeaks({});
+        setImprovements({});
     };
 
     const handleFileUpload = async (month, file) => {
         if (!file || !selectedStudent) return;
 
-        // Validar tipo de arquivo
         const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
             alert('Tipo de arquivo não permitido. Use PNG, JPG, GIF ou WebP.');
             return;
         }
 
-        // Validar tamanho (10MB)
         if (file.size > 10 * 1024 * 1024) {
             alert('Arquivo muito grande. Máximo 10MB.');
             return;
@@ -117,10 +104,9 @@ const AdminLeakManagement = () => {
             setUploading(true);
             setUploadingMonth(month);
 
-            // Usar fetch diretamente para ter controle total
             const token = localStorage.getItem('token');
             console.log('🔐 Token para upload:', token ? 'PRESENTE' : 'AUSENTE');
-
+            
             const formData = new FormData();
             formData.append('file', file);
             formData.append('month', month);
@@ -131,18 +117,17 @@ const AdminLeakManagement = () => {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
-                    // NÃO definir Content-Type para FormData
                 },
                 body: formData
             });
 
             console.log('📤 Response status:', response.status);
-
+            
             if (response.ok) {
                 const data = await response.json();
                 console.log('✅ Upload sucesso:', data);
                 alert('Análise de leak enviada com sucesso!');
-                fetchStudentLeaks(); // Recarregar análises
+                fetchStudentLeaks();
             } else {
                 const errorData = await response.text();
                 console.error('❌ Upload erro:', response.status, errorData);
@@ -162,7 +147,6 @@ const AdminLeakManagement = () => {
         if (file) {
             handleFileUpload(month, file);
         }
-        // Limpar o input para permitir reenvio do mesmo arquivo
         event.target.value = '';
     };
 
@@ -175,14 +159,13 @@ const AdminLeakManagement = () => {
 
     const saveImprovements = async (month) => {
         if (!selectedStudent || !improvements[month]) return;
-
+        
         try {
             const token = localStorage.getItem('token');
             const formData = new FormData();
             formData.append('month', month);
             formData.append('year', selectedYear);
             formData.append('improvements', improvements[month]);
-            formData.append('improvements_only', 'true'); // Flag para indicar que é só melhorias
 
             const response = await fetch(`https://cardroomgrinders.com.br/api/admin/student/${selectedStudent.id}/leaks/improvements`, {
                 method: 'POST',
@@ -194,12 +177,15 @@ const AdminLeakManagement = () => {
 
             if (response.ok) {
                 console.log('✅ Melhorias salvas com sucesso');
-                fetchStudentLeaks(); // Recarregar para mostrar as melhorias salvas
+                alert('Melhorias salvas com sucesso!');
+                fetchStudentLeaks();
             } else {
                 console.error('❌ Erro ao salvar melhorias:', response.status);
+                alert('Erro ao salvar melhorias');
             }
         } catch (error) {
             console.error('❌ Erro ao salvar melhorias:', error);
+            alert('Erro ao salvar melhorias');
         }
     };
 
@@ -208,268 +194,205 @@ const AdminLeakManagement = () => {
     }
 
     return (
-        <div className="admin-leak-management">
-            <div className="page-header">
-                <h2>
-                    <FontAwesomeIcon icon={faSearch} className="me-2" />
-                    Gerenciar Caça Leaks
-                </h2>
-                <p className="text-muted">
-                    Faça upload das análises mensais de leaks para os alunos
-                </p>
+        <div className="p-6 text-white min-h-screen">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold text-red-400">Gerenciamento de Caça Leaks</h2>
+                <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium text-gray-300">Ano:</label>
+                    <select 
+                        className="bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                    >
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                </div>
             </div>
 
-            <div className="row">
-                {/* Lista de Partições e Alunos */}
-                <div className="col-md-4">
-                    <div className="card">
-                        <div className="card-header">
-                            <h6 className="mb-0">
-                                <FontAwesomeIcon icon={faUsers} className="me-2" />
-                                Alunos por Partição
-                            </h6>
-                        </div>
-                        <div className="card-body p-0">
-                            {partitions.map(partition => (
-                                <div key={partition.id} className="partition-group">
-                                    <div className="partition-header p-3 bg-light border-bottom">
-                                        <h6 className="mb-0 text-primary">{partition.nome}</h6>
-                                        <small className="text-muted">{partition.students.length} alunos</small>
-                                    </div>
-                                    <div className="students-list">
-                                        {partition.students.map(student => (
+            {/* Seleção de Aluno */}
+            <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-300 mb-4">Selecionar Aluno</h3>
+                <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
+                    <table className="w-full min-w-full">
+                        <thead className="bg-gray-500">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Nome</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Partição</th>
+                                <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-600">
+                            {partitions.map(partition => 
+                                partition.students.map(student => (
+                                    <tr 
+                                        key={student.id} 
+                                        className={`hover:bg-gray-600 transition-colors duration-150 ${
+                                            selectedStudent?.id === student.id ? 'bg-red-900 bg-opacity-50' : ''
+                                        }`}
+                                    >
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.name}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.email}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{partition.nome}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                             <button
-                                                key={student.id}
-                                                className={`btn btn-link text-start w-100 p-3 border-bottom ${
-                                                    selectedStudent?.id === student.id ? 'bg-primary text-white' : ''
+                                                className={`px-4 py-2 rounded transition-colors duration-150 ${
+                                                    selectedStudent?.id === student.id 
+                                                        ? 'bg-green-600 hover:bg-green-700 text-white' 
+                                                        : 'bg-red-400 hover:bg-red-500 text-white'
                                                 }`}
                                                 onClick={() => handleStudentSelect(student)}
                                             >
-                                                <div className="d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <div className="fw-bold">{student.name}</div>
-                                                        <small className={selectedStudent?.id === student.id ? 'text-white-50' : 'text-muted'}>
-                                                            {student.email}
-                                                        </small>
-                                                    </div>
-                                                    <FontAwesomeIcon icon={faEye} />
-                                                </div>
+                                                {selectedStudent?.id === student.id ? 'Selecionado' : 'Selecionar'}
                                             </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Análises do Aluno Selecionado */}
+            {selectedStudent ? (
+                <div className="student-leaks">
+                    <div className="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 className="text-lg font-semibold text-red-400">Análises de {selectedStudent.name}</h3>
+                            <p className="text-gray-400 text-sm">{selectedStudent.email}</p>
                         </div>
                     </div>
-                </div>
 
-                {/* Análises do Aluno Selecionado */}
-                <div className="col-md-8">
-                    {selectedStudent ? (
-                        <div className="student-leaks">
-                            <div className="card">
-                                <div className="card-header">
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 className="mb-0">Análises de {selectedStudent.name}</h6>
-                                            <small className="text-muted">{selectedStudent.email}</small>
-                                        </div>
-                                        <div className="year-selector">
-                                            <label className="form-label me-2">
-                                                <FontAwesomeIcon icon={faCalendarAlt} className="me-1" />
-                                                Ano:
-                                            </label>
-                                            <select
-                                                className="form-select w-auto d-inline-block"
-                                                value={selectedYear}
-                                                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                                style={{ color: '#000', backgroundColor: '#fff' }}
-                                            >
-                                                {[2024, 2025, 2026].map(year => (
-                                                    <option key={year} value={year}>{year}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="card-body">
-                                    {loadingLeaks ? (
-                                        <div className="text-center py-4">
-                                            <div className="spinner-border" role="status">
-                                                <span className="visually-hidden">Carregando...</span>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="table-responsive">
-                                            <table className="table table-hover">
-                                                <thead className="table-light">
-                                                    <tr>
-                                                        <th style={{ width: '15%' }}>Mês</th>
-                                                        <th style={{ width: '25%' }}>Análise</th>
-                                                        <th style={{ width: '35%' }}>Melhorias Sugeridas</th>
-                                                        <th style={{ width: '15%' }}>Data</th>
-                                                        <th style={{ width: '10%' }}>Ações</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {months.map(month => (
-                                                        <tr key={month.key}>
-                                                            <td>
-                                                                <div className="d-flex align-items-center">
-                                                                    <span className="fw-bold">{month.name}</span>
-                                                                    {studentLeaks[month.key] && (
-                                                                        <span className="badge bg-success ms-2">
-                                                                            <FontAwesomeIcon icon={faImage} />
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                {studentLeaks[month.key] ? (
-                                                                    <div className="leak-preview">
-                                                                        <img
-                                                                            src={`https://cardroomgrinders.com.br${studentLeaks[month.key].image_url}`}
-                                                                            alt={`Análise ${month.name}`}
-                                                                            className="img-fluid rounded"
-                                                                            style={{ maxHeight: '80px', width: '100%', objectFit: 'contain', cursor: 'pointer' }}
-                                                                            onClick={() => window.open(`https://cardroomgrinders.com.br${studentLeaks[month.key].image_url}`, '_blank')}
-                                                                        />
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="text-center text-muted">
-                                                                        <FontAwesomeIcon icon={faSearch} className="mb-1" />
-                                                                        <br />
-                                                                        <small>Não analisado</small>
-                                                                    </div>
-                                                                )}
-                                                            </td>
-                                                            <td>
-                                                                <textarea
-                                                                    className="form-control form-control-sm"
-                                                                    placeholder="Digite as principais melhorias que o aluno deve focar..."
-                                                                    value={improvements[month.key] || ''}
-                                                                    onChange={(e) => handleImprovementChange(month.key, e.target.value)}
-                                                                    rows="3"
-                                                                    style={{ fontSize: '0.85rem', resize: 'vertical' }}
-                                                                />
-                                                                <div className="mt-2 d-flex gap-1">
-                                                                    <button
-                                                                        className="btn btn-sm btn-success"
-                                                                        onClick={() => saveImprovements(month.key)}
-                                                                        disabled={!improvements[month.key]?.trim()}
-                                                                        style={{ fontSize: '0.75rem' }}
-                                                                    >
-                                                                        <FontAwesomeIcon icon={faUpload} className="me-1" />
-                                                                        Salvar
-                                                                    </button>
-                                                                </div>
-                                                                {studentLeaks[month.key]?.improvements && (
-                                                                    <div className="mt-2 p-2 bg-light rounded">
-                                                                        <small className="fw-bold text-primary d-block">💾 Salvo:</small>
-                                                                        <small className="text-muted">
-                                                                            {studentLeaks[month.key].improvements}
-                                                                        </small>
-                                                                    </div>
-                                                                )}
-                                                            </td>
-                                                            <td>
-                                                                {studentLeaks[month.key] ? (
-                                                                    <small className="text-muted">
-                                                                        {new Date(studentLeaks[month.key].created_at).toLocaleDateString('pt-BR')}
-                                                                    </small>
-                                                                ) : (
-                                                                    <small className="text-muted">-</small>
-                                                                )}
-                                                            </td>
-                                                            <td>
-                                                                <div className="d-flex flex-column gap-1">
-                                                                    <input
-                                                                        type="file"
-                                                                        id={`leak-file-${month.key}`}
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleFileSelect(month.key, e)}
-                                                                        style={{ display: 'none' }}
-                                                                        disabled={uploading}
-                                                                    />
-                                                                    <label
-                                                                        htmlFor={`leak-file-${month.key}`}
-                                                                        className={`btn btn-sm ${studentLeaks[month.key] ? 'btn-outline-primary' : 'btn-primary'} ${uploading ? 'disabled' : ''}`}
-                                                                        style={{ fontSize: '0.75rem' }}
-                                                                    >
-                                                                        {uploadingMonth === month.key ? (
-                                                                            <>
-                                                                                <div className="spinner-border spinner-border-sm me-1" role="status">
-                                                                                    <span className="visually-hidden">Enviando...</span>
-                                                                                </div>
-                                                                                Enviando...
-                                                                            </>
-                                                                        ) : (
-                                                                            <>
-                                                                                <FontAwesomeIcon icon={faUpload} className="me-1" />
-                                                                                {studentLeaks[month.key] ? 'Substituir' : 'Enviar'}
-                                                                            </>
-                                                                        )}
-                                                                    </label>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Estatísticas */}
-                            <div className="card mt-3">
-                                <div className="card-header">
-                                    <h6 className="mb-0">📊 Progresso das Análises {selectedYear}</h6>
-                                </div>
-                                <div className="card-body">
-                                    <div className="row text-center">
-                                        <div className="col-md-4">
-                                            <h5 className="text-success">{Object.keys(studentLeaks).length}</h5>
-                                            <small className="text-muted">Análises Feitas</small>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <h5 className="text-warning">{12 - Object.keys(studentLeaks).length}</h5>
-                                            <small className="text-muted">Pendentes</small>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <h5 className="text-info">
-                                                {Math.round((Object.keys(studentLeaks).length / 12) * 100)}%
-                                            </h5>
-                                            <small className="text-muted">Completo</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    {loadingLeaks ? (
+                        <div className="text-center py-8">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-400"></div>
+                            <p className="text-gray-400 mt-2">Carregando análises...</p>
                         </div>
                     ) : (
-                        <div className="card">
-                            <div className="card-body text-center py-5">
-                                <FontAwesomeIcon icon={faUsers} size="3x" className="text-muted mb-3" />
-                                <h5 className="text-muted">Selecione um aluno</h5>
-                                <p className="text-muted">
-                                    Escolha um aluno da lista ao lado para gerenciar suas análises de leaks
-                                </p>
-                            </div>
+                        <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
+                            <table className="w-full min-w-full">
+                                <thead className="bg-gray-500">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Mês</th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Análise</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Melhorias Sugeridas</th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Data</th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-600">
+                                    {months.map(month => (
+                                        <tr key={month.key} className="hover:bg-gray-600 transition-colors duration-150">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                                                <div className="flex items-center">
+                                                    <span className="font-medium">{month.name}</span>
+                                                    {studentLeaks[month.key] && (
+                                                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            <FontAwesomeIcon icon={faImage} className="mr-1" />
+                                                            Analisado
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                                                {studentLeaks[month.key] ? (
+                                                    <div className="flex justify-center">
+                                                        <img 
+                                                            src={`https://cardroomgrinders.com.br${studentLeaks[month.key].image_url}`}
+                                                            alt={`Análise ${month.name}`}
+                                                            className="h-16 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                                            onClick={() => window.open(`https://cardroomgrinders.com.br${studentLeaks[month.key].image_url}`, '_blank')}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center text-gray-400">
+                                                        <FontAwesomeIcon icon={faSearch} className="text-2xl mb-1" />
+                                                        <p className="text-xs">Não analisado</p>
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-white">
+                                                <textarea
+                                                    className="w-full bg-gray-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400 resize-vertical"
+                                                    placeholder="Digite as principais melhorias que o aluno deve focar..."
+                                                    value={improvements[month.key] || ''}
+                                                    onChange={(e) => handleImprovementChange(month.key, e.target.value)}
+                                                    rows="3"
+                                                />
+                                                <div className="mt-2 flex gap-2">
+                                                    <button
+                                                        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
+                                                        onClick={() => saveImprovements(month.key)}
+                                                        disabled={!improvements[month.key]?.trim()}
+                                                    >
+                                                        <FontAwesomeIcon icon={faSave} className="mr-1" />
+                                                        Salvar
+                                                    </button>
+                                                </div>
+                                                {studentLeaks[month.key]?.improvements && (
+                                                    <div className="mt-2 p-2 bg-gray-600 rounded">
+                                                        <p className="text-xs font-medium text-green-400 mb-1">💾 Salvo:</p>
+                                                        <p className="text-xs text-gray-300">{studentLeaks[month.key].improvements}</p>
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
+                                                {studentLeaks[month.key] ? (
+                                                    <span className="text-gray-300">
+                                                        {new Date(studentLeaks[month.key].created_at).toLocaleDateString('pt-BR')}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-500">-</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                <input
+                                                    type="file"
+                                                    id={`leak-file-${month.key}`}
+                                                    accept="image/*"
+                                                    onChange={(e) => handleFileSelect(month.key, e)}
+                                                    style={{ display: 'none' }}
+                                                    disabled={uploading}
+                                                />
+                                                <label 
+                                                    htmlFor={`leak-file-${month.key}`}
+                                                    className={`px-3 py-2 rounded cursor-pointer transition-colors ${
+                                                        studentLeaks[month.key] 
+                                                            ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                                                            : 'bg-red-400 hover:bg-red-500 text-white'
+                                                    } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                >
+                                                    {uploadingMonth === month.key ? (
+                                                        <>
+                                                            <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                            Enviando...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <FontAwesomeIcon icon={faUpload} className="mr-1" />
+                                                            {studentLeaks[month.key] ? 'Substituir' : 'Enviar'}
+                                                        </>
+                                                    )}
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>
-            </div>
-
-            {/* Informações */}
-            <div className="alert alert-info mt-4">
-                <h6>📋 Instruções para Análises:</h6>
-                <ul className="mb-0">
-                    <li>Formatos aceitos: PNG, JPG, GIF, WebP</li>
-                    <li>Tamanho máximo: 10MB por arquivo</li>
-                    <li>Inclua stats, observações e pontos de melhoria</li>
-                    <li>As análises ficam disponíveis imediatamente para o aluno</li>
-                </ul>
-            </div>
+            ) : (
+                <div className="text-center py-12">
+                    <FontAwesomeIcon icon={faUsers} className="text-6xl text-gray-500 mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-400 mb-2">Selecione um aluno</h3>
+                    <p className="text-gray-500">Escolha um aluno da tabela acima para gerenciar suas análises de leaks</p>
+                </div>
+            )}
         </div>
     );
 };
