@@ -110,6 +110,7 @@ const appConfig = {
     CLASSES_HISTORY: '/classes/history',
     UPLOAD_VIDEO: '/classes/upload-video',
     UPLOAD_COMPLETE: '/classes/upload-complete',
+    CATEGORIES: '/classes/categories',
 
     // Usuários
     USERS: '/users',

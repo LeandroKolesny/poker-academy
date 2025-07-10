@@ -691,6 +691,32 @@ def upload_complete_class(current_user):
         current_app.logger.error(f"Erro no upload completo: {e}", exc_info=True)
         return jsonify(error=f"Erro ao criar aula: {str(e)}"), 500
 
+# Rota para obter categorias disponíveis
+@class_bp.route("/api/classes/categories", methods=["GET"])
+@token_required
+def get_categories(current_user):
+    """
+    Retorna todas as categorias disponíveis no ENUM
+    """
+    try:
+        # Obter valores atuais do ENUM
+        result = db.session.execute(db.text("SHOW COLUMNS FROM classes LIKE 'category'")).fetchone()
+        current_enum = result[1]  # Type column
+
+        # Extrair valores atuais do ENUM
+        import re
+        enum_values = re.findall(r"'([^']*)'", current_enum)
+
+        print(f"📋 Categorias disponíveis: {enum_values}")
+
+        return jsonify({
+            'categories': enum_values
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao buscar categorias: {e}", exc_info=True)
+        return jsonify(error="Erro ao buscar categorias"), 500
+
 # Rota para auto-import de aulas
 @class_bp.route("/api/classes/auto-import", methods=["POST"])
 @admin_required

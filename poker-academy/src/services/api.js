@@ -120,6 +120,9 @@ export const classService = {
 
   // Obter lista de instrutores (admins)
   getInstructors: () => apiRequest(appConfig.API_ENDPOINTS.INSTRUCTORS),
+
+  // Obter categorias disponíveis
+  getCategories: () => apiRequest(appConfig.API_ENDPOINTS.CATEGORIES),
 };
 
 // Serviços de Analytics
