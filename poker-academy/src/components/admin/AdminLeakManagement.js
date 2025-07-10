@@ -159,15 +159,18 @@ const AdminLeakManagement = () => {
 
     const saveImprovements = async (month) => {
         if (!selectedStudent || !improvements[month]) return;
-        
+
         try {
             const token = localStorage.getItem('token');
+
+            // Usar o endpoint existente de upload, mas apenas com melhorias
             const formData = new FormData();
             formData.append('month', month);
             formData.append('year', selectedYear);
             formData.append('improvements', improvements[month]);
+            formData.append('improvements_only', 'true'); // Flag para indicar que é só melhorias
 
-            const response = await fetch(`https://cardroomgrinders.com.br/api/admin/student/${selectedStudent.id}/leaks/improvements`, {
+            const response = await fetch(`https://cardroomgrinders.com.br/api/admin/student/${selectedStudent.id}/leaks/upload`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -176,16 +179,18 @@ const AdminLeakManagement = () => {
             });
 
             if (response.ok) {
-                console.log('✅ Melhorias salvas com sucesso');
+                const data = await response.json();
+                console.log('✅ Melhorias salvas com sucesso:', data);
                 alert('Melhorias salvas com sucesso!');
                 fetchStudentLeaks();
             } else {
-                console.error('❌ Erro ao salvar melhorias:', response.status);
-                alert('Erro ao salvar melhorias');
+                const errorData = await response.text();
+                console.error('❌ Erro ao salvar melhorias:', response.status, errorData);
+                alert(`Erro ao salvar melhorias: ${errorData}`);
             }
         } catch (error) {
             console.error('❌ Erro ao salvar melhorias:', error);
-            alert('Erro ao salvar melhorias');
+            alert(`Erro ao salvar melhorias: ${error.message}`);
         }
     };
 
