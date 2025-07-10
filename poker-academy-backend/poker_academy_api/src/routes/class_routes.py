@@ -164,11 +164,45 @@ def delete_class(class_id):
     cls_to_delete = Classes.query.get(class_id)
     if not cls_to_delete:
         return jsonify(error="Aula não encontrada"), 404
-    
+
     try:
+        # Importar modelos necessários
+        from src.models import ClassViews, Favorites, PlaylistClasses, UserProgress
+
+        # Excluir registros relacionados em ordem (devido às foreign keys)
+        print(f"🗑️ Excluindo registros relacionados à aula {class_id}...")
+
+        # 1. Excluir visualizações da aula
+        class_views = ClassViews.query.filter_by(class_id=class_id).all()
+        for view in class_views:
+            db.session.delete(view)
+        print(f"   ✅ Removidas {len(class_views)} visualizações")
+
+        # 2. Excluir favoritos da aula
+        favorites = Favorites.query.filter_by(class_id=class_id).all()
+        for favorite in favorites:
+            db.session.delete(favorite)
+        print(f"   ✅ Removidos {len(favorites)} favoritos")
+
+        # 3. Excluir aula das playlists
+        playlist_classes = PlaylistClasses.query.filter_by(class_id=class_id).all()
+        for playlist_class in playlist_classes:
+            db.session.delete(playlist_class)
+        print(f"   ✅ Removida de {len(playlist_classes)} playlists")
+
+        # 4. Excluir progresso dos usuários
+        user_progress = UserProgress.query.filter_by(class_id=class_id).all()
+        for progress in user_progress:
+            db.session.delete(progress)
+        print(f"   ✅ Removido progresso de {len(user_progress)} usuários")
+
+        # 5. Finalmente, excluir a aula
         db.session.delete(cls_to_delete)
         db.session.commit()
+
+        print(f"✅ Aula {class_id} excluída com sucesso!")
         return jsonify(message="Aula excluída com sucesso"), 200
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Erro ao excluir aula {class_id}: {e}", exc_info=True)
