@@ -60,13 +60,21 @@ const apiRequest = async (endpoint, options = {}) => {
       }
     }
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (jsonError) {
+      console.error('❌ Erro ao parsear JSON:', jsonError);
+      console.error('❌ Response status:', response.status);
+      console.error('❌ Response headers:', response.headers);
+      throw new Error('Resposta inválida do servidor');
+    }
 
     if (!response.ok) {
       throw new Error(data.error || 'Erro na requisição');
     }
 
-    return data;
+    return { data };
   } catch (error) {
     console.error('Erro na API:', error);
     throw error;
