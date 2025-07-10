@@ -586,10 +586,41 @@ def upload_complete_class(current_user):
 
         # Criar nova aula no banco
         # Se categoria estiver vazia, usar um valor padrão válido do ENUM
-        final_category = category if category and category.strip() else 'preflop'
+        final_category = category if category and category.strip() else 'geral'
 
-        # Verificar se a categoria existe no ENUM, se não existir, criar dinamicamente
+        print(f"📂 Categoria recebida: '{category}' -> Categoria final: '{final_category}'")
+
+        # VERIFICAR E CRIAR CATEGORIA ANTES de tentar inserir a aula
         try:
+            # Obter valores atuais do ENUM
+            result = db.session.execute(db.text("SHOW COLUMNS FROM classes LIKE 'category'")).fetchone()
+            current_enum = result[1]  # Type column
+
+            # Extrair valores atuais do ENUM
+            import re
+            enum_values = re.findall(r"'([^']*)'", current_enum)
+
+            print(f"🔍 Categorias existentes no ENUM: {enum_values}")
+
+            # Verificar se a categoria já existe
+            if final_category not in enum_values:
+                print(f"🔧 Categoria '{final_category}' não existe. Adicionando ao ENUM...")
+
+                # Adicionar nova categoria ao ENUM
+                enum_values.append(final_category)
+                new_enum = "enum('" + "','".join(enum_values) + "')"
+
+                # Alterar a coluna para incluir a nova categoria
+                alter_sql = f"ALTER TABLE classes MODIFY COLUMN category {new_enum}"
+                db.session.execute(db.text(alter_sql))
+                db.session.commit()
+
+                print(f"✅ Categoria '{final_category}' adicionada ao ENUM com sucesso!")
+                print(f"📋 Novo ENUM: {enum_values}")
+            else:
+                print(f"✅ Categoria '{final_category}' já existe no ENUM")
+
+            # Agora criar a aula com categoria garantidamente válida
             new_class = Classes(
                 name=name,
                 instructor=instructor,
@@ -603,73 +634,48 @@ def upload_complete_class(current_user):
             db.session.add(new_class)
             db.session.commit()
 
-        except Exception as enum_error:
-            # Se der erro de ENUM, vamos adicionar a categoria dinamicamente
-            if "Data truncated for column 'category'" in str(enum_error) or "enum" in str(enum_error).lower():
-                print(f"🔧 Categoria '{final_category}' não existe no ENUM. Criando automaticamente...")
+            print(f"✅ Aula criada com sucesso! ID={new_class.id}, Categoria='{final_category}'")
 
-                # Rollback da transação anterior
+        except Exception as error:
+            db.session.rollback()
+            print(f"❌ Erro ao criar aula: {error}")
+
+            # Como último recurso, tentar com categoria padrão
+            try:
+                print("🔄 Tentando com categoria padrão 'geral'...")
+                final_category = 'geral'
+
+                # Verificar se 'geral' existe, se não, criar
+                result = db.session.execute(db.text("SHOW COLUMNS FROM classes LIKE 'category'")).fetchone()
+                current_enum = result[1]
+                enum_values = re.findall(r"'([^']*)'", current_enum)
+
+                if 'geral' not in enum_values:
+                    enum_values.append('geral')
+                    new_enum = "enum('" + "','".join(enum_values) + "')"
+                    alter_sql = f"ALTER TABLE classes MODIFY COLUMN category {new_enum}"
+                    db.session.execute(db.text(alter_sql))
+                    db.session.commit()
+
+                new_class = Classes(
+                    name=name,
+                    instructor=instructor,
+                    date=date_obj,
+                    category=final_category,
+                    video_type=video_type,
+                    video_path=filename,
+                    priority=int(priority),
+                    views=0
+                )
+                db.session.add(new_class)
+                db.session.commit()
+
+                print(f"✅ Aula criada com categoria padrão '{final_category}'")
+
+            except Exception as final_error:
                 db.session.rollback()
-
-                # Adicionar nova categoria ao ENUM
-                try:
-                    # Obter valores atuais do ENUM
-                    result = db.session.execute(db.text("SHOW COLUMNS FROM classes LIKE 'category'")).fetchone()
-                    current_enum = result[1]  # Type column
-
-                    # Extrair valores atuais do ENUM
-                    import re
-                    enum_values = re.findall(r"'([^']*)'", current_enum)
-
-                    # Adicionar nova categoria se não existir
-                    if final_category not in enum_values:
-                        enum_values.append(final_category)
-                        new_enum = "enum('" + "','".join(enum_values) + "')"
-
-                        # Alterar a coluna para incluir a nova categoria
-                        alter_sql = f"ALTER TABLE classes MODIFY COLUMN category {new_enum}"
-                        db.session.execute(db.text(alter_sql))
-                        db.session.commit()
-
-                        print(f"✅ Categoria '{final_category}' adicionada ao ENUM com sucesso!")
-
-                    # Agora tentar criar a aula novamente
-                    new_class = Classes(
-                        name=name,
-                        instructor=instructor,
-                        date=date_obj,
-                        category=final_category,
-                        video_type=video_type,
-                        video_path=filename,
-                        priority=int(priority),
-                        views=0
-                    )
-                    db.session.add(new_class)
-                    db.session.commit()
-
-                    print(f"✅ Aula criada com sucesso após adicionar categoria '{final_category}'!")
-
-                except Exception as alter_error:
-                    db.session.rollback()
-                    print(f"❌ Erro ao alterar ENUM: {alter_error}")
-                    # Como último recurso, usar categoria padrão
-                    final_category = 'preflop'
-                    new_class = Classes(
-                        name=name,
-                        instructor=instructor,
-                        date=date_obj,
-                        category=final_category,
-                        video_type=video_type,
-                        video_path=filename,
-                        priority=int(priority),
-                        views=0
-                    )
-                    db.session.add(new_class)
-                    db.session.commit()
-                    print(f"⚠️ Usando categoria padrão '{final_category}' devido a erro na alteração do ENUM")
-            else:
-                # Se não for erro de ENUM, re-raise o erro original
-                raise enum_error
+                print(f"❌ Erro final: {final_error}")
+                raise final_error
 
         print(f"✅ Aula criada com sucesso: ID={new_class.id}")
 
