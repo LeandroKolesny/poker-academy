@@ -246,3 +246,64 @@ def serve_leak_file(filename):
     except Exception as e:
         print(f"❌ Erro ao servir arquivo: {e}")
         return jsonify({'error': 'Arquivo não encontrado'}), 404
+
+@admin_graphs_bp.route('/api/admin/student/<int:student_id>/leaks/improvements', methods=['POST'])
+@token_required
+def save_student_improvements(current_user, student_id):
+    """Salvar apenas melhorias para um aluno (sem upload de arquivo)"""
+    try:
+        # Verificar se é admin
+        if current_user.type.value != 'admin':
+            return jsonify({'error': 'Acesso negado'}), 403
+
+        # Verificar se o aluno existe
+        student = Users.query.filter_by(id=student_id, type='student').first()
+        if not student:
+            return jsonify({'error': 'Aluno não encontrado'}), 404
+
+        # Verificar dados
+        month = request.form.get('month')
+        year = request.form.get('year', datetime.now().year, type=int)
+        improvements = request.form.get('improvements', '')
+
+        if not month or month not in [m.value for m in MonthEnum]:
+            return jsonify({'error': 'Mês inválido'}), 400
+
+        if not improvements.strip():
+            return jsonify({'error': 'Melhorias não podem estar vazias'}), 400
+
+        # Verificar se já existe análise para este mês/ano
+        existing_leak = StudentLeaks.query.filter_by(
+            student_id=student_id,
+            month=MonthEnum(month),
+            year=year
+        ).first()
+
+        if existing_leak:
+            # Atualizar apenas as melhorias
+            existing_leak.improvements = improvements
+            existing_leak.updated_at = datetime.utcnow()
+        else:
+            # Criar novo registro apenas com melhorias (sem imagem)
+            new_leak = StudentLeaks(
+                student_id=student_id,
+                month=MonthEnum(month),
+                year=year,
+                image_url='',  # Vazio por enquanto
+                improvements=improvements,
+                uploaded_by=current_user.id
+            )
+            db.session.add(new_leak)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Melhorias salvas com sucesso',
+            'improvements': improvements
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erro ao salvar melhorias: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
