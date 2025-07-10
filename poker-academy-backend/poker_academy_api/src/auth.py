@@ -15,16 +15,7 @@ class AuthService:
     @staticmethod
     def verify_password(password, hashed_password):
         """Verify a password against its hash"""
-        print(f"🔍 Verificando senha: '{password}' contra hash: '{hashed_password[:50]}...'")
-
-        # Temporário: aceitar senha em texto plano para debug
-        if hashed_password == password:
-            print("✅ Senha em texto plano aceita (modo debug)")
-            return True
-
-        result = check_password_hash(hashed_password, password)
-        print(f"🔑 Resultado da verificação: {result}")
-        return result
+        return check_password_hash(hashed_password, password)
     
     @staticmethod
     def generate_token(user_id, user_type):
@@ -51,28 +42,18 @@ class AuthService:
     @staticmethod
     def authenticate_user(username_or_email, password):
         """Authenticate user with username or email and password"""
-        print(f"🔍 Buscando usuário: '{username_or_email}'")
-
         # Tentar primeiro por username
         user = Users.query.filter_by(username=username_or_email).first()
-        print(f"📧 Busca por username: {'Encontrado' if user else 'Não encontrado'}")
 
         # Se não encontrou por username, tentar por email
         if not user:
             user = Users.query.filter_by(email=username_or_email).first()
-            print(f"📧 Busca por email: {'Encontrado' if user else 'Não encontrado'}")
 
-        if user:
-            print(f"👤 Usuário encontrado: {user.name} (ID: {user.id})")
-            if AuthService.verify_password(password, user.password_hash):
-                # Update last login
-                user.last_login = datetime.utcnow()
-                db.session.commit()
-                return user
-            else:
-                print("❌ Senha incorreta")
-        else:
-            print("❌ Usuário não encontrado")
+        if user and AuthService.verify_password(password, user.password_hash):
+            # Update last login
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+            return user
         return None
 
 def token_required(f):

@@ -26,16 +26,8 @@ def login():
         if not username_or_email or not password:
             return jsonify({"error": "Username/Email e senha são obrigatórios"}), 400
 
-        print(f"🔐 Tentativa de login: {username_or_email}")
-
         # Authenticate user
-        try:
-            print("🔍 Chamando AuthService.authenticate_user...")
-            user = AuthService.authenticate_user(username_or_email, password)
-            print(f"🔍 Resultado da autenticação: {user}")
-        except Exception as e:
-            print(f"❌ Erro na autenticação: {e}")
-            user = None
+        user = AuthService.authenticate_user(username_or_email, password)
         if not user:
             print(f"❌ Login falhou para: {username_or_email}")
             return jsonify({"error": "Username/Email ou senha inválidos"}), 401
