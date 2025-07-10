@@ -289,7 +289,7 @@ def save_student_improvements(current_user, student_id):
                 student_id=student_id,
                 month=MonthEnum(month),
                 year=year,
-                image_url='',  # Vazio por enquanto
+                image_url=None,  # NULL para indicar que não há imagem ainda
                 improvements=improvements,
                 uploaded_by=current_user.id
             )
@@ -307,3 +307,13 @@ def save_student_improvements(current_user, student_id):
         db.session.rollback()
         print(f"❌ Erro ao salvar melhorias: {e}")
         return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@admin_graphs_bp.route('/api/admin/test-improvements', methods=['GET'])
+@token_required
+def test_improvements_endpoint(current_user):
+    """Endpoint de teste para verificar se a rota está funcionando"""
+    return jsonify({
+        'success': True,
+        'message': 'Endpoint de melhorias está funcionando',
+        'user': current_user.name
+    })
