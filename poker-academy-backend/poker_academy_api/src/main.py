@@ -26,23 +26,22 @@ from src.routes.class_routes import class_bp
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000", "http://localhost:3001"], supports_credentials=True)
 
-# Configuração do banco de dados MySQL
+# Configuração do banco de dados
 DATABASE_URL = os.getenv("DATABASE_URL")
-print(f"DATABASE_URL encontrada: {DATABASE_URL}")
 
 if DATABASE_URL:
-    # Usar DATABASE_URL se disponível (Docker)
-    print(f"Usando DATABASE_URL: {DATABASE_URL}")
+    # Usar DATABASE_URL se disponível (Docker/Produção)
+    print(f"🐳 Usando DATABASE_URL: {DATABASE_URL}")
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 else:
-    # Fallback para variáveis individuais (desenvolvimento local)
+    # MySQL local para desenvolvimento
     DB_USERNAME = os.getenv("DB_USERNAME", "root")
-    DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "")      # Senha vazia por padrão
+    DB_HOST = os.getenv("DB_HOST", "127.0.0.1")     # IP direto
     DB_PORT = os.getenv("DB_PORT", "3306")
     DB_NAME = os.getenv("DB_NAME", "poker_academy")
     connection_string = f"mysql+pymysql://{DB_USERNAME}:{quote_plus(DB_PASSWORD)}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
-    print(f"Usando variáveis individuais: {connection_string}")
+    print(f"🔧 Usando MySQL local: {connection_string}")
     app.config["SQLALCHEMY_DATABASE_URI"] = connection_string
 
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
