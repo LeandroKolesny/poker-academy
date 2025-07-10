@@ -46,6 +46,9 @@ const ClassManagement = () => {
     try {
       const response = await classService.getAll();
       const data = response.data || response; // Compatibilidade com nova estrutura
+      console.log("📊 Resposta do classService:", response);
+      console.log("📊 Dados das aulas:", data);
+      console.log("📊 É array?", Array.isArray(data));
       setClasses(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error("Erro ao buscar aulas:", e);
