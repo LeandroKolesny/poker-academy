@@ -489,6 +489,7 @@ const ClassManagement = () => {
         formData.append('date', classData.date);
         // Extrair categoria da terceira parte do nome do arquivo
         const extractedCategory = extractCategoryFromFileName(classData.fileName);
+        console.log(`🔍 Debug: fileName="${classData.fileName}", categoria extraída="${extractedCategory}"`);
         formData.append('category', extractedCategory);
         formData.append('priority', '5');
         formData.append('video_type', 'local');
