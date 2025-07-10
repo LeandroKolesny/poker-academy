@@ -15,7 +15,16 @@ class AuthService:
     @staticmethod
     def verify_password(password, hashed_password):
         """Verify a password against its hash"""
-        return check_password_hash(hashed_password, password)
+        print(f"🔍 Verificando senha: '{password}' contra hash: '{hashed_password[:50]}...'")
+
+        # Temporário: aceitar senha em texto plano para debug
+        if hashed_password == password:
+            print("✅ Senha em texto plano aceita (modo debug)")
+            return True
+
+        result = check_password_hash(hashed_password, password)
+        print(f"🔑 Resultado da verificação: {result}")
+        return result
     
     @staticmethod
     def generate_token(user_id, user_type):
