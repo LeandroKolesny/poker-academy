@@ -194,7 +194,7 @@ class StudentLeaks(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     month = db.Column(SQLAlchemyEnum(MonthEnum), nullable=False)
     year = db.Column(db.Integer, nullable=False)
-    image_url = db.Column(db.Text, nullable=False)
+    image_url = db.Column(db.Text, nullable=True)  # Permitir NULL para quando só há melhorias
     improvements = db.Column(db.Text, nullable=True)  # Campo para melhorias sugeridas
     uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
