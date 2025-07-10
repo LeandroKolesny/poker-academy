@@ -20,7 +20,9 @@ export const getToken = () => {
   // Se não temos token na memória, tentar recuperar do localStorage
   if (!currentToken) {
     currentToken = localStorage.getItem('token');
+    console.log(`🔐 Token recuperado do localStorage: ${currentToken ? 'SIM' : 'NÃO'}`);
   }
+  console.log(`🔐 getToken retornando: ${currentToken ? currentToken.substring(0, 20) + '...' : 'NULL'}`);
   return currentToken;
 };
 
@@ -50,6 +52,14 @@ const apiRequest = async (endpoint, options = {}) => {
 
   console.log(`🔐 É FormData: ${isFormData}`);
   console.log(`🔐 Headers finais:`, config.headers);
+  console.log(`🔐 Config completo:`, config);
+
+  // Log específico para FormData
+  if (isFormData) {
+    console.log(`🔐 FormData detectado - verificando Authorization header`);
+    console.log(`🔐 Authorization presente:`, !!config.headers.Authorization);
+    console.log(`🔐 Token no header:`, config.headers.Authorization?.substring(0, 30) + '...');
+  }
 
   try {
     const response = await fetch(url, config);
