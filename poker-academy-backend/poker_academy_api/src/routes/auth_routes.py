@@ -152,7 +152,7 @@ def logout():
     """Logout endpoint (client-side token removal)"""
     return jsonify({"message": "Logout realizado com sucesso"}), 200
 
-@auth_bp.route("/api/auth/change-password", methods=["PUT"])
+@auth_bp.route("/api/auth/change-password", methods=["POST"])
 def change_password():
     """Change password endpoint"""
     try:
