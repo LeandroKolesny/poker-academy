@@ -161,6 +161,9 @@ def upload_student_leak_admin(current_user, student_id):
 
         # Verificar se é apenas melhorias ou upload com arquivo
         improvements_only = request.form.get('improvements_only', 'false').lower() == 'true'
+        print(f"🔍 improvements_only: {improvements_only}")
+        print(f"🔍 improvements: '{improvements}'")
+        print(f"🔍 form data: {dict(request.form)}")
 
         if not improvements_only:
             # Upload normal com arquivo
