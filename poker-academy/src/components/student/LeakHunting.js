@@ -31,7 +31,7 @@ const LeakHunting = () => {
     const fetchLeaks = async () => {
         try {
             setLoading(true);
-            const response = await api.get(`/api/student/leaks?year=${selectedYear}`);
+            const response = await api.get(`/student/leaks?year=${selectedYear}`);
             setLeaks(response.data.leaks || {});
         } catch (error) {
             console.error('Erro ao buscar análises de leaks:', error);
