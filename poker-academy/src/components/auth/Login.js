@@ -23,7 +23,12 @@ const Login = () => {
       // Verificar se é primeiro login
       if (loginResult.user && loginResult.user.first_login) {
         console.log('Primeiro login detectado, redirecionando para alteração de senha...');
-        navigate('/change-password');
+        // Redirecionar para a área do usuário com a aba de alteração de senha
+        if (loginResult.user.type === 'admin') {
+          navigate('/admin/change-password');
+        } else {
+          navigate('/student/change-password');
+        }
       } else {
         // Redirecionar para área apropriada baseada no tipo de usuário
         console.log('Login normal, redirecionando...');

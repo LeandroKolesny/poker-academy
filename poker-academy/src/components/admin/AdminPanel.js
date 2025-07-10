@@ -5,6 +5,7 @@ import Sidebar from '../shared/Sidebar';
 import StudentManagement from './StudentManagement';
 import ClassManagement from './ClassManagement';
 import Analytics from './Analytics';
+import ChangePassword from '../student/ChangePassword'; // Reutilizar componente do student
 
 const AdminPanel = () => {
   return (
@@ -18,6 +19,7 @@ const AdminPanel = () => {
             <Route path="students" element={<StudentManagement />} />
             <Route path="classes" element={<ClassManagement />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="change-password" element={<ChangePassword />} />
             {/* Fallback para qualquer outra sub-rota não reconhecida em /admin/* */}
             <Route path="*" element={<Navigate to="analytics" replace />} />
           </Routes>
