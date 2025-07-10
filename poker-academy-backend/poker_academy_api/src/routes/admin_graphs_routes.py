@@ -158,36 +158,51 @@ def upload_student_leak_admin(current_user, student_id):
 
         if not month or month not in [m.value for m in MonthEnum]:
             return jsonify({'error': 'Mês inválido'}), 400
+
+        # Verificar se é apenas melhorias ou upload com arquivo
+        improvements_only = request.form.get('improvements_only', 'false').lower() == 'true'
+
+        if not improvements_only:
+            # Upload normal com arquivo
+            if 'file' not in request.files:
+                return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+
+            file = request.files['file']
+            if file.filename == '':
+                return jsonify({'error': 'Nenhum arquivo selecionado'}), 400
+
+            if not allowed_file(file.filename):
+                return jsonify({'error': 'Tipo de arquivo não permitido'}), 400
+        else:
+            # Apenas melhorias, sem arquivo
+            if not improvements.strip():
+                return jsonify({'error': 'Melhorias não podem estar vazias'}), 400
         
-        if 'file' not in request.files:
-            return jsonify({'error': 'Nenhum arquivo enviado'}), 400
-        
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'Nenhum arquivo selecionado'}), 400
-        
-        if not allowed_file(file.filename):
-            return jsonify({'error': 'Tipo de arquivo não permitido'}), 400
-        
-        # Verificar tamanho do arquivo
-        file.seek(0, os.SEEK_END)
-        file_size = file.tell()
-        file.seek(0)
-        
-        if file_size > MAX_FILE_SIZE:
-            return jsonify({'error': 'Arquivo muito grande (máximo 10MB)'}), 400
-        
-        # Gerar nome único para o arquivo
-        file_extension = file.filename.rsplit('.', 1)[1].lower()
-        filename = f"leak_{student_id}_{month}_{year}_{uuid.uuid4().hex[:8]}.{file_extension}"
-        
-        # Salvar arquivo
-        upload_folder = get_upload_folder()
-        file_path = os.path.join(upload_folder, filename)
-        file.save(file_path)
-        
-        # URL relativa para o arquivo
-        image_url = f"/api/uploads/leaks/{filename}"
+        # Processar arquivo apenas se não for apenas melhorias
+        if not improvements_only:
+            # Verificar tamanho do arquivo
+            file.seek(0, os.SEEK_END)
+            file_size = file.tell()
+            file.seek(0)
+
+            if file_size > MAX_FILE_SIZE:
+                return jsonify({'error': 'Arquivo muito grande (máximo 10MB)'}), 400
+
+            # Gerar nome único para o arquivo
+            file_extension = file.filename.rsplit('.', 1)[1].lower()
+            filename = f"leak_{student_id}_{month}_{year}_{uuid.uuid4().hex[:8]}.{file_extension}"
+
+            # Salvar arquivo
+            upload_folder = get_upload_folder()
+            file_path = os.path.join(upload_folder, filename)
+            file.save(file_path)
+
+            # URL relativa para o arquivo
+            image_url = f"/api/uploads/leaks/{filename}"
+        else:
+            # Apenas melhorias, sem arquivo
+            image_url = None
+            filename = None
         
         # Verificar se já existe análise para este mês/ano
         existing_leak = StudentLeaks.query.filter_by(
@@ -197,13 +212,15 @@ def upload_student_leak_admin(current_user, student_id):
         ).first()
         
         if existing_leak:
-            # Deletar arquivo antigo
-            old_file_path = os.path.join(upload_folder, os.path.basename(existing_leak.image_url))
-            if os.path.exists(old_file_path):
-                os.remove(old_file_path)
+            # Se não for apenas melhorias, deletar arquivo antigo
+            if not improvements_only and existing_leak.image_url:
+                old_file_path = os.path.join(get_upload_folder(), os.path.basename(existing_leak.image_url))
+                if os.path.exists(old_file_path):
+                    os.remove(old_file_path)
 
             # Atualizar registro
-            existing_leak.image_url = image_url
+            if not improvements_only:
+                existing_leak.image_url = image_url
             existing_leak.improvements = improvements
             existing_leak.uploaded_by = current_user.id
             existing_leak.updated_at = datetime.utcnow()
