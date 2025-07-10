@@ -585,8 +585,8 @@ def upload_complete_class(current_user):
                 return jsonify(error="Formato de data inválido. Use YYYY-MM-DD"), 400
 
         # Criar nova aula no banco
-        # Se categoria estiver vazia, usar um valor padrão
-        final_category = category if category and category.strip() else 'Geral'
+        # Se categoria estiver vazia, usar um valor padrão válido do ENUM
+        final_category = category if category and category.strip() else 'preflop'
 
         new_class = Classes(
             name=name,

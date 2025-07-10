@@ -20,7 +20,7 @@ const ClassManagement = () => {
   const initialFormData = {
     name: '',
     instructor: '',
-    category: '',  // Categoria agora é opcional
+    category: 'preflop',  // Categoria padrão
     date: new Date().toISOString().split('T')[0],
     priority: 5,
     video_path: '',
@@ -101,7 +101,7 @@ const ClassManagement = () => {
     setFormData({
       name: cls.name || '',
       instructor: cls.instructor || '',
-      category: cls.category || '',  // Categoria pode ser vazia
+      category: cls.category || 'preflop',  // Categoria padrão se vazia
       date: dateValue,
       priority: cls.priority || 5,
       video_path: cls.video_path || '',
@@ -449,7 +449,7 @@ const ClassManagement = () => {
         formData.append('name', classData.name);
         formData.append('instructor', classData.instructor);
         formData.append('date', classData.date);
-        formData.append('category', ''); // Categoria vazia
+        formData.append('category', 'preflop'); // Categoria padrão válida
         formData.append('priority', '5');
         formData.append('video_type', 'local');
 
