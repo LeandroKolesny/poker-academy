@@ -96,7 +96,7 @@ const LeakHunting = () => {
                                 {leaks[month.key] ? (
                                     <div className="leak-analysis">
                                         <img 
-                                            src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api${leaks[month.key].image_url}`}
+                                            src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${leaks[month.key].image_url}`}
                                             alt={`Análise de Leaks ${month.name}`}
                                             className="img-fluid rounded mb-3"
                                             style={{ maxHeight: '200px', width: '100%', objectFit: 'contain' }}
