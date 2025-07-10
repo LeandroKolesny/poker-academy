@@ -29,7 +29,13 @@ def login():
         print(f"🔐 Tentativa de login: {username_or_email}")
 
         # Authenticate user
-        user = AuthService.authenticate_user(username_or_email, password)
+        try:
+            print("🔍 Chamando AuthService.authenticate_user...")
+            user = AuthService.authenticate_user(username_or_email, password)
+            print(f"🔍 Resultado da autenticação: {user}")
+        except Exception as e:
+            print(f"❌ Erro na autenticação: {e}")
+            user = None
         if not user:
             print(f"❌ Login falhou para: {username_or_email}")
             return jsonify({"error": "Username/Email ou senha inválidos"}), 401
