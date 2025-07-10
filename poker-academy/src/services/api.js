@@ -35,15 +35,21 @@ const apiRequest = async (endpoint, options = {}) => {
     console.log(`🔐 Token (primeiros 20 chars): ${token.substring(0, 20)}...`);
   }
 
+  // Verificar se é FormData
+  const isFormData = options.body instanceof FormData;
+
   const config = {
     headers: {
       // Só adicionar Content-Type se não for FormData
-      ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options.headers,
     },
     ...options,
   };
+
+  console.log(`🔐 É FormData: ${isFormData}`);
+  console.log(`🔐 Headers finais:`, config.headers);
 
   try {
     const response = await fetch(url, config);
