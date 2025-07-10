@@ -22,7 +22,7 @@ def get_upload_folder():
     os.makedirs(upload_folder, exist_ok=True)
     return upload_folder
 
-@admin_graphs_bp.route('/admin/students-by-partition', methods=['GET'])
+@admin_graphs_bp.route('/api/admin/students-by-partition', methods=['GET'])
 @token_required
 def get_students_by_partition(current_user):
     """Buscar alunos organizados por partição (apenas admin)"""
@@ -57,7 +57,7 @@ def get_students_by_partition(current_user):
         print(f"❌ Erro ao buscar alunos por partição: {e}")
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
-@admin_graphs_bp.route('/admin/student/<int:student_id>/graphs', methods=['GET'])
+@admin_graphs_bp.route('/api/admin/student/<int:student_id>/graphs', methods=['GET'])
 @token_required
 def get_student_graphs_admin(current_user, student_id):
     """Buscar gráficos de um aluno específico (apenas admin)"""
@@ -94,7 +94,7 @@ def get_student_graphs_admin(current_user, student_id):
         print(f"❌ Erro ao buscar gráficos do aluno: {e}")
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
-@admin_graphs_bp.route('/admin/student/<int:student_id>/leaks', methods=['GET'])
+@admin_graphs_bp.route('/api/admin/student/<int:student_id>/leaks', methods=['GET'])
 @token_required
 def get_student_leaks_admin(current_user, student_id):
     """Buscar análises de leaks de um aluno específico (apenas admin)"""
@@ -131,7 +131,7 @@ def get_student_leaks_admin(current_user, student_id):
         print(f"❌ Erro ao buscar leaks do aluno: {e}")
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
-@admin_graphs_bp.route('/admin/student/<int:student_id>/leaks/upload', methods=['POST'])
+@admin_graphs_bp.route('/api/admin/student/<int:student_id>/leaks/upload', methods=['POST'])
 @token_required
 def upload_student_leak_admin(current_user, student_id):
     """Upload de análise de leak pelo admin"""
