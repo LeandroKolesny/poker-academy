@@ -32,7 +32,7 @@ services:
     restart: unless-stopped
     environment:
       - FLASK_ENV=production
-      - DATABASE_URL=mysql+pymysql://${MYSQL_USER:-poker_user}:${MYSQL_PASSWORD:-poker_pass_2025}@mysql:3306/${MYSQL_DATABASE:-poker_academy}
+      - DATABASE_URL=mysql+pymysql://${MYSQL_USER:-poker_user}:Dojo%40Sql159357@mysql:3306/${MYSQL_DATABASE:-poker_academy}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-super-secret-jwt-key-change-in-production}
       - CORS_ORIGINS=http://localhost,http://127.0.0.1,http://frontend
     volumes:
