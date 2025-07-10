@@ -106,24 +106,39 @@ const AdminLeakManagement = () => {
             setUploading(true);
             setUploadingMonth(month);
 
+            // Usar fetch diretamente para ter controle total
+            const token = localStorage.getItem('token');
+            console.log('🔐 Token para upload:', token ? 'PRESENTE' : 'AUSENTE');
+
             const formData = new FormData();
             formData.append('file', file);
             formData.append('month', month);
             formData.append('year', selectedYear);
 
-            const response = await api.post(`/admin/student/${selectedStudent.id}/leaks/upload`, formData, {
+            const response = await fetch(`https://cardroomgrinders.com.br/api/admin/student/${selectedStudent.id}/leaks/upload`, {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+                    'Authorization': `Bearer ${token}`
+                    // NÃO definir Content-Type para FormData
+                },
+                body: formData
             });
 
-            if (response.data.success) {
+            console.log('📤 Response status:', response.status);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Upload sucesso:', data);
                 alert('Análise de leak enviada com sucesso!');
                 fetchStudentLeaks(); // Recarregar análises
+            } else {
+                const errorData = await response.text();
+                console.error('❌ Upload erro:', response.status, errorData);
+                alert(`Erro no upload: ${response.status} - ${errorData}`);
             }
         } catch (error) {
-            console.error('Erro no upload:', error);
-            alert(error.response?.data?.error || 'Erro ao enviar análise');
+            console.error('❌ Erro no upload:', error);
+            alert(`Erro ao enviar análise: ${error.message}`);
         } finally {
             setUploading(false);
             setUploadingMonth(null);
