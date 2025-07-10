@@ -22,7 +22,7 @@ def get_upload_folder():
     os.makedirs(upload_folder, exist_ok=True)
     return upload_folder
 
-@graphs_bp.route('/student/graphs', methods=['GET'])
+@graphs_bp.route('/api/student/graphs', methods=['GET'])
 @token_required
 def get_student_graphs(current_user):
     """Buscar gráficos do aluno logado"""
@@ -49,7 +49,7 @@ def get_student_graphs(current_user):
         print(f"❌ Erro ao buscar gráficos do aluno: {e}")
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
-@graphs_bp.route('/student/graphs/upload', methods=['POST'])
+@graphs_bp.route('/api/student/graphs/upload', methods=['POST'])
 @token_required
 def upload_student_graph(current_user):
     """Upload de gráfico mensal pelo aluno"""
@@ -138,7 +138,7 @@ def upload_student_graph(current_user):
         print(f"❌ Erro no upload do gráfico: {e}")
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
-@graphs_bp.route('/student/leaks', methods=['GET'])
+@graphs_bp.route('/api/student/leaks', methods=['GET'])
 @token_required
 def get_student_leaks(current_user):
     """Buscar análises de leaks do aluno logado"""
