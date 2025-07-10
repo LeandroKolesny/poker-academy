@@ -55,6 +55,7 @@ class Users(db.Model):
     particao_id = db.Column(db.Integer, db.ForeignKey('particoes.id'), nullable=False) # Chave estrangeira obrigatória
     register_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) # Data de registro
     last_login = db.Column(db.DateTime, nullable=True)
+    first_login = db.Column(db.Boolean, nullable=False, default=True) # True = precisa alterar senha no primeiro login
 
     # Relacionamento
     particao_obj = db.relationship('Particoes', backref='users')

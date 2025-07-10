@@ -15,15 +15,26 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const success = await login(username, password);
+    const loginResult = await login(username, password);
 
-    if (success) {
-      // Redirecionar manualmente após login bem-sucedido
-      console.log('Login bem-sucedido, redirecionando...');
-      // Aguardar um pouco para o estado ser atualizado
-      setTimeout(() => {
-        navigate('/admin'); // Por enquanto, redirecionar para admin
-      }, 100);
+    if (loginResult && loginResult.success) {
+      console.log('Login bem-sucedido, verificando primeiro login...');
+
+      // Verificar se é primeiro login
+      if (loginResult.user && loginResult.user.first_login) {
+        console.log('Primeiro login detectado, redirecionando para alteração de senha...');
+        navigate('/change-password');
+      } else {
+        // Redirecionar para área apropriada baseada no tipo de usuário
+        console.log('Login normal, redirecionando...');
+        setTimeout(() => {
+          if (loginResult.user.type === 'admin') {
+            navigate('/admin');
+          } else {
+            navigate('/student');
+          }
+        }, 100);
+      }
     }
   };
 

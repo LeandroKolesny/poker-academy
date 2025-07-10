@@ -33,10 +33,14 @@ def login():
             return jsonify({"error": "Username/Email ou senha inválidos"}), 401
 
         print(f"✅ Login bem-sucedido: {user.username} ({user.name})")
-        
+
+        # Atualizar last_login
+        user.last_login = datetime.utcnow()
+        db.session.commit()
+
         # Generate token
         token = AuthService.generate_token(user.id, user.type.value)
-        
+
         return jsonify({
             "message": "Login realizado com sucesso",
             "token": token,
@@ -45,7 +49,8 @@ def login():
                 "name": user.name,
                 "email": user.email,
                 "type": user.type.value,
-                "last_login": user.last_login.isoformat() if user.last_login else None
+                "last_login": user.last_login.isoformat() if user.last_login else None,
+                "first_login": getattr(user, 'first_login', False)  # Verificar se é primeiro login
             }
         }), 200
         
@@ -200,9 +205,9 @@ def change_password():
         if AuthService.verify_password(new_password, user.password_hash):
             return jsonify({"error": "A nova senha deve ser diferente da senha atual"}), 400
 
-        # Atualizar senha
+        # Atualizar senha e marcar que não é mais primeiro login
         user.password_hash = AuthService.hash_password(new_password)
-        user.updated_at = datetime.utcnow()
+        user.first_login = False  # Marcar que já não é mais primeiro login
 
         db.session.commit()
 
