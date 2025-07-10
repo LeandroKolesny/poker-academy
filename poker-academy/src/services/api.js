@@ -46,7 +46,7 @@ const apiRequest = async (endpoint, options = {}) => {
       console.log('🔄 Token expirado, tentando renovar...');
 
       // Verificar se o token realmente expirou
-      const verifyResponse = await fetch(`${appConfig.API_BASE_URL}/api/auth/verify`, {
+      const verifyResponse = await fetch(`${appConfig.API_BASE_URL}${appConfig.API_ENDPOINTS.VERIFY}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -76,77 +76,77 @@ const apiRequest = async (endpoint, options = {}) => {
 // Serviços de Classes
 export const classService = {
   // Listar todas as aulas
-  getAll: () => apiRequest('/api/classes'),
-  
+  getAll: () => apiRequest(appConfig.API_ENDPOINTS.CLASSES),
+
   // Obter detalhes de uma aula
-  getById: (id) => apiRequest(`/api/classes/${id}`),
-  
+  getById: (id) => apiRequest(appConfig.API_ENDPOINTS.CLASS_BY_ID(id)),
+
   // Criar nova aula (admin)
-  create: (classData) => apiRequest('/api/classes', {
+  create: (classData) => apiRequest(appConfig.API_ENDPOINTS.CLASSES, {
     method: 'POST',
     body: JSON.stringify(classData),
   }),
-  
+
   // Atualizar aula (admin)
-  update: (id, classData) => apiRequest(`/api/classes/${id}`, {
+  update: (id, classData) => apiRequest(appConfig.API_ENDPOINTS.CLASS_BY_ID(id), {
     method: 'PUT',
     body: JSON.stringify(classData),
   }),
-  
+
   // Deletar aula (admin)
-  delete: (id) => apiRequest(`/api/classes/${id}`, {
+  delete: (id) => apiRequest(appConfig.API_ENDPOINTS.CLASS_BY_ID(id), {
     method: 'DELETE',
   }),
   
   // Obter progresso da aula
-  getProgress: (id) => apiRequest(`/api/classes/${id}/progress`),
+  getProgress: (id) => apiRequest(appConfig.API_ENDPOINTS.CLASS_PROGRESS(id)),
 
   // Atualizar progresso da aula
-  updateProgress: (id, progressData) => apiRequest(`/api/classes/${id}/progress`, {
+  updateProgress: (id, progressData) => apiRequest(appConfig.API_ENDPOINTS.CLASS_PROGRESS(id), {
     method: 'POST',
     body: JSON.stringify(progressData),
   }),
 
   // Registrar visualização da aula
-  registerView: (id) => apiRequest(`/api/classes/${id}/view`, {
+  registerView: (id) => apiRequest(appConfig.API_ENDPOINTS.CLASS_VIEW(id), {
     method: 'POST',
   }),
 
   // Obter estatísticas de visualizações (admin)
-  getViewStats: (id) => apiRequest(`/api/classes/${id}/views`),
+  getViewStats: (id) => apiRequest(appConfig.API_ENDPOINTS.CLASS_VIEWS(id)),
 
   // Obter histórico de aulas assistidas
-  getHistory: () => apiRequest('/api/classes/history'),
+  getHistory: () => apiRequest(appConfig.API_ENDPOINTS.CLASSES_HISTORY),
 
   // Obter lista de instrutores (admins)
-  getInstructors: () => apiRequest('/api/instructors'),
+  getInstructors: () => apiRequest(appConfig.API_ENDPOINTS.INSTRUCTORS),
 };
 
 // Serviços de Analytics
 export const analyticsService = {
   // Obter estatísticas do painel (admin)
-  getStats: () => apiRequest('/api/analytics/stats'),
+  getStats: () => apiRequest(appConfig.API_ENDPOINTS.ANALYTICS_STATS),
 };
 
 // Serviços de Usuários
 export const userService = {
   // Listar todos os usuários (admin)
-  getAll: () => apiRequest('/api/users'),
-  
+  getAll: () => apiRequest(appConfig.API_ENDPOINTS.USERS),
+
   // Criar novo usuário (admin)
-  create: (userData) => apiRequest('/api/users', {
+  create: (userData) => apiRequest(appConfig.API_ENDPOINTS.USERS, {
     method: 'POST',
     body: JSON.stringify(userData),
   }),
-  
+
   // Atualizar usuário (admin)
-  update: (id, userData) => apiRequest(`/api/users/${id}`, {
+  update: (id, userData) => apiRequest(appConfig.API_ENDPOINTS.USER_BY_ID(id), {
     method: 'PUT',
     body: JSON.stringify(userData),
   }),
-  
+
   // Deletar usuário (admin)
-  delete: (id) => apiRequest(`/api/users/${id}`, {
+  delete: (id) => apiRequest(appConfig.API_ENDPOINTS.USER_BY_ID(id), {
     method: 'DELETE',
   }),
 };
@@ -154,48 +154,48 @@ export const userService = {
 // Serviços de Favoritos
 export const favoritesService = {
   // Listar favoritos do usuário
-  getAll: () => apiRequest('/api/favorites'),
-  
+  getAll: () => apiRequest(appConfig.API_ENDPOINTS.FAVORITES),
+
   // Adicionar aos favoritos
-  add: (classId) => apiRequest(`/api/favorites/${classId}`, {
+  add: (classId) => apiRequest(appConfig.API_ENDPOINTS.FAVORITE_BY_ID(classId), {
     method: 'POST',
   }),
-  
+
   // Remover dos favoritos
-  remove: (classId) => apiRequest(`/api/favorites/${classId}`, {
+  remove: (classId) => apiRequest(appConfig.API_ENDPOINTS.FAVORITE_BY_ID(classId), {
     method: 'DELETE',
   }),
-  
+
   // Verificar se está nos favoritos
-  check: (classId) => apiRequest(`/api/favorites/${classId}/check`),
+  check: (classId) => apiRequest(appConfig.API_ENDPOINTS.FAVORITE_CHECK(classId)),
 };
 
 // Serviços de Playlists
 export const playlistService = {
   // Listar playlists do usuário
-  getAll: () => apiRequest('/api/playlists'),
-  
+  getAll: () => apiRequest(appConfig.API_ENDPOINTS.PLAYLISTS),
+
   // Obter detalhes de uma playlist
-  getById: (id) => apiRequest(`/api/playlists/${id}`),
-  
+  getById: (id) => apiRequest(appConfig.API_ENDPOINTS.PLAYLIST_BY_ID(id)),
+
   // Criar nova playlist
-  create: (playlistData) => apiRequest('/api/playlists', {
+  create: (playlistData) => apiRequest(appConfig.API_ENDPOINTS.PLAYLISTS, {
     method: 'POST',
     body: JSON.stringify(playlistData),
   }),
-  
+
   // Deletar playlist
-  delete: (id) => apiRequest(`/api/playlists/${id}`, {
+  delete: (id) => apiRequest(appConfig.API_ENDPOINTS.PLAYLIST_BY_ID(id), {
     method: 'DELETE',
   }),
-  
+
   // Adicionar aula à playlist
-  addClass: (playlistId, classId) => apiRequest(`/api/playlists/${playlistId}/classes/${classId}`, {
+  addClass: (playlistId, classId) => apiRequest(appConfig.API_ENDPOINTS.PLAYLIST_ADD_CLASS(playlistId, classId), {
     method: 'POST',
   }),
-  
+
   // Remover aula da playlist
-  removeClass: (playlistId, classId) => apiRequest(`/api/playlists/${playlistId}/classes/${classId}`, {
+  removeClass: (playlistId, classId) => apiRequest(appConfig.API_ENDPOINTS.PLAYLIST_ADD_CLASS(playlistId, classId), {
     method: 'DELETE',
   }),
 };
@@ -203,27 +203,27 @@ export const playlistService = {
 // Serviços de Autenticação
 export const authService = {
   // Login
-  login: (email, password) => apiRequest('/api/auth/login', {
+  login: (email, password) => apiRequest(appConfig.API_ENDPOINTS.LOGIN, {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   }),
-  
+
   // Registro
-  register: (userData) => apiRequest('/api/auth/register', {
+  register: (userData) => apiRequest(appConfig.API_ENDPOINTS.REGISTER, {
     method: 'POST',
     body: JSON.stringify(userData),
   }),
-  
+
   // Verificar token
-  verify: () => apiRequest('/api/auth/verify'),
-  
+  verify: () => apiRequest(appConfig.API_ENDPOINTS.VERIFY),
+
   // Logout
-  logout: () => apiRequest('/api/auth/logout', {
+  logout: () => apiRequest(appConfig.API_ENDPOINTS.LOGOUT, {
     method: 'POST',
   }),
 
   // Alterar senha
-  changePassword: (currentPassword, newPassword) => apiRequest('/api/auth/change-password', {
+  changePassword: (currentPassword, newPassword) => apiRequest(appConfig.API_ENDPOINTS.CHANGE_PASSWORD, {
     method: 'POST',
     body: JSON.stringify({
       current_password: currentPassword,
