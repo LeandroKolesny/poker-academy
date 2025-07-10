@@ -268,7 +268,7 @@ const AdminLeakManagement = () => {
                                                             {studentLeaks[month.key] ? (
                                                                 <div className="leak-preview">
                                                                     <img 
-                                                                        src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${studentLeaks[month.key].image_url}`}
+                                                                        src={`https://cardroomgrinders.com.br${studentLeaks[month.key].image_url}`}
                                                                         alt={`Análise ${month.name}`}
                                                                         className="img-fluid rounded mb-2"
                                                                         style={{ maxHeight: '100px', width: '100%', objectFit: 'contain' }}
