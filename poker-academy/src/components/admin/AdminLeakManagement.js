@@ -43,10 +43,24 @@ const AdminLeakManagement = () => {
         try {
             setLoading(true);
             const response = await api.get('/admin/students-by-partition');
-            setPartitions(response.data.partitions || []);
+            console.log('📊 Resposta da API:', response.data);
+
+            if (response.data.success && response.data.partitions) {
+                setPartitions(response.data.partitions);
+            } else if (response.data.error) {
+                console.error('❌ Erro da API:', response.data.error);
+                alert(`Erro: ${response.data.error}`);
+                setPartitions([]);
+            } else {
+                console.error('❌ Resposta inesperada:', response.data);
+                alert('Resposta inesperada da API');
+                setPartitions([]);
+            }
         } catch (error) {
-            console.error('Erro ao buscar partições:', error);
-            alert('Erro ao carregar partições');
+            console.error('❌ Erro ao buscar partições:', error);
+            console.error('❌ Detalhes do erro:', error.response?.data);
+            alert(`Erro ao carregar partições: ${error.response?.data?.error || error.message}`);
+            setPartitions([]);
         } finally {
             setLoading(false);
         }
