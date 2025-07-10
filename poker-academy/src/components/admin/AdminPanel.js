@@ -5,6 +5,8 @@ import Sidebar from '../shared/Sidebar';
 import StudentManagement from './StudentManagement';
 import ClassManagement from './ClassManagement';
 import Analytics from './Analytics';
+import AdminStudentGraphs from './AdminStudentGraphs';
+import AdminLeakManagement from './AdminLeakManagement';
 import ChangePassword from '../student/ChangePassword'; // Reutilizar componente do student
 
 const AdminPanel = () => {
@@ -19,6 +21,8 @@ const AdminPanel = () => {
             <Route path="students" element={<StudentManagement />} />
             <Route path="classes" element={<ClassManagement />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="student-graphs" element={<AdminStudentGraphs />} />
+            <Route path="leak-management" element={<AdminLeakManagement />} />
             <Route path="change-password" element={<ChangePassword />} />
             {/* Fallback para qualquer outra sub-rota não reconhecida em /admin/* */}
             <Route path="*" element={<Navigate to="analytics" replace />} />
