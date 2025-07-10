@@ -44,8 +44,9 @@ const ClassManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await classService.getAll();
-      setClasses(data);
+      const response = await classService.getAll();
+      const data = response.data || response; // Compatibilidade com nova estrutura
+      setClasses(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error("Erro ao buscar aulas:", e);
       setError(e.message);
@@ -56,8 +57,9 @@ const ClassManagement = () => {
 
   const fetchInstructors = async () => {
     try {
-      const data = await classService.getInstructors();
-      setInstructors(data);
+      const response = await classService.getInstructors();
+      const data = response.data || response; // Compatibilidade com nova estrutura
+      setInstructors(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error("Erro ao buscar instrutores:", e);
     }
