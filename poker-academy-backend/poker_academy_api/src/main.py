@@ -25,8 +25,11 @@ CORS(app, origins=["http://localhost:3000", "http://localhost:3001"], supports_c
 
 # Configuração do banco de dados MySQL
 DATABASE_URL = os.getenv("DATABASE_URL")
+print(f"DATABASE_URL encontrada: {DATABASE_URL}")
+
 if DATABASE_URL:
     # Usar DATABASE_URL se disponível (Docker)
+    print(f"Usando DATABASE_URL: {DATABASE_URL}")
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 else:
     # Fallback para variáveis individuais (desenvolvimento local)
@@ -35,7 +38,9 @@ else:
     DB_HOST = os.getenv("DB_HOST", "localhost")
     DB_PORT = os.getenv("DB_PORT", "3306")
     DB_NAME = os.getenv("DB_NAME", "poker_academy")
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+    connection_string = f"mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+    print(f"Usando variáveis individuais: {connection_string}")
+    app.config["SQLALCHEMY_DATABASE_URI"] = connection_string
 
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
