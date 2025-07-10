@@ -40,7 +40,7 @@ const AdminStudentGraphs = () => {
     const fetchPartitions = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/admin/students-by-partition');
+            const response = await api.get('/api/admin/students-by-partition');
             setPartitions(response.data.partitions || []);
         } catch (error) {
             console.error('Erro ao buscar partições:', error);
@@ -55,7 +55,7 @@ const AdminStudentGraphs = () => {
         
         try {
             setLoadingGraphs(true);
-            const response = await api.get(`/admin/student/${selectedStudent.id}/graphs?year=${selectedYear}`);
+            const response = await api.get(`/api/admin/student/${selectedStudent.id}/graphs?year=${selectedYear}`);
             setStudentGraphs(response.data.graphs || {});
         } catch (error) {
             console.error('Erro ao buscar gráficos do aluno:', error);

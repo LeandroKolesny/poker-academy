@@ -42,7 +42,7 @@ const AdminLeakManagement = () => {
     const fetchPartitions = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/admin/students-by-partition');
+            const response = await api.get('/api/admin/students-by-partition');
             setPartitions(response.data.partitions || []);
         } catch (error) {
             console.error('Erro ao buscar partições:', error);
@@ -57,7 +57,7 @@ const AdminLeakManagement = () => {
         
         try {
             setLoadingLeaks(true);
-            const response = await api.get(`/admin/student/${selectedStudent.id}/leaks?year=${selectedYear}`);
+            const response = await api.get(`/api/admin/student/${selectedStudent.id}/leaks?year=${selectedYear}`);
             setStudentLeaks(response.data.leaks || {});
         } catch (error) {
             console.error('Erro ao buscar leaks do aluno:', error);
@@ -97,7 +97,7 @@ const AdminLeakManagement = () => {
             formData.append('month', month);
             formData.append('year', selectedYear);
 
-            const response = await api.post(`/admin/student/${selectedStudent.id}/leaks/upload`, formData, {
+            const response = await api.post(`/api/admin/student/${selectedStudent.id}/leaks/upload`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
