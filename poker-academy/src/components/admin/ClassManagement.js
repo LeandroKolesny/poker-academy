@@ -333,6 +333,47 @@ const ClassManagement = () => {
     return categories[category] || category || 'Sem categoria';
   };
 
+  // Função para gerar categoria baseada no instrutor e nome da aula
+  const generateCategoryFromData = (instructor, className) => {
+    // Normalizar strings para comparação
+    const normalizeString = (str) => str.toLowerCase().trim();
+    const instructorNorm = normalizeString(instructor);
+    const classNameNorm = normalizeString(className);
+
+    // Palavras-chave para diferentes categorias
+    const categoryKeywords = {
+      'preflop': ['preflop', 'pre-flop', 'pré-flop', 'abertura', 'raise', 'fold', 'call', 'limp'],
+      'postflop': ['postflop', 'post-flop', 'pós-flop', 'flop', 'turn', 'river', 'check', 'bet', 'bluff'],
+      'mental': ['mental', 'psicologia', 'tilt', 'mindset', 'concentração', 'foco', 'emocional'],
+      'torneos': ['torneio', 'tournament', 'mtt', 'sit and go', 'sng', 'knockout', 'bounty'],
+      'cash': ['cash', 'ring', 'nlhe', 'plo', 'omaha', 'holdem']
+    };
+
+    // Verificar palavras-chave no nome da aula primeiro
+    for (const [category, keywords] of Object.entries(categoryKeywords)) {
+      for (const keyword of keywords) {
+        if (classNameNorm.includes(keyword)) {
+          return category;
+        }
+      }
+    }
+
+    // Se não encontrou por palavra-chave, usar o nome do instrutor como categoria
+    // Limpar caracteres especiais e espaços
+    let instructorCategory = instructor
+      .replace(/[^a-zA-Z0-9\s]/g, '') // Remove caracteres especiais
+      .replace(/\s+/g, '_') // Substitui espaços por underscore
+      .toLowerCase()
+      .substring(0, 20); // Limita a 20 caracteres
+
+    // Se ficou vazio, usar categoria padrão
+    if (!instructorCategory || instructorCategory.length < 2) {
+      instructorCategory = 'geral';
+    }
+
+    return instructorCategory;
+  };
+
   // Funções para auto-import de vídeos
   const handleAutoImport = () => {
     setShowAutoImport(true);
@@ -449,7 +490,9 @@ const ClassManagement = () => {
         formData.append('name', classData.name);
         formData.append('instructor', classData.instructor);
         formData.append('date', classData.date);
-        formData.append('category', 'preflop'); // Categoria padrão válida
+        // Gerar categoria baseada no instrutor ou nome da aula
+        const generatedCategory = generateCategoryFromData(classData.instructor, classData.name);
+        formData.append('category', generatedCategory);
         formData.append('priority', '5');
         formData.append('video_type', 'local');
 
@@ -535,7 +578,13 @@ const ClassManagement = () => {
               [fileIndex]: 'error'
             }));
 
-            reject(new Error(errorResponse.error || `HTTP ${xhr.status}: ${xhr.statusText}`));
+            // Verificar se é erro de categoria e mostrar mensagem mais amigável
+            let errorMessage = errorResponse.error || `HTTP ${xhr.status}: ${xhr.statusText}`;
+            if (errorMessage.includes('Data truncated for column \'category\'')) {
+              errorMessage = 'Erro de categoria - tentando criar categoria automaticamente...';
+            }
+
+            reject(new Error(errorMessage));
           } catch (e) {
             console.error(`❌ Erro upload ${fileIndex}:`, xhr.statusText);
 
