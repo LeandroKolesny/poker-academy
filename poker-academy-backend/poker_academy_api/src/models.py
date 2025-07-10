@@ -195,6 +195,7 @@ class StudentLeaks(db.Model):
     month = db.Column(SQLAlchemyEnum(MonthEnum), nullable=False)
     year = db.Column(db.Integer, nullable=False)
     image_url = db.Column(db.Text, nullable=False)
+    improvements = db.Column(db.Text, nullable=True)  # Campo para melhorias sugeridas
     uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -214,6 +215,7 @@ class StudentLeaks(db.Model):
             'month': self.month.value if self.month else None,
             'year': self.year,
             'image_url': self.image_url,
+            'improvements': self.improvements,
             'uploaded_by': self.uploaded_by,
             'uploaded_by_name': self.admin.name if self.admin else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
