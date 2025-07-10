@@ -166,38 +166,29 @@ def delete_class(class_id):
         return jsonify(error="Aula não encontrada"), 404
 
     try:
-        # Importar modelos necessários
-        from src.models import ClassViews, Favorites, PlaylistClasses, UserProgress
-
-        # Excluir registros relacionados em ordem (devido às foreign keys)
         print(f"🗑️ Excluindo registros relacionados à aula {class_id}...")
 
+        # Usar SQL direto para excluir registros relacionados
         # 1. Excluir visualizações da aula
-        class_views = ClassViews.query.filter_by(class_id=class_id).all()
-        for view in class_views:
-            db.session.delete(view)
-        print(f"   ✅ Removidas {len(class_views)} visualizações")
+        result1 = db.session.execute(db.text("DELETE FROM class_views WHERE class_id = :class_id"), {"class_id": class_id})
+        print(f"   ✅ Removidas {result1.rowcount} visualizações")
 
         # 2. Excluir favoritos da aula
-        favorites = Favorites.query.filter_by(class_id=class_id).all()
-        for favorite in favorites:
-            db.session.delete(favorite)
-        print(f"   ✅ Removidos {len(favorites)} favoritos")
+        result2 = db.session.execute(db.text("DELETE FROM favorites WHERE class_id = :class_id"), {"class_id": class_id})
+        print(f"   ✅ Removidos {result2.rowcount} favoritos")
 
         # 3. Excluir aula das playlists
-        playlist_classes = PlaylistClasses.query.filter_by(class_id=class_id).all()
-        for playlist_class in playlist_classes:
-            db.session.delete(playlist_class)
-        print(f"   ✅ Removida de {len(playlist_classes)} playlists")
+        result3 = db.session.execute(db.text("DELETE FROM playlist_classes WHERE class_id = :class_id"), {"class_id": class_id})
+        print(f"   ✅ Removida de {result3.rowcount} playlists")
 
         # 4. Excluir progresso dos usuários
-        user_progress = UserProgress.query.filter_by(class_id=class_id).all()
-        for progress in user_progress:
-            db.session.delete(progress)
-        print(f"   ✅ Removido progresso de {len(user_progress)} usuários")
+        result4 = db.session.execute(db.text("DELETE FROM user_progress WHERE class_id = :class_id"), {"class_id": class_id})
+        print(f"   ✅ Removido progresso de {result4.rowcount} usuários")
 
         # 5. Finalmente, excluir a aula
-        db.session.delete(cls_to_delete)
+        db.session.execute(db.text("DELETE FROM classes WHERE id = :class_id"), {"class_id": class_id})
+
+        # Commit todas as alterações
         db.session.commit()
 
         print(f"✅ Aula {class_id} excluída com sucesso!")
