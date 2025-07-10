@@ -235,7 +235,24 @@ export const authService = {
   }),
 };
 
-export default {
+// Exportar funções básicas da API também
+const api = {
+  get: (url, options = {}) => apiRequest(url, { method: 'GET', ...options }),
+  post: (url, data, options = {}) => apiRequest(url, {
+    method: 'POST',
+    body: data instanceof FormData ? data : JSON.stringify(data),
+    headers: data instanceof FormData ? {} : { 'Content-Type': 'application/json' },
+    ...options
+  }),
+  put: (url, data, options = {}) => apiRequest(url, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'application/json' },
+    ...options
+  }),
+  delete: (url, options = {}) => apiRequest(url, { method: 'DELETE', ...options }),
+
+  // Serviços específicos
   classService,
   userService,
   favoritesService,
@@ -243,3 +260,5 @@ export default {
   authService,
   analyticsService,
 };
+
+export default api;
