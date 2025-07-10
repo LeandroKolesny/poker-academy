@@ -65,6 +65,7 @@ services:
       - "443:443"
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
+      - backend_uploads:/app/uploads:ro
     depends_on:
       - backend
     networks:
