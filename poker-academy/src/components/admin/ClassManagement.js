@@ -335,17 +335,27 @@ const ClassManagement = () => {
 
   // Função para extrair categoria da terceira parte do nome do arquivo
   const extractCategoryFromFileName = (fileName) => {
+    console.log(`🔍 FUNÇÃO extractCategoryFromFileName chamada com: "${fileName}"`);
+
     try {
+      if (!fileName) {
+        console.error(`❌ fileName está vazio ou undefined`);
+        return 'geral';
+      }
+
       // Remover extensão do arquivo
       const nameWithoutExtension = fileName.replace(/\.[^/.]+$/, "");
+      console.log(`🔍 Nome sem extensão: "${nameWithoutExtension}"`);
 
       // Dividir por " - " para obter as partes
       const parts = nameWithoutExtension.split(' - ');
+      console.log(`🔍 Partes divididas:`, parts);
 
       // Verificar se temos pelo menos 3 partes (data - instrutor - categoria)
       if (parts.length >= 3) {
         // A terceira parte é a categoria
         let category = parts[2].trim();
+        console.log(`🔍 Categoria bruta (terceira parte): "${category}"`);
 
         // Limpar e normalizar a categoria
         category = category
@@ -354,15 +364,18 @@ const ClassManagement = () => {
           .replace(/\s+/g, '_') // Substitui espaços por underscore
           .substring(0, 50); // Limita a 50 caracteres
 
+        console.log(`🔍 Categoria após limpeza: "${category}"`);
+
         // Se ficou vazio após limpeza, usar categoria padrão
         if (!category || category.length < 1) {
           category = 'geral';
+          console.log(`⚠️ Categoria ficou vazia, usando padrão: "${category}"`);
         }
 
-        console.log(`📂 Categoria extraída de "${fileName}": "${category}"`);
+        console.log(`📂 Categoria FINAL extraída de "${fileName}": "${category}"`);
         return category;
       } else {
-        console.warn(`⚠️ Formato de arquivo inválido: "${fileName}". Esperado: Data - Instrutor - Categoria`);
+        console.warn(`⚠️ Formato de arquivo inválido: "${fileName}". Esperado: Data - Instrutor - Categoria. Partes encontradas: ${parts.length}`);
         return 'geral';
       }
     } catch (error) {
@@ -487,9 +500,13 @@ const ClassManagement = () => {
         formData.append('name', classData.name);
         formData.append('instructor', classData.instructor);
         formData.append('date', classData.date);
+        // Debug: verificar estrutura dos dados
+        console.log(`🔍 Debug classData:`, classData);
+        console.log(`🔍 Debug fileName:`, classData.fileName);
+
         // Extrair categoria da terceira parte do nome do arquivo
         const extractedCategory = extractCategoryFromFileName(classData.fileName);
-        console.log(`🔍 Debug: fileName="${classData.fileName}", categoria extraída="${extractedCategory}"`);
+        console.log(`🔍 Debug categoria extraída:`, extractedCategory);
         formData.append('category', extractedCategory);
         formData.append('priority', '5');
         formData.append('video_type', 'local');
