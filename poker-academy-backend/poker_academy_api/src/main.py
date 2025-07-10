@@ -18,6 +18,8 @@ from src.routes.auth_routes import auth_bp
 from src.routes.favorites_routes import favorites_bp
 from src.routes.playlist_routes import playlist_bp
 from src.routes.particao_routes import particao_bp
+from src.routes.graphs_routes import graphs_bp
+from src.routes.admin_graphs_routes import admin_graphs_bp
 from src.models import db, Classes
 from src.routes.class_routes import class_bp
 
@@ -56,6 +58,8 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(favorites_bp)
 app.register_blueprint(playlist_bp)
 app.register_blueprint(particao_bp)
+app.register_blueprint(graphs_bp)
+app.register_blueprint(admin_graphs_bp)
 
 @app.route("/")
 def home():
