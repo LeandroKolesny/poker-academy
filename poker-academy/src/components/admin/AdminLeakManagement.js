@@ -218,49 +218,51 @@ const AdminLeakManagement = () => {
                 </div>
             </div>
 
-            {/* Seleção de Aluno */}
-            <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-300 mb-4">Selecionar Aluno</h3>
-                <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
-                    <table className="w-full min-w-full">
-                        <thead className="bg-gray-500">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Nome</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Partição</th>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-600">
-                            {partitions.map(partition => 
-                                partition.students.map(student => (
-                                    <tr 
-                                        key={student.id} 
-                                        className={`hover:bg-gray-600 transition-colors duration-150 ${
-                                            selectedStudent?.id === student.id ? 'bg-red-900 bg-opacity-50' : ''
-                                        }`}
-                                    >
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.name}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.email}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{partition.nome}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                            <button
-                                                className={`px-4 py-2 rounded transition-colors duration-150 ${
-                                                    selectedStudent?.id === student.id 
-                                                        ? 'bg-green-600 hover:bg-green-700 text-white' 
-                                                        : 'bg-red-400 hover:bg-red-500 text-white'
-                                                }`}
-                                                onClick={() => handleStudentSelect(student)}
-                                            >
-                                                {selectedStudent?.id === student.id ? 'Selecionado' : 'Selecionar'}
-                                            </button>
-                                        </td>
+            {/* Tabelas de Alunos por Partição */}
+            <div className="mb-6 space-y-6">
+                {partitions.map(partition => (
+                    <div key={partition.id} className="partition-section">
+                        <h3 className="text-lg font-semibold text-gray-300 mb-4">
+                            Partição {partition.nome} ({partition.students.length} alunos)
+                        </h3>
+                        <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
+                            <table className="w-full min-w-full">
+                                <thead className="bg-gray-500">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Nome</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email</th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Ações</th>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                </thead>
+                                <tbody className="divide-y divide-gray-600">
+                                    {partition.students.map(student => (
+                                        <tr
+                                            key={student.id}
+                                            className={`hover:bg-gray-600 transition-colors duration-150 ${
+                                                selectedStudent?.id === student.id ? 'bg-red-900 bg-opacity-50' : ''
+                                            }`}
+                                        >
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.email}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                <button
+                                                    className={`px-4 py-2 rounded transition-colors duration-150 ${
+                                                        selectedStudent?.id === student.id
+                                                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                                                            : 'bg-red-400 hover:bg-red-500 text-white'
+                                                    }`}
+                                                    onClick={() => handleStudentSelect(student)}
+                                                >
+                                                    {selectedStudent?.id === student.id ? 'Selecionado' : 'Selecionar'}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Análises do Aluno Selecionado */}
