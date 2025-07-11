@@ -234,7 +234,7 @@ def admin_delete_user(user_id):
 
         # Conectar diretamente ao MySQL
         connection = pymysql.connect(
-            host='db',
+            host='172.18.0.2',  # IP fixo do container MySQL
             user='root',
             password='Dojo@Sql159357',
             database='poker_academy',
