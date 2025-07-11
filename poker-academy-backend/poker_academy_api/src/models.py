@@ -170,8 +170,7 @@ class StudentGraphs(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relacionamentos
-    student = db.relationship('Users', backref='graphs')
+    # Relacionamentos removidos para evitar problemas na exclusão
 
     # Constraint única para evitar duplicatas
     __table_args__ = (db.UniqueConstraint('student_id', 'month', 'year', name='unique_student_month_year'),)
@@ -200,9 +199,7 @@ class StudentLeaks(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relacionamentos
-    student = db.relationship('Users', foreign_keys=[student_id], backref='leaks')
-    admin = db.relationship('Users', foreign_keys=[uploaded_by], backref='uploaded_leaks')
+    # Relacionamentos removidos para evitar problemas na exclusão
 
     # Constraint única para evitar duplicatas
     __table_args__ = (db.UniqueConstraint('student_id', 'month', 'year', name='unique_student_leak_month_year'),)
