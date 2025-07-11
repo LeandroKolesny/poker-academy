@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartLine, faUsers, faEye, faCalendarAlt, faImage, faUpload } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import Loading from '../shared/Loading';
+import ImageZoomModal from '../shared/ImageZoomModal';
 
 const AdminStudentGraphs = () => {
     const [partitions, setPartitions] = useState([]);
@@ -13,6 +14,7 @@ const AdminStudentGraphs = () => {
     const [uploading, setUploading] = useState(false);
     const [uploadingMonth, setUploadingMonth] = useState(null);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [zoomModal, setZoomModal] = useState({ isOpen: false, imageUrl: '', altText: '' });
 
     const months = [
         { key: 'jan', name: 'Janeiro' },
@@ -134,6 +136,18 @@ const AdminStudentGraphs = () => {
         event.target.value = '';
     };
 
+    const openZoomModal = (imageUrl, altText) => {
+        setZoomModal({
+            isOpen: true,
+            imageUrl: `https://cardroomgrinders.com.br${imageUrl}`,
+            altText
+        });
+    };
+
+    const closeZoomModal = () => {
+        setZoomModal({ isOpen: false, imageUrl: '', altText: '' });
+    };
+
     if (loading) {
         return <Loading />;
     }
@@ -247,11 +261,11 @@ const AdminStudentGraphs = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                                                 {studentGraphs[month.key] ? (
                                                     <div className="flex justify-center">
-                                                        <img 
+                                                        <img
                                                             src={`https://cardroomgrinders.com.br${studentGraphs[month.key].image_url}`}
                                                             alt={`Gráfico ${month.name}`}
                                                             className="h-16 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                                            onClick={() => window.open(`https://cardroomgrinders.com.br${studentGraphs[month.key].image_url}`, '_blank')}
+                                                            onClick={() => openZoomModal(studentGraphs[month.key].image_url, `Gráfico ${month.name}`)}
                                                         />
                                                     </div>
                                                 ) : (
@@ -314,6 +328,14 @@ const AdminStudentGraphs = () => {
                     <p className="text-gray-500">Escolha um aluno da tabela acima para gerenciar seus gráficos mensais</p>
                 </div>
             )}
+
+            {/* Modal de Zoom */}
+            <ImageZoomModal
+                isOpen={zoomModal.isOpen}
+                onClose={closeZoomModal}
+                imageUrl={zoomModal.imageUrl}
+                altText={zoomModal.altText}
+            />
         </div>
     );
 };

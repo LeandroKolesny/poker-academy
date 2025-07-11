@@ -3,11 +3,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faImage, faCalendarAlt, faEye } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import Loading from '../shared/Loading';
+import ImageZoomModal from '../shared/ImageZoomModal';
 
 const LeakHunting = () => {
     const [leaks, setLeaks] = useState({});
     const [loading, setLoading] = useState(true);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [zoomModal, setZoomModal] = useState({ isOpen: false, imageUrl: '', altText: '' });
 
     const months = [
         { key: 'jan', name: 'Janeiro' },
@@ -39,6 +41,18 @@ const LeakHunting = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const openZoomModal = (imageUrl, altText) => {
+        setZoomModal({
+            isOpen: true,
+            imageUrl: `https://cardroomgrinders.com.br${imageUrl}`,
+            altText
+        });
+    };
+
+    const closeZoomModal = () => {
+        setZoomModal({ isOpen: false, imageUrl: '', altText: '' });
     };
 
     if (loading) {
@@ -92,11 +106,11 @@ const LeakHunting = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                                     {leaks[month.key] && leaks[month.key].image_url ? (
                                         <div className="flex justify-center">
-                                            <img 
+                                            <img
                                                 src={`https://cardroomgrinders.com.br${leaks[month.key].image_url}`}
                                                 alt={`Análise ${month.name}`}
                                                 className="h-16 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                                onClick={() => window.open(`https://cardroomgrinders.com.br${leaks[month.key].image_url}`, '_blank')}
+                                                onClick={() => openZoomModal(leaks[month.key].image_url, `Análise ${month.name}`)}
                                             />
                                         </div>
                                     ) : (
@@ -145,6 +159,14 @@ const LeakHunting = () => {
                     <li>• Foque nas melhorias indicadas para cada mês</li>
                 </ul>
             </div>
+
+            {/* Modal de Zoom */}
+            <ImageZoomModal
+                isOpen={zoomModal.isOpen}
+                onClose={closeZoomModal}
+                imageUrl={zoomModal.imageUrl}
+                altText={zoomModal.altText}
+            />
         </div>
     );
 };

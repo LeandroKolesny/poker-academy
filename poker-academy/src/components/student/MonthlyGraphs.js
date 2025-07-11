@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpload, faImage, faCalendarAlt, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import Loading from '../shared/Loading';
+import ImageZoomModal from '../shared/ImageZoomModal';
 
 const MonthlyGraphs = () => {
     const [graphs, setGraphs] = useState({});
@@ -10,6 +11,7 @@ const MonthlyGraphs = () => {
     const [uploading, setUploading] = useState(false);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [uploadingMonth, setUploadingMonth] = useState(null);
+    const [zoomModal, setZoomModal] = useState({ isOpen: false, imageUrl: '', altText: '' });
 
     const months = [
         { key: 'jan', name: 'Janeiro' },
@@ -109,6 +111,18 @@ const MonthlyGraphs = () => {
         event.target.value = '';
     };
 
+    const openZoomModal = (imageUrl, altText) => {
+        setZoomModal({
+            isOpen: true,
+            imageUrl: `https://cardroomgrinders.com.br${imageUrl}`,
+            altText
+        });
+    };
+
+    const closeZoomModal = () => {
+        setZoomModal({ isOpen: false, imageUrl: '', altText: '' });
+    };
+
     if (loading) {
         return <Loading />;
     }
@@ -160,11 +174,11 @@ const MonthlyGraphs = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                                     {graphs[month.key] ? (
                                         <div className="flex justify-center">
-                                            <img 
+                                            <img
                                                 src={`https://cardroomgrinders.com.br${graphs[month.key].image_url}`}
                                                 alt={`Gráfico ${month.name}`}
                                                 className="h-16 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                                onClick={() => window.open(`https://cardroomgrinders.com.br${graphs[month.key].image_url}`, '_blank')}
+                                                onClick={() => openZoomModal(graphs[month.key].image_url, `Gráfico ${month.name}`)}
                                             />
                                         </div>
                                     ) : (
@@ -230,6 +244,14 @@ const MonthlyGraphs = () => {
                     <li>• Você pode substituir gráficos já enviados</li>
                 </ul>
             </div>
+
+            {/* Modal de Zoom */}
+            <ImageZoomModal
+                isOpen={zoomModal.isOpen}
+                onClose={closeZoomModal}
+                imageUrl={zoomModal.imageUrl}
+                altText={zoomModal.altText}
+            />
         </div>
     );
 };

@@ -162,10 +162,31 @@ def delete_user(user_id):
     user_to_delete = Users.query.get(user_id)
     if not user_to_delete:
         return jsonify(error="Usuário não encontrado"), 404
-    
+
     try:
+        # Importar modelos relacionados
+        from src.models import StudentGraphs, StudentLeaks, Favorites, Playlists
+
+        # Deletar registros relacionados manualmente
+        # 1. Deletar gráficos do aluno
+        StudentGraphs.query.filter_by(student_id=user_id).delete()
+
+        # 2. Deletar análises de leaks do aluno
+        StudentLeaks.query.filter_by(student_id=user_id).delete()
+
+        # 3. Deletar análises de leaks enviadas pelo usuário (se for admin)
+        StudentLeaks.query.filter_by(uploaded_by=user_id).delete()
+
+        # 4. Deletar favoritos
+        Favorites.query.filter_by(user_id=user_id).delete()
+
+        # 5. Deletar playlists
+        Playlists.query.filter_by(user_id=user_id).delete()
+
+        # 6. Finalmente deletar o usuário
         db.session.delete(user_to_delete)
         db.session.commit()
+
         return jsonify(message="Usuário excluído com sucesso"), 200
     except Exception as e:
         db.session.rollback()
