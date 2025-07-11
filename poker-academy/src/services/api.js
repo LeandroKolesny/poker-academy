@@ -179,8 +179,8 @@ export const userService = {
     body: JSON.stringify(userData),
   }),
 
-  // Deletar usuário (admin)
-  delete: (id) => apiRequest(appConfig.API_ENDPOINTS.USER_BY_ID(id), {
+  // Deletar usuário (admin) - usando rota admin que bypassa SQLAlchemy
+  delete: (id) => apiRequest(`/api/admin/delete-user/${id}`, {
     method: 'DELETE',
   }),
 };
