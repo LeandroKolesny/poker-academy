@@ -167,24 +167,43 @@ def delete_user(user_id):
         # Importar modelos relacionados
         from src.models import StudentGraphs, StudentLeaks, Favorites, Playlists
 
-        # Deletar registros relacionados manualmente
+        # Deletar registros relacionados usando SQL direto para evitar problemas de ORM
         # 1. Deletar gráficos do aluno
-        StudentGraphs.query.filter_by(student_id=user_id).delete()
+        db.session.execute(
+            "DELETE FROM student_graphs WHERE student_id = :user_id",
+            {"user_id": user_id}
+        )
 
         # 2. Deletar análises de leaks do aluno
-        StudentLeaks.query.filter_by(student_id=user_id).delete()
+        db.session.execute(
+            "DELETE FROM student_leaks WHERE student_id = :user_id",
+            {"user_id": user_id}
+        )
 
         # 3. Deletar análises de leaks enviadas pelo usuário (se for admin)
-        StudentLeaks.query.filter_by(uploaded_by=user_id).delete()
+        db.session.execute(
+            "DELETE FROM student_leaks WHERE uploaded_by = :user_id",
+            {"user_id": user_id}
+        )
 
         # 4. Deletar favoritos
-        Favorites.query.filter_by(user_id=user_id).delete()
+        db.session.execute(
+            "DELETE FROM favorites WHERE user_id = :user_id",
+            {"user_id": user_id}
+        )
 
         # 5. Deletar playlists
-        Playlists.query.filter_by(user_id=user_id).delete()
+        db.session.execute(
+            "DELETE FROM playlists WHERE user_id = :user_id",
+            {"user_id": user_id}
+        )
 
         # 6. Finalmente deletar o usuário
-        db.session.delete(user_to_delete)
+        db.session.execute(
+            "DELETE FROM users WHERE id = :user_id",
+            {"user_id": user_id}
+        )
+
         db.session.commit()
 
         return jsonify(message="Usuário excluído com sucesso"), 200
