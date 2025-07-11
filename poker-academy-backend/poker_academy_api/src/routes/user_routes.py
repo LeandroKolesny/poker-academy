@@ -167,7 +167,10 @@ def delete_user(user_id):
         # Importar modelos relacionados
         from src.models import StudentGraphs, StudentLeaks, Favorites, Playlists
 
-        # Deletar registros relacionados usando SQL direto para evitar problemas de ORM
+        # Desabilitar foreign key checks temporariamente
+        db.session.execute("SET FOREIGN_KEY_CHECKS = 0")
+
+        # Deletar registros relacionados usando SQL direto
         # 1. Deletar gráficos do aluno
         db.session.execute(
             "DELETE FROM student_graphs WHERE student_id = :user_id",
@@ -203,6 +206,9 @@ def delete_user(user_id):
             "DELETE FROM users WHERE id = :user_id",
             {"user_id": user_id}
         )
+
+        # Reabilitar foreign key checks
+        db.session.execute("SET FOREIGN_KEY_CHECKS = 1")
 
         db.session.commit()
 
