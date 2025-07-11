@@ -159,36 +159,56 @@ def update_user(user_id):
 # Rota para excluir um usuário
 @user_bp.route("/api/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
-    user_to_delete = Users.query.get(user_id)
-    if not user_to_delete:
+    # Verificar se usuário existe primeiro
+    user_exists = db.session.execute(f"SELECT id FROM users WHERE id = {user_id}").fetchone()
+    if not user_exists:
         return jsonify(error="Usuário não encontrado"), 404
 
     try:
-        # Usar uma nova conexão direta para evitar problemas do ORM
-        from sqlalchemy import text
+        # Usar conexão raw do MySQL para evitar completamente o ORM
+        import pymysql
+        from flask import current_app
 
-        # Executar todas as exclusões em uma única transação SQL
-        sql_commands = [
-            "SET FOREIGN_KEY_CHECKS = 0;",
-            f"DELETE FROM user_progress WHERE user_id = {user_id};",
-            f"DELETE FROM student_graphs WHERE student_id = {user_id};",
-            f"DELETE FROM student_leaks WHERE student_id = {user_id};",
-            f"DELETE FROM student_leaks WHERE uploaded_by = {user_id};",
-            f"DELETE FROM favorites WHERE user_id = {user_id};",
-            f"DELETE FROM playlists WHERE user_id = {user_id};",
-            f"DELETE FROM users WHERE id = {user_id};",
-            "SET FOREIGN_KEY_CHECKS = 1;"
-        ]
+        # Configurações do banco
+        config = current_app.config
+        connection = pymysql.connect(
+            host=config.get('MYSQL_HOST', 'db'),
+            user=config.get('MYSQL_USER', 'root'),
+            password=config.get('MYSQL_PASSWORD', 'Dojo@Sql159357'),
+            database=config.get('MYSQL_DATABASE', 'poker_academy'),
+            charset='utf8mb4'
+        )
 
-        # Executar todos os comandos
-        for sql_command in sql_commands:
-            db.session.execute(text(sql_command))
+        cursor = connection.cursor()
 
-        db.session.commit()
+        try:
+            # Desabilitar foreign key checks
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
 
-        return jsonify(message="Usuário excluído com sucesso"), 200
+            # Deletar registros relacionados
+            cursor.execute(f"DELETE FROM user_progress WHERE user_id = {user_id}")
+            cursor.execute(f"DELETE FROM student_graphs WHERE student_id = {user_id}")
+            cursor.execute(f"DELETE FROM student_leaks WHERE student_id = {user_id}")
+            cursor.execute(f"DELETE FROM student_leaks WHERE uploaded_by = {user_id}")
+            cursor.execute(f"DELETE FROM favorites WHERE user_id = {user_id}")
+            cursor.execute(f"DELETE FROM playlists WHERE user_id = {user_id}")
+
+            # Deletar o usuário
+            cursor.execute(f"DELETE FROM users WHERE id = {user_id}")
+
+            # Reabilitar foreign key checks
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
+
+            # Commit das mudanças
+            connection.commit()
+
+            return jsonify(message="Usuário excluído com sucesso"), 200
+
+        finally:
+            cursor.close()
+            connection.close()
+
     except Exception as e:
-        db.session.rollback()
         current_app.logger.error(f"Erro ao excluir usuário {user_id}: {e}", exc_info=True)
         return jsonify(error=f"Erro ao excluir usuário: {str(e)}"), 500
 
