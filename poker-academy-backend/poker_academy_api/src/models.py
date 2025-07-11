@@ -168,7 +168,7 @@ class StudentGraphs(db.Model):
     year = db.Column(db.Integer, nullable=False)
     image_url = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     # Relacionamentos removidos para evitar problemas na exclusão
 
@@ -197,7 +197,7 @@ class StudentLeaks(db.Model):
     improvements = db.Column(db.Text, nullable=True)  # Campo para melhorias sugeridas
     uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     # Relacionamentos removidos para evitar problemas na exclusão
 
