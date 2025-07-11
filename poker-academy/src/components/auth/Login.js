@@ -50,15 +50,15 @@ const Login = () => {
         <div className="flex items-center justify-center mb-8 space-x-4">
           <DojoLogo size={56} className="opacity-95" />
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-white">Poker Academy</h2>
-            <p className="text-gray-300 text-sm mt-1">Bem-vindo de volta</p>
+            <h2 className="text-3xl font-bold text-white">Grinders</h2>
+            <p className="text-gray-300 text-sm mt-1">Bem-vindos de volta</p>
           </div>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="username" className="block text-white font-medium mb-2">
-              Username
+              Username/Email
             </label>
             <input
               type="text"
@@ -66,7 +66,7 @@ const Login = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full bg-gray-500 border border-gray-400 text-white px-4 py-3 rounded-modern focus:ring-2 focus:ring-primary-red focus:border-primary-red transition-all duration-200 placeholder-gray-300"
-              placeholder="Digite seu username"
+              placeholder="Digite seu username ou email"
               required
             />
           </div>
