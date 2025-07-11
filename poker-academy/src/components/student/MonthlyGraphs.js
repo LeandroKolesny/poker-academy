@@ -53,7 +53,7 @@ const MonthlyGraphs = () => {
             return;
         }
 
-        // Validar tamanho (10MB)
+        // Validar tamanho do arquivo (máximo 10MB)
         if (file.size > 10 * 1024 * 1024) {
             alert('Arquivo muito grande. Máximo 10MB.');
             return;
@@ -77,10 +77,12 @@ const MonthlyGraphs = () => {
             if (response.data.success) {
                 alert('Gráfico enviado com sucesso!');
                 fetchGraphs(); // Recarregar gráficos
+            } else {
+                alert('Erro ao enviar gráfico');
             }
         } catch (error) {
             console.error('Erro no upload:', error);
-            alert(error.response?.data?.error || 'Erro ao enviar gráfico');
+            alert(`Erro ao enviar gráfico: ${error.response?.data?.error || error.message}`);
         } finally {
             setUploading(false);
             setUploadingMonth(null);
@@ -101,117 +103,120 @@ const MonthlyGraphs = () => {
     }
 
     return (
-        <div className="monthly-graphs">
-            <div className="page-header">
-                <h2>
-                    <FontAwesomeIcon icon={faChartLine} className="me-2" />
-                    Gráficos Mensais
-                </h2>
-                <p className="text-muted">
-                    Faça upload dos seus gráficos de resultados mensais para acompanhar sua evolução
-                </p>
+        <div className="p-6 text-white min-h-screen">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold text-red-400">Meus Gráficos Mensais</h2>
+                <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium text-gray-300">Ano:</label>
+                    <select 
+                        className="bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                    >
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                </div>
             </div>
 
-            {/* Seletor de Ano */}
-            <div className="year-selector mb-4">
-                <label className="form-label">
-                    <FontAwesomeIcon icon={faCalendarAlt} className="me-2" />
-                    Ano:
-                </label>
-                <select 
-                    className="form-select w-auto d-inline-block ms-2"
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                >
-                    {[2024, 2025, 2026].map(year => (
-                        <option key={year} value={year}>{year}</option>
-                    ))}
-                </select>
-            </div>
-
-            {/* Grid de Meses */}
-            <div className="row">
-                {months.map(month => (
-                    <div key={month.key} className="col-md-6 col-lg-4 mb-4">
-                        <div className="card h-100">
-                            <div className="card-header d-flex justify-content-between align-items-center">
-                                <h6 className="mb-0">{month.name} {selectedYear}</h6>
-                                {graphs[month.key] && (
-                                    <span className="badge bg-success">
-                                        <FontAwesomeIcon icon={faImage} className="me-1" />
-                                        Enviado
-                                    </span>
-                                )}
-                            </div>
-                            <div className="card-body">
-                                {graphs[month.key] ? (
-                                    <div className="graph-preview">
-                                        <img 
-                                            src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api${graphs[month.key].image_url}`}
-                                            alt={`Gráfico ${month.name}`}
-                                            className="img-fluid rounded mb-3"
-                                            style={{ maxHeight: '200px', width: '100%', objectFit: 'contain' }}
-                                        />
-                                        <small className="text-muted">
-                                            Enviado em: {new Date(graphs[month.key].created_at).toLocaleDateString('pt-BR')}
-                                        </small>
+            {/* Tabela de Gráficos */}
+            <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
+                <table className="w-full min-w-full">
+                    <thead className="bg-gray-500">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Mês</th>
+                            <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Gráfico</th>
+                            <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Data de Envio</th>
+                            <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-600">
+                        {months.map(month => (
+                            <tr key={month.key} className="hover:bg-gray-600 transition-colors duration-150">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                                    <div className="flex items-center">
+                                        <span className="font-medium">{month.name}</span>
+                                        {graphs[month.key] && (
+                                            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <FontAwesomeIcon icon={faImage} className="mr-1" />
+                                                Enviado
+                                            </span>
+                                        )}
                                     </div>
-                                ) : (
-                                    <div className="upload-area text-center py-4">
-                                        <FontAwesomeIcon 
-                                            icon={faImage} 
-                                            size="3x" 
-                                            className="text-muted mb-3" 
-                                        />
-                                        <p className="text-muted mb-3">
-                                            Nenhum gráfico enviado para este mês
-                                        </p>
-                                    </div>
-                                )}
-                                
-                                {/* Botão de Upload */}
-                                <div className="upload-button">
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                                    {graphs[month.key] ? (
+                                        <div className="flex justify-center">
+                                            <img 
+                                                src={`https://cardroomgrinders.com.br${graphs[month.key].image_url}`}
+                                                alt={`Gráfico ${month.name}`}
+                                                className="h-16 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                                onClick={() => window.open(`https://cardroomgrinders.com.br${graphs[month.key].image_url}`, '_blank')}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-gray-400">
+                                            <FontAwesomeIcon icon={faChartLine} className="text-2xl mb-1" />
+                                            <p className="text-xs">Não enviado</p>
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
+                                    {graphs[month.key] ? (
+                                        <span className="text-gray-300">
+                                            {new Date(graphs[month.key].created_at).toLocaleDateString('pt-BR')}
+                                        </span>
+                                    ) : (
+                                        <span className="text-gray-500">-</span>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                     <input
                                         type="file"
-                                        id={`file-${month.key}`}
+                                        id={`graph-file-${month.key}`}
                                         accept="image/*"
                                         onChange={(e) => handleFileSelect(month.key, e)}
                                         style={{ display: 'none' }}
                                         disabled={uploading}
                                     />
                                     <label 
-                                        htmlFor={`file-${month.key}`}
-                                        className={`btn ${graphs[month.key] ? 'btn-outline-primary' : 'btn-primary'} w-100 ${uploading ? 'disabled' : ''}`}
+                                        htmlFor={`graph-file-${month.key}`}
+                                        className={`px-3 py-2 rounded cursor-pointer transition-colors ${
+                                            graphs[month.key] 
+                                                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                                                : 'bg-red-400 hover:bg-red-500 text-white'
+                                        } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
                                         {uploadingMonth === month.key ? (
                                             <>
-                                                <div className="spinner-border spinner-border-sm me-2" role="status">
-                                                    <span className="visually-hidden">Enviando...</span>
-                                                </div>
+                                                <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                                 Enviando...
                                             </>
                                         ) : (
                                             <>
-                                                <FontAwesomeIcon icon={faUpload} className="me-2" />
-                                                {graphs[month.key] ? 'Substituir Gráfico' : 'Enviar Gráfico'}
+                                                <FontAwesomeIcon icon={faUpload} className="mr-1" />
+                                                {graphs[month.key] ? 'Substituir' : 'Enviar'}
                                             </>
                                         )}
                                     </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
 
-            {/* Informações */}
-            <div className="alert alert-info mt-4">
-                <h6>📋 Instruções:</h6>
-                <ul className="mb-0">
-                    <li>Formatos aceitos: PNG, JPG, GIF, WebP</li>
-                    <li>Tamanho máximo: 10MB por arquivo</li>
-                    <li>Você pode substituir gráficos já enviados</li>
-                    <li>Os gráficos ficam organizados por mês e ano</li>
+            {/* Instruções */}
+            <div className="mt-6 bg-gray-700 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-red-400 mb-2">Instruções</h3>
+                <ul className="text-gray-300 text-sm space-y-1">
+                    <li>• Envie seus gráficos mensais de resultados</li>
+                    <li>• Formatos aceitos: PNG, JPG, GIF, WebP</li>
+                    <li>• Tamanho máximo: 10MB</li>
+                    <li>• Clique na imagem para visualizar em tamanho completo</li>
+                    <li>• Você pode substituir gráficos já enviados</li>
                 </ul>
             </div>
         </div>

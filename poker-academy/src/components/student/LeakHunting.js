@@ -46,136 +46,105 @@ const LeakHunting = () => {
     }
 
     return (
-        <div className="leak-hunting">
-            <div className="page-header">
-                <h2>
-                    <FontAwesomeIcon icon={faSearch} className="me-2" />
-                    Caça Leaks
-                </h2>
-                <p className="text-muted">
-                    Visualize as análises mensais dos seus leaks feitas pelos instrutores
-                </p>
+        <div className="p-6 text-white min-h-screen">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold text-red-400">Minhas Análises de Leaks</h2>
+                <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium text-gray-300">Ano:</label>
+                    <select 
+                        className="bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                    >
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                </div>
             </div>
 
-            {/* Seletor de Ano */}
-            <div className="year-selector mb-4">
-                <label className="form-label">
-                    <FontAwesomeIcon icon={faCalendarAlt} className="me-2" />
-                    Ano:
-                </label>
-                <select 
-                    className="form-select w-auto d-inline-block ms-2"
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                >
-                    {[2024, 2025, 2026].map(year => (
-                        <option key={year} value={year}>{year}</option>
-                    ))}
-                </select>
-            </div>
-
-            {/* Grid de Meses */}
-            <div className="row">
-                {months.map(month => (
-                    <div key={month.key} className="col-md-6 col-lg-4 mb-4">
-                        <div className="card h-100">
-                            <div className="card-header d-flex justify-content-between align-items-center">
-                                <h6 className="mb-0">{month.name} {selectedYear}</h6>
-                                {leaks[month.key] ? (
-                                    <span className="badge bg-success">
-                                        <FontAwesomeIcon icon={faEye} className="me-1" />
-                                        Disponível
-                                    </span>
-                                ) : (
-                                    <span className="badge bg-secondary">
-                                        Aguardando
-                                    </span>
-                                )}
-                            </div>
-                            <div className="card-body">
-                                {leaks[month.key] ? (
-                                    <div className="leak-analysis">
-                                        <img 
-                                            src={`https://cardroomgrinders.com.br${leaks[month.key].image_url}`}
-                                            alt={`Análise de Leaks ${month.name}`}
-                                            className="img-fluid rounded mb-3"
-                                            style={{ maxHeight: '200px', width: '100%', objectFit: 'contain' }}
-                                        />
-                                        <div className="analysis-info">
-                                            <small className="text-muted d-block">
-                                                <strong>Analisado por:</strong> {leaks[month.key].uploaded_by_name}
-                                            </small>
-                                            <small className="text-muted d-block">
-                                                <strong>Data:</strong> {new Date(leaks[month.key].created_at).toLocaleDateString('pt-BR')}
-                                            </small>
+            {/* Tabela de Análises */}
+            <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
+                <table className="w-full min-w-full">
+                    <thead className="bg-gray-500">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Mês</th>
+                            <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Análise</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Melhorias Sugeridas</th>
+                            <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-600">
+                        {months.map(month => (
+                            <tr key={month.key} className="hover:bg-gray-600 transition-colors duration-150">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                                    <div className="flex items-center">
+                                        <span className="font-medium">{month.name}</span>
+                                        {leaks[month.key] && (
+                                            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <FontAwesomeIcon icon={faImage} className="mr-1" />
+                                                Analisado
+                                            </span>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                                    {leaks[month.key] && leaks[month.key].image_url ? (
+                                        <div className="flex justify-center">
+                                            <img 
+                                                src={`https://cardroomgrinders.com.br${leaks[month.key].image_url}`}
+                                                alt={`Análise ${month.name}`}
+                                                className="h-16 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                                onClick={() => window.open(`https://cardroomgrinders.com.br${leaks[month.key].image_url}`, '_blank')}
+                                            />
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="no-analysis text-center py-4">
-                                        <FontAwesomeIcon 
-                                            icon={faSearch} 
-                                            size="3x" 
-                                            className="text-muted mb-3" 
-                                        />
-                                        <p className="text-muted mb-0">
-                                            Análise ainda não disponível
-                                        </p>
-                                        <small className="text-muted">
-                                            Aguarde o instrutor fazer a análise dos seus leaks
-                                        </small>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                                    ) : (
+                                        <div className="text-center text-gray-400">
+                                            <FontAwesomeIcon icon={faSearch} className="text-2xl mb-1" />
+                                            <p className="text-xs">Não analisado</p>
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-white">
+                                    {leaks[month.key] && leaks[month.key].improvements ? (
+                                        <div className="bg-gray-600 rounded p-3">
+                                            <p className="text-sm text-gray-300 whitespace-pre-wrap">
+                                                {leaks[month.key].improvements}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-gray-400">
+                                            <p className="text-xs">Nenhuma melhoria sugerida</p>
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
+                                    {leaks[month.key] ? (
+                                        <span className="text-gray-300">
+                                            {new Date(leaks[month.key].created_at).toLocaleDateString('pt-BR')}
+                                        </span>
+                                    ) : (
+                                        <span className="text-gray-500">-</span>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
 
             {/* Informações */}
-            <div className="alert alert-info mt-4">
-                <h6>🔍 Sobre o Caça Leaks:</h6>
-                <ul className="mb-0">
-                    <li>As análises são feitas mensalmente pelos instrutores</li>
-                    <li>Cada análise contém stats e observações sobre seu jogo</li>
-                    <li>Use essas informações para identificar pontos de melhoria</li>
-                    <li>As análises ficam disponíveis permanentemente para consulta</li>
+            <div className="mt-6 bg-gray-700 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-red-400 mb-2">Sobre as Análises de Leaks</h3>
+                <ul className="text-gray-300 text-sm space-y-1">
+                    <li>• Aqui você encontra as análises mensais dos seus leaks</li>
+                    <li>• As análises são feitas pelos administradores</li>
+                    <li>• Clique na imagem para visualizar em tamanho completo</li>
+                    <li>• As melhorias sugeridas te ajudarão a evoluir no poker</li>
+                    <li>• Foque nas melhorias indicadas para cada mês</li>
                 </ul>
             </div>
-
-            {/* Estatísticas */}
-            {Object.keys(leaks).length > 0 && (
-                <div className="stats-summary mt-4">
-                    <div className="card">
-                        <div className="card-header">
-                            <h6 className="mb-0">📊 Resumo do Ano {selectedYear}</h6>
-                        </div>
-                        <div className="card-body">
-                            <div className="row text-center">
-                                <div className="col-md-4">
-                                    <div className="stat-item">
-                                        <h4 className="text-success">{Object.keys(leaks).length}</h4>
-                                        <small className="text-muted">Análises Recebidas</small>
-                                    </div>
-                                </div>
-                                <div className="col-md-4">
-                                    <div className="stat-item">
-                                        <h4 className="text-primary">{12 - Object.keys(leaks).length}</h4>
-                                        <small className="text-muted">Análises Pendentes</small>
-                                    </div>
-                                </div>
-                                <div className="col-md-4">
-                                    <div className="stat-item">
-                                        <h4 className="text-info">
-                                            {Math.round((Object.keys(leaks).length / 12) * 100)}%
-                                        </h4>
-                                        <small className="text-muted">Progresso Anual</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
