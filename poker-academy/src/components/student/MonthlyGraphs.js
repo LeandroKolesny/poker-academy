@@ -63,26 +63,37 @@ const MonthlyGraphs = () => {
             setUploading(true);
             setUploadingMonth(month);
 
+            const token = localStorage.getItem('token');
+            console.log('🔐 Token para upload:', token ? 'PRESENTE' : 'AUSENTE');
+
             const formData = new FormData();
             formData.append('file', file);
             formData.append('month', month);
             formData.append('year', selectedYear);
 
-            const response = await api.post('/student/graphs/upload', formData, {
+            const response = await fetch(`https://cardroomgrinders.com.br/api/student/graphs/upload`, {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
             });
 
-            if (response.data.success) {
+            console.log('📤 Response status:', response.status);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Upload sucesso:', data);
                 alert('Gráfico enviado com sucesso!');
-                fetchGraphs(); // Recarregar gráficos
+                fetchGraphs();
             } else {
-                alert('Erro ao enviar gráfico');
+                const errorData = await response.text();
+                console.error('❌ Upload erro:', response.status, errorData);
+                alert(`Erro no upload: ${response.status} - ${errorData}`);
             }
         } catch (error) {
-            console.error('Erro no upload:', error);
-            alert(`Erro ao enviar gráfico: ${error.response?.data?.error || error.message}`);
+            console.error('❌ Erro no upload:', error);
+            alert(`Erro ao enviar gráfico: ${error.message}`);
         } finally {
             setUploading(false);
             setUploadingMonth(null);
