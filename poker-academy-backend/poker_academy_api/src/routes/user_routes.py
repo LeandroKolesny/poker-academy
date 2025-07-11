@@ -159,29 +159,27 @@ def update_user(user_id):
 # Rota para excluir um usuário
 @user_bp.route("/api/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
-    # Verificar se usuário existe primeiro
-    user_exists = db.session.execute(f"SELECT id FROM users WHERE id = {user_id}").fetchone()
-    if not user_exists:
-        return jsonify(error="Usuário não encontrado"), 404
-
     try:
         # Usar conexão raw do MySQL para evitar completamente o ORM
         import pymysql
-        from flask import current_app
 
-        # Configurações do banco
-        config = current_app.config
+        # Configurações do banco - usar valores fixos para garantir funcionamento
         connection = pymysql.connect(
-            host=config.get('MYSQL_HOST', 'db'),
-            user=config.get('MYSQL_USER', 'root'),
-            password=config.get('MYSQL_PASSWORD', 'Dojo@Sql159357'),
-            database=config.get('MYSQL_DATABASE', 'poker_academy'),
+            host='db',
+            user='root',
+            password='Dojo@Sql159357',
+            database='poker_academy',
             charset='utf8mb4'
         )
 
         cursor = connection.cursor()
 
         try:
+            # Verificar se usuário existe
+            cursor.execute(f"SELECT id FROM users WHERE id = {user_id}")
+            if not cursor.fetchone():
+                return jsonify(error="Usuário não encontrado"), 404
+
             # Desabilitar foreign key checks
             cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
 

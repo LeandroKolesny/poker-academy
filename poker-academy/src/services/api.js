@@ -179,8 +179,8 @@ export const userService = {
     body: JSON.stringify(userData),
   }),
 
-  // Deletar usuário (admin) - usando force-delete para evitar problemas de constraint
-  delete: (id) => apiRequest(`/api/users/${id}/force-delete`, {
+  // Deletar usuário (admin)
+  delete: (id) => apiRequest(appConfig.API_ENDPOINTS.USER_BY_ID(id), {
     method: 'DELETE',
   }),
 };
