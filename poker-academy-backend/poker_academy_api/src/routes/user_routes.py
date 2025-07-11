@@ -212,3 +212,58 @@ def delete_user(user_id):
         current_app.logger.error(f"Erro ao excluir usuário {user_id}: {e}", exc_info=True)
         return jsonify(error=f"Erro ao excluir usuário: {str(e)}"), 500
 
+# Nova rota para exclusão que bypassa completamente o ORM
+@user_bp.route("/api/users/<int:user_id>/force-delete", methods=["DELETE"])
+def force_delete_user(user_id):
+    try:
+        # Usar conexão raw do MySQL para evitar completamente o ORM
+        import pymysql
+        from flask import current_app
+
+        # Configurações do banco
+        connection = pymysql.connect(
+            host='db',
+            user='root',
+            password='Dojo@Sql159357',
+            database='poker_academy',
+            charset='utf8mb4'
+        )
+
+        cursor = connection.cursor()
+
+        try:
+            # Verificar se usuário existe
+            cursor.execute(f"SELECT id FROM users WHERE id = {user_id}")
+            if not cursor.fetchone():
+                return jsonify(error="Usuário não encontrado"), 404
+
+            # Desabilitar foreign key checks
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
+
+            # Deletar registros relacionados
+            cursor.execute(f"DELETE FROM user_progress WHERE user_id = {user_id}")
+            cursor.execute(f"DELETE FROM student_graphs WHERE student_id = {user_id}")
+            cursor.execute(f"DELETE FROM student_leaks WHERE student_id = {user_id}")
+            cursor.execute(f"DELETE FROM student_leaks WHERE uploaded_by = {user_id}")
+            cursor.execute(f"DELETE FROM favorites WHERE user_id = {user_id}")
+            cursor.execute(f"DELETE FROM playlists WHERE user_id = {user_id}")
+
+            # Deletar o usuário
+            cursor.execute(f"DELETE FROM users WHERE id = {user_id}")
+
+            # Reabilitar foreign key checks
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
+
+            # Commit das mudanças
+            connection.commit()
+
+            return jsonify(message="Usuário excluído com sucesso"), 200
+
+        finally:
+            cursor.close()
+            connection.close()
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao excluir usuário {user_id}: {e}", exc_info=True)
+        return jsonify(error=f"Erro ao excluir usuário: {str(e)}"), 500
+
