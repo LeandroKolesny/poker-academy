@@ -164,51 +164,25 @@ def delete_user(user_id):
         return jsonify(error="Usuário não encontrado"), 404
 
     try:
-        # Importar modelos relacionados
-        from src.models import StudentGraphs, StudentLeaks, Favorites, Playlists
+        # Usar uma nova conexão direta para evitar problemas do ORM
+        from sqlalchemy import text
 
-        # Desabilitar foreign key checks temporariamente
-        db.session.execute("SET FOREIGN_KEY_CHECKS = 0")
+        # Executar todas as exclusões em uma única transação SQL
+        sql_commands = [
+            "SET FOREIGN_KEY_CHECKS = 0;",
+            f"DELETE FROM user_progress WHERE user_id = {user_id};",
+            f"DELETE FROM student_graphs WHERE student_id = {user_id};",
+            f"DELETE FROM student_leaks WHERE student_id = {user_id};",
+            f"DELETE FROM student_leaks WHERE uploaded_by = {user_id};",
+            f"DELETE FROM favorites WHERE user_id = {user_id};",
+            f"DELETE FROM playlists WHERE user_id = {user_id};",
+            f"DELETE FROM users WHERE id = {user_id};",
+            "SET FOREIGN_KEY_CHECKS = 1;"
+        ]
 
-        # Deletar registros relacionados usando SQL direto
-        # 1. Deletar gráficos do aluno
-        db.session.execute(
-            "DELETE FROM student_graphs WHERE student_id = :user_id",
-            {"user_id": user_id}
-        )
-
-        # 2. Deletar análises de leaks do aluno
-        db.session.execute(
-            "DELETE FROM student_leaks WHERE student_id = :user_id",
-            {"user_id": user_id}
-        )
-
-        # 3. Deletar análises de leaks enviadas pelo usuário (se for admin)
-        db.session.execute(
-            "DELETE FROM student_leaks WHERE uploaded_by = :user_id",
-            {"user_id": user_id}
-        )
-
-        # 4. Deletar favoritos
-        db.session.execute(
-            "DELETE FROM favorites WHERE user_id = :user_id",
-            {"user_id": user_id}
-        )
-
-        # 5. Deletar playlists
-        db.session.execute(
-            "DELETE FROM playlists WHERE user_id = :user_id",
-            {"user_id": user_id}
-        )
-
-        # 6. Finalmente deletar o usuário
-        db.session.execute(
-            "DELETE FROM users WHERE id = :user_id",
-            {"user_id": user_id}
-        )
-
-        # Reabilitar foreign key checks
-        db.session.execute("SET FOREIGN_KEY_CHECKS = 1")
+        # Executar todos os comandos
+        for sql_command in sql_commands:
+            db.session.execute(text(sql_command))
 
         db.session.commit()
 
