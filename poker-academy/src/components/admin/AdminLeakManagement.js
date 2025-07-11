@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faUpload, faImage, faUsers, faCalendarAlt, faEye, faSave } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import Loading from '../shared/Loading';
+import ImageZoomModal from '../shared/ImageZoomModal';
 
 const AdminLeakManagement = () => {
     const [partitions, setPartitions] = useState([]);
@@ -14,6 +15,7 @@ const AdminLeakManagement = () => {
     const [uploadingMonth, setUploadingMonth] = useState(null);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [improvements, setImprovements] = useState({});
+    const [zoomModal, setZoomModal] = useState({ isOpen: false, imageUrl: '', altText: '' });
 
     const months = [
         { key: 'jan', name: 'Janeiro' },
@@ -195,6 +197,18 @@ const AdminLeakManagement = () => {
         }
     };
 
+    const openZoomModal = (imageUrl, altText) => {
+        setZoomModal({
+            isOpen: true,
+            imageUrl: `https://cardroomgrinders.com.br${imageUrl}`,
+            altText
+        });
+    };
+
+    const closeZoomModal = () => {
+        setZoomModal({ isOpen: false, imageUrl: '', altText: '' });
+    };
+
     if (loading) {
         return <Loading />;
     }
@@ -309,11 +323,11 @@ const AdminLeakManagement = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                                                 {studentLeaks[month.key] ? (
                                                     <div className="flex justify-center">
-                                                        <img 
+                                                        <img
                                                             src={`https://cardroomgrinders.com.br${studentLeaks[month.key].image_url}`}
                                                             alt={`Análise ${month.name}`}
                                                             className="h-16 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                                            onClick={() => window.open(`https://cardroomgrinders.com.br${studentLeaks[month.key].image_url}`, '_blank')}
+                                                            onClick={() => openZoomModal(studentLeaks[month.key].image_url, `Análise ${month.name}`)}
                                                         />
                                                     </div>
                                                 ) : (
@@ -401,6 +415,14 @@ const AdminLeakManagement = () => {
                     <p className="text-gray-500">Escolha um aluno da tabela acima para gerenciar suas análises de leaks</p>
                 </div>
             )}
+
+            {/* Modal de Zoom */}
+            <ImageZoomModal
+                isOpen={zoomModal.isOpen}
+                onClose={closeZoomModal}
+                imageUrl={zoomModal.imageUrl}
+                altText={zoomModal.altText}
+            />
         </div>
     );
 };
