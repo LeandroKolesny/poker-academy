@@ -159,55 +159,70 @@ def update_user(user_id):
 # Rota para excluir um usuário
 @user_bp.route("/api/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
+    """Rota para exclusão de usuário que bypassa completamente o SQLAlchemy"""
     try:
-        # Usar conexão raw do MySQL para evitar completamente o ORM
         import pymysql
 
-        # Configurações do banco - usar valores fixos para garantir funcionamento
+        # Conectar diretamente ao MySQL
         connection = pymysql.connect(
             host='db',
             user='root',
             password='Dojo@Sql159357',
             database='poker_academy',
-            charset='utf8mb4'
+            charset='utf8mb4',
+            autocommit=False
         )
 
         cursor = connection.cursor()
 
         try:
             # Verificar se usuário existe
-            cursor.execute(f"SELECT id FROM users WHERE id = {user_id}")
-            if not cursor.fetchone():
+            cursor.execute("SELECT id, name, email FROM users WHERE id = %s", (user_id,))
+            user = cursor.fetchone()
+            if not user:
                 return jsonify(error="Usuário não encontrado"), 404
+
+            # Iniciar transação
+            cursor.execute("START TRANSACTION")
 
             # Desabilitar foreign key checks
             cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
 
-            # Deletar registros relacionados
-            cursor.execute(f"DELETE FROM user_progress WHERE user_id = {user_id}")
-            cursor.execute(f"DELETE FROM student_graphs WHERE student_id = {user_id}")
-            cursor.execute(f"DELETE FROM student_leaks WHERE student_id = {user_id}")
-            cursor.execute(f"DELETE FROM student_leaks WHERE uploaded_by = {user_id}")
-            cursor.execute(f"DELETE FROM favorites WHERE user_id = {user_id}")
-            cursor.execute(f"DELETE FROM playlists WHERE user_id = {user_id}")
+            # Deletar registros relacionados em ordem
+            tables_to_clean = [
+                ("user_progress", "user_id"),
+                ("student_graphs", "student_id"),
+                ("student_leaks", "student_id"),
+                ("student_leaks", "uploaded_by"),
+                ("favorites", "user_id"),
+                ("playlists", "user_id")
+            ]
+
+            for table, column in tables_to_clean:
+                cursor.execute(f"DELETE FROM {table} WHERE {column} = %s", (user_id,))
 
             # Deletar o usuário
-            cursor.execute(f"DELETE FROM users WHERE id = {user_id}")
+            cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
 
             # Reabilitar foreign key checks
             cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
 
-            # Commit das mudanças
-            connection.commit()
+            # Commit da transação
+            cursor.execute("COMMIT")
 
-            return jsonify(message="Usuário excluído com sucesso"), 200
+            return jsonify(message=f"Usuário {user[1]} ({user[2]}) excluído com sucesso"), 200
+
+        except Exception as e:
+            # Rollback em caso de erro
+            cursor.execute("ROLLBACK")
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
+            raise e
 
         finally:
             cursor.close()
             connection.close()
 
     except Exception as e:
-        current_app.logger.error(f"Erro ao excluir usuário {user_id}: {e}", exc_info=True)
         return jsonify(error=f"Erro ao excluir usuário: {str(e)}"), 500
 
 # Nova rota para exclusão que não usa SQLAlchemy de forma alguma
