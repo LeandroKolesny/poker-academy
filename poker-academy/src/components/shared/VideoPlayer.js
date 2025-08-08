@@ -278,6 +278,13 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
                   <source src={videoUrl} type="video/ogg" />
                   Seu navegador não suporta o elemento de vídeo.
                 </video>
+
+          {/* Barra de progresso visual */}
+          {progress && progress.progress > 0 && (
+            <div className="mb-4">
+              <div className="flex justify-between text-sm text-gray-400 mb-1">
+                <span>Progresso da aula</span>
+                <span>{progress.progress}%</span>
               </div>
             </div>
           ) : (
