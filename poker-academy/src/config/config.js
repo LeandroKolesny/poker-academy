@@ -131,6 +131,7 @@ const appConfig = {
 
     // Instrutores
     INSTRUCTORS: '/instructors',
+    INSTRUCTOR_BY_ID: (id) => `/instructors/${id}`,
 
     // Partições
     PARTICOES: '/particoes',

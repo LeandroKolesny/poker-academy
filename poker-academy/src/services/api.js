@@ -185,6 +185,29 @@ export const userService = {
   }),
 };
 
+// Serviços de Instrutores (Admin)
+export const instructorService = {
+  // Listar todos os instrutores (admin)
+  getAll: () => apiRequest(appConfig.API_ENDPOINTS.INSTRUCTORS),
+
+  // Criar novo instrutor (admin)
+  create: (instructorData) => apiRequest(appConfig.API_ENDPOINTS.INSTRUCTORS, {
+    method: 'POST',
+    body: JSON.stringify(instructorData),
+  }),
+
+  // Atualizar instrutor (admin)
+  update: (id, instructorData) => apiRequest(appConfig.API_ENDPOINTS.INSTRUCTOR_BY_ID(id), {
+    method: 'PUT',
+    body: JSON.stringify(instructorData),
+  }),
+
+  // Deletar instrutor (admin)
+  delete: (id) => apiRequest(appConfig.API_ENDPOINTS.INSTRUCTOR_BY_ID(id), {
+    method: 'DELETE',
+  }),
+};
+
 // Serviços de Favoritos
 export const favoritesService = {
   // Listar favoritos do usuário
@@ -294,10 +317,12 @@ const api = {
   // Serviços específicos
   classService,
   userService,
+  instructorService,
   favoritesService,
   playlistService,
   authService,
   analyticsService,
 };
 
+export { apiRequest };
 export default api;
