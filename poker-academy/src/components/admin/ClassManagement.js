@@ -665,19 +665,19 @@ const ClassManagement = () => {
   }
 
   return (
-    <div className="p-6 text-white min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-red-400">Gestão de Aulas</h2>
-        <div className="flex gap-3">
+    <div className="p-4 md:p-6 text-white min-h-screen">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 space-y-4 md:space-y-0">
+        <h2 className="text-xl md:text-2xl font-semibold text-red-400">Gestão de Aulas</h2>
+        <div className="flex flex-col md:flex-row gap-3">
           <button
-            className="bg-red-400 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition-colors duration-150"
+            className="bg-red-400 hover:bg-red-500 text-white font-bold py-3 md:py-2 px-4 rounded transition-colors duration-150 w-full md:w-auto"
             onClick={handleAddClass}
           >
             <FontAwesomeIcon icon={faPlus} className="mr-2" /> Nova Aula
           </button>
 
           <button
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition-colors duration-150"
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 md:py-2 px-4 rounded transition-colors duration-150 w-full md:w-auto"
             onClick={handleAutoImport}
           >
             <FontAwesomeIcon icon={faUpload} className="mr-2" /> Auto Import
@@ -689,7 +689,7 @@ const ClassManagement = () => {
         <input
           type="text"
           placeholder="Buscar aula por nome ou instrutor..."
-          className="w-full bg-gray-500 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-300 placeholder-gray-300"
+          className="w-full bg-gray-500 text-white px-4 py-3 md:py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-300 placeholder-gray-300 text-base"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -700,84 +700,137 @@ const ClassManagement = () => {
       )}
 
       {filteredClasses.length > 0 && (
-        <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
-          <table className="w-full min-w-full">
-            <thead className="bg-gray-500">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Nome</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Instrutor</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Categoria</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Data</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Visualizações</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-600">
-              {filteredClasses.map(cls => (
-                <tr key={cls.id} className="hover:bg-gray-600 transition-colors duration-150">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{cls.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{cls.instructor}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{getCategoryName(cls.category)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{formatDateForDisplay(cls.date)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                    <span className="bg-red-100 text-black px-2 py-1 rounded-full text-xs">
-                      {cls.views || 0} views
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+        <>
+          {/* Tabela para Desktop */}
+          <div className="hidden md:block bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
+            <table className="w-full min-w-full">
+              <thead className="bg-gray-500">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Nome</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Instrutor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Categoria</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Data</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Visualizações</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-600">
+                {filteredClasses.map(cls => (
+                  <tr key={cls.id} className="hover:bg-gray-600 transition-colors duration-150">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{cls.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{cls.instructor}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{getCategoryName(cls.category)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{formatDateForDisplay(cls.date)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <span className="bg-red-100 text-black px-2 py-1 rounded-full text-xs">
+                        {cls.views || 0} views
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        className="text-blue-400 hover:text-blue-300 mr-3 transition-colors duration-150"
+                        onClick={() => handleEditClass(cls)}
+                        title="Editar Aula"
+                      >
+                        <FontAwesomeIcon icon={faEdit} />
+                      </button>
+                      <button
+                        className="text-red-400 hover:text-red-300 transition-colors duration-150"
+                        onClick={() => handleDeleteClass(cls.id)}
+                        title="Excluir Aula"
+                      >
+                        <FontAwesomeIcon icon={faTrash} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Cards para Mobile */}
+          <div className="md:hidden space-y-4">
+            {filteredClasses.map(cls => (
+              <div key={cls.id} className="bg-gray-700 rounded-lg p-4 shadow-lg">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-1">{cls.name}</h3>
+                    <p className="text-gray-300 text-sm">👨‍🏫 {cls.instructor}</p>
+                  </div>
+                  <div className="flex space-x-3">
                     <button
-                      className="text-blue-400 hover:text-blue-300 mr-3 transition-colors duration-150"
+                      className="text-blue-400 hover:text-blue-300 p-2 transition-colors duration-150"
                       onClick={() => handleEditClass(cls)}
                       title="Editar Aula"
                     >
-                      <FontAwesomeIcon icon={faEdit} />
+                      <FontAwesomeIcon icon={faEdit} className="text-lg" />
                     </button>
                     <button
-                      className="text-red-400 hover:text-red-300 transition-colors duration-150"
+                      className="text-red-400 hover:text-red-300 p-2 transition-colors duration-150"
                       onClick={() => handleDeleteClass(cls.id)}
                       title="Excluir Aula"
                     >
-                      <FontAwesomeIcon icon={faTrash} />
+                      <FontAwesomeIcon icon={faTrash} className="text-lg" />
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Categoria:</span>
+                    <span className="text-white">{getCategoryName(cls.category)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Data:</span>
+                    <span className="text-white">{formatDateForDisplay(cls.date)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Visualizações:</span>
+                    <span className="bg-red-100 text-black px-2 py-1 rounded-full text-xs">
+                      {cls.views || 0} views
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-lg shadow-xl transform transition-all">
-            <h3 className="text-xl font-semibold mb-6 text-poker-red">
-              {currentClass ? 'Editar Aula' : 'Adicionar Nova Aula'}
-            </h3>
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-0 md:p-4">
+          <div className="bg-gray-800 w-full h-full md:w-full md:max-w-2xl md:h-auto md:rounded-lg shadow-xl transform transition-all overflow-y-auto">
+            <div className="sticky top-0 bg-gray-800 p-4 md:p-6 border-b border-gray-700 md:border-none">
+              <h3 className="text-lg md:text-xl font-semibold text-red-400">
+                {currentClass ? 'Editar Aula' : 'Adicionar Nova Aula'}
+              </h3>
+            </div>
+            <div className="p-4 md:p-6 md:pt-0">
             
             <form onSubmit={handleSaveClass}>
               {formError && <p className="text-red-500 mb-4 bg-red-900 bg-opacity-50 p-3 rounded">{formError}</p>}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 gap-4 mb-4">
                 <div>
-                  <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-300">Nome da Aula *</label>
+                  <label htmlFor="name" className="block mb-2 text-sm font-medium text-gray-300">Nome da Aula *</label>
                   <input
                     type="text"
                     id="name"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-poker-red"
+                    className="w-full bg-gray-700 text-white px-4 py-3 md:py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400 text-base"
                     required
                     placeholder="Digite o nome da aula"
                   />
                 </div>
                 <div>
-                  <label htmlFor="instructor" className="block mb-1 text-sm font-medium text-gray-300">Instrutor *</label>
+                  <label htmlFor="instructor" className="block mb-2 text-sm font-medium text-gray-300">Instrutor *</label>
                   <select
                     id="instructor"
                     name="instructor"
                     value={formData.instructor}
                     onChange={handleChange}
-                    className="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-poker-red"
+                    className="w-full bg-gray-700 text-white px-4 py-3 md:py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400 text-base"
                     required
                   >
                     <option value="">Selecione um instrutor</option>
@@ -788,23 +841,22 @@ const ClassManagement = () => {
                     ))}
                   </select>
                 </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+
                 <div>
-                  <label htmlFor="date" className="block mb-1 text-sm font-medium text-gray-300">Data</label>
-                  <input 
-                    type="date" 
-                    id="date" 
+                  <label htmlFor="date" className="block mb-2 text-sm font-medium text-gray-300">Data</label>
+                  <input
+                    type="date"
+                    id="date"
                     name="date"
                     value={formData.date}
                     onChange={handleChange}
-                    className="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-poker-red calendar-dark" 
-                    required 
+                    className="w-full bg-gray-700 text-white px-4 py-3 md:py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400 text-base"
+                    required
                   />
                 </div>
+
                 <div>
-                  <label htmlFor="category" className="block mb-1 text-sm font-medium text-gray-300">Categoria (opcional)</label>
+                  <label htmlFor="category" className="block mb-2 text-sm font-medium text-gray-300">Categoria (opcional)</label>
                   <select
                     id="category"
                     name="category"
@@ -962,6 +1014,7 @@ const ClassManagement = () => {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
