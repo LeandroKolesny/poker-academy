@@ -15,7 +15,7 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
   console.log('🎬 VideoPlayer: actualClassData:', actualClassData);
   console.log('🎬 VideoPlayer: actualClassData.instructor:', actualClassData?.instructor);
   console.log('🎬 VideoPlayer: actualClassData.category:', actualClassData?.category);
-  console.log('🎬 VideoPlayer: actualClassData.date:', actualClassData?.date);
+  console.log('🎬 VideoPlayer: actualClassData.created_at:', actualClassData?.created_at);
   console.log('🎬 VideoPlayer: actualClassData.date:', actualClassData?.date);
 
   const [isWatching, setIsWatching] = useState(false);
@@ -240,8 +240,8 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
               </p>
               <p>
                 <span className="text-gray-300">Data:</span> {
-                  actualClassData.date
-                    ? new Date(actualClassData.date).toLocaleDateString('pt-BR')
+                  actualClassData.created_at
+                    ? new Date(actualClassData.created_at).toLocaleDateString('pt-BR')
                     : actualClassData.upload_date
                     ? new Date(actualClassData.upload_date).toLocaleDateString('pt-BR')
                     : 'N/A'

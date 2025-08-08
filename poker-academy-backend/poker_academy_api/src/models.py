@@ -18,8 +18,7 @@ class ClassCategory(enum.Enum):
     preflop = "preflop"
     postflop = "postflop"
     mental = "mental"
-    torneos = "torneos"
-    cash = "cash"
+    icm = "icm"
 
 class VideoType(enum.Enum):
     youtube = "youtube"  # Temporário para compatibilidade

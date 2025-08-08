@@ -1,0 +1,232 @@
+/* VideoPlayer.css - Estilos específicos para mobile */
+
+/* Container do vídeo responsivo */
+.video-container {
+  position: relative;
+  width: 100%;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Container alternativo para mobile com melhor layout */
+@media (max-width: 767px) {
+  .video-container {
+    /* Usar flexbox para melhor controle */
+    display: flex;
+    flex-direction: column;
+    min-height: 300px; /* Altura mínima para mobile */
+  }
+
+  .video-container-mobile {
+    /* Layout específico para mobile */
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 para mobile também */
+    background: #000;
+    border-radius: 8px;
+    overflow: visible; /* Permitir que controles sejam visíveis */
+  }
+}
+
+/* Aspect ratio responsivo */
+.video-aspect-ratio {
+  position: relative;
+  width: 100%;
+}
+
+/* Mobile: aspect ratio 4:3 */
+@media (max-width: 767px) {
+  .video-aspect-ratio {
+    padding-bottom: 75%; /* 4:3 */
+  }
+
+  /* Controles de vídeo nativos - deixar o browser gerenciar */
+  .video-container video {
+    /* Remover customizações que podem causar conflitos */
+  }
+
+  /* Garantir que os controles não sobreponham */
+  .video-container video::-webkit-media-controls-panel {
+    position: relative;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  /* Botão de play inicial maior no mobile */
+  .play-button-mobile {
+    font-size: 4rem !important;
+    padding: 1rem 2rem;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  
+  /* Texto menor no mobile */
+  .video-title-mobile {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  
+  .video-instructor-mobile {
+    font-size: 0.875rem;
+  }
+  
+  /* Barra de progresso mais visível no mobile */
+  .progress-bar-mobile {
+    height: 12px;
+  }
+  
+  /* Container do player com padding menor no mobile */
+  .video-player-container {
+    padding: 0.75rem;
+  }
+}
+
+/* Tablet: aspect ratio 16:10 */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .video-aspect-ratio {
+    padding-bottom: 62.5%; /* 16:10 */
+  }
+}
+
+/* Desktop: aspect ratio 16:9 */
+@media (min-width: 1024px) {
+  .video-aspect-ratio {
+    padding-bottom: 56.25%; /* 16:9 */
+  }
+}
+
+/* Vídeo sempre ocupando todo o container */
+.video-element {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Melhorias específicas para mobile */
+@media (max-width: 767px) {
+  .video-element {
+    /* Garantir que os controles não sobreponham o vídeo */
+    padding-bottom: 50px; /* Espaço para controles */
+    box-sizing: border-box;
+  }
+
+  /* Container com espaço para controles */
+  .video-aspect-ratio {
+    /* Adicionar espaço extra para controles mobile */
+    padding-bottom: calc(75% + 50px); /* 4:3 + espaço para controles */
+  }
+}
+
+/* Melhorar controles nativos do vídeo */
+.video-element::-webkit-media-controls {
+  /* Deixar o browser gerenciar os controles nativamente */
+}
+
+.video-element::-webkit-media-controls-enclosure {
+  /* Garantir que os controles fiquem na posição correta */
+  position: relative;
+}
+
+/* Estilo para loading spinner responsivo */
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+}
+
+@media (max-width: 767px) {
+  .loading-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+/* Estilo para mensagens de erro responsivas */
+.error-message {
+  padding: 1rem;
+  text-align: center;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #fca5a5;
+}
+
+@media (max-width: 767px) {
+  .error-message {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Animações suaves para transições */
+.video-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Otimizações para touch devices */
+@media (hover: none) and (pointer: coarse) {
+  /* Garantir que o vídeo seja touch-friendly */
+  .video-element {
+    /* Permitir que o browser gerencie os controles touch nativamente */
+    touch-action: manipulation;
+  }
+
+  /* Garantir espaçamento adequado para controles */
+  .video-container {
+    /* Adicionar padding inferior para evitar sobreposição */
+    padding-bottom: 10px;
+  }
+
+  /* Remover hover effects em touch devices */
+  .video-player-container button:hover {
+    transform: none;
+  }
+}
+
+/* Suporte para orientação landscape no mobile */
+@media (max-width: 767px) and (orientation: landscape) {
+  .video-aspect-ratio {
+    padding-bottom: 56.25%; /* 16:9 em landscape */
+  }
+  
+  .video-element {
+    max-height: 80vh;
+  }
+}
+
+/* Melhorar visibilidade em telas pequenas */
+@media (max-width: 480px) {
+  .video-title-mobile {
+    font-size: 0.875rem;
+  }
+  
+  .video-instructor-mobile {
+    font-size: 0.75rem;
+  }
+  
+  .play-button-mobile {
+    font-size: 3rem !important;
+    padding: 0.75rem 1.5rem;
+  }
+}
+
+/* Estilo para fullscreen no mobile */
+.video-element:fullscreen {
+  object-fit: contain;
+  background: #000;
+}
+
+.video-element:-webkit-full-screen {
+  object-fit: contain;
+  background: #000;
+}
+
+.video-element:-moz-full-screen {
+  object-fit: contain;
+  background: #000;
+}

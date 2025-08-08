@@ -84,8 +84,7 @@ const History = () => {
       'preflop': '#FF6B6B',
       'postflop': '#4ECDC4',
       'mental': '#45B7D1',
-      'torneos': '#96CEB4',
-      'cash': '#FFEAA7'
+      'icm': '#96CEB4'
     };
     return colors[category] || '#6C5CE7';
   };

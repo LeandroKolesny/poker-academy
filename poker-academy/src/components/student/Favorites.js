@@ -17,11 +17,22 @@ const Favorites = () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await favoritesService.getAll();
-        setFavorites(data);
+        const response = await favoritesService.getAll();
+        const data = response.data || response;
+
+        // Garantir que data é um array e ordenar por data mais recente
+        const favoritesArray = Array.isArray(data) ? data : [];
+        const sortedFavorites = favoritesArray.sort((a, b) => {
+          const dateA = a.date ? new Date(a.date).getTime() : 0;
+          const dateB = b.date ? new Date(b.date).getTime() : 0;
+          return dateB - dateA; // Ordem decrescente (mais recente primeiro)
+        });
+
+        setFavorites(sortedFavorites);
       } catch (e) {
         console.error("Erro ao buscar favoritos:", e);
         setError(e.message);
+        setFavorites([]); // Garantir que favorites seja sempre um array
       } finally {
         setLoading(false);
       }

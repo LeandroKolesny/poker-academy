@@ -201,11 +201,11 @@ const StudentManagement = () => {
   }
 
   return (
-    <div className="p-4 md:p-6 text-white min-h-screen">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 space-y-4 md:space-y-0">
-        <h2 className="text-xl md:text-2xl font-semibold text-red-400">Gestão de Alunos</h2>
+    <div className="p-6 text-white min-h-screen">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold text-red-400">Gestão de Alunos</h2>
         <button
-          className="bg-red-400 hover:bg-red-500 text-white font-bold py-3 md:py-2 px-4 rounded transition-colors duration-150 w-full md:w-auto"
+          className="bg-red-400 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition-colors duration-150"
           onClick={handleAddStudent}
         >
           <FontAwesomeIcon icon={faPlus} className="mr-2" /> Novo Aluno
@@ -216,7 +216,7 @@ const StudentManagement = () => {
         <input
           type="text"
           placeholder="Buscar aluno por nome, username ou email..."
-          className="w-full bg-gray-500 text-white px-4 py-3 md:py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-300 placeholder-gray-300 text-base"
+          className="w-full bg-gray-500 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-300 placeholder-gray-300"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -227,131 +227,76 @@ const StudentManagement = () => {
       )}
 
       {filteredStudents.length > 0 && (
-        <>
-          {/* Tabela para Desktop */}
-          <div className="hidden md:block bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
-            <table className="w-full min-w-full">
-              <thead className="bg-gray-500">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Nome</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Username</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Partição</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Data de Cadastro</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Último Login</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-600">
-                {filteredStudents.map(student => (
-                  <tr key={student.id} className="hover:bg-gray-600 transition-colors duration-150">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.username}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.particao_nome || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.register_date ? formatDateForDisplay(student.register_date) : 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.last_login ? new Date(student.last_login).toLocaleString() : 'Nunca'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        className="text-blue-400 hover:text-blue-300 mr-3 transition-colors duration-150"
-                        onClick={() => handleEditStudent(student)}
-                        title="Editar Aluno"
-                      >
-                        <FontAwesomeIcon icon={faEdit} />
-                      </button>
-                      <button
-                        className="text-red-400 hover:text-red-300 transition-colors duration-150"
-                        onClick={() => handleDeleteStudent(student.id)}
-                        title="Excluir Aluno"
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Cards para Mobile */}
-          <div className="md:hidden space-y-4">
-            {filteredStudents.map(student => (
-              <div key={student.id} className="bg-gray-700 rounded-lg p-4 shadow-lg">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white mb-1">{student.name}</h3>
-                    <p className="text-gray-300 text-sm">@{student.username}</p>
-                  </div>
-                  <div className="flex space-x-3">
+        <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
+          <table className="w-full min-w-full">
+            <thead className="bg-gray-500">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Nome</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Username</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Partição</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Data de Cadastro</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Último Login</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-600">
+              {filteredStudents.map(student => (
+                <tr key={student.id} className="hover:bg-gray-600 transition-colors duration-150">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.username}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.particao_nome || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.register_date ? formatDateForDisplay(student.register_date) : 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.last_login ? new Date(student.last_login).toLocaleString() : 'Nunca'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
-                      className="text-blue-400 hover:text-blue-300 p-2 transition-colors duration-150"
+                      className="text-blue-400 hover:text-blue-300 mr-3 transition-colors duration-150"
                       onClick={() => handleEditStudent(student)}
                       title="Editar Aluno"
                     >
-                      <FontAwesomeIcon icon={faEdit} className="text-lg" />
+                      <FontAwesomeIcon icon={faEdit} />
                     </button>
                     <button
-                      className="text-red-400 hover:text-red-300 p-2 transition-colors duration-150"
+                      className="text-red-400 hover:text-red-300 transition-colors duration-150"
                       onClick={() => handleDeleteStudent(student.id)}
                       title="Excluir Aluno"
                     >
-                      <FontAwesomeIcon icon={faTrash} className="text-lg" />
+                      <FontAwesomeIcon icon={faTrash} />
                     </button>
-                  </div>
-                </div>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Email:</span>
-                    <span className="text-white text-right">{student.email}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Partição:</span>
-                    <span className="text-white">{student.particao_nome || 'N/A'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Cadastro:</span>
-                    <span className="text-white">{student.register_date ? formatDateForDisplay(student.register_date) : 'N/A'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Último Login:</span>
-                    <span className="text-white text-right">{student.last_login ? new Date(student.last_login).toLocaleString() : 'Nunca'}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* Formulário de Aluno Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-0 md:p-4">
-          <div className="bg-gray-800 w-full h-full md:w-full md:max-w-lg md:h-auto md:rounded-lg shadow-xl transform transition-all overflow-y-auto">
-            <div className="sticky top-0 bg-gray-800 p-4 md:p-6 border-b border-gray-700 md:border-none">
-              <h3 className="text-lg md:text-xl font-semibold text-red-400">
-                {currentStudent ? 'Editar Aluno' : 'Adicionar Novo Aluno'}
-              </h3>
-            </div>
-            <div className="p-4 md:p-6 md:pt-0">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-lg shadow-xl transform transition-all">
+            <h3 className="text-xl font-semibold mb-6 text-poker-red">
+              {currentStudent ? 'Editar Aluno' : 'Adicionar Novo Aluno'}
+            </h3>
             
             <form onSubmit={handleSaveStudent}>
               {formError && <p className="text-red-500 mb-4 bg-red-900 bg-opacity-50 p-3 rounded">{formError}</p>}
               <div className="mb-4">
-                <label htmlFor="name" className="block mb-2 text-sm font-medium text-gray-300">Nome Real</label>
+                <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-300">Nome Real</label>
                 <input
                   type="text"
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full bg-gray-700 text-white px-4 py-3 md:py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400 text-base"
+                  className="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-poker-red"
                   required
                 />
               </div>
 
               <div className="mb-4">
-                <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-300">Username</label>
+                <label htmlFor="username" className="block mb-1 text-sm font-medium text-gray-300">Username</label>
                 <input
                   type="text"
                   id="username"
@@ -359,20 +304,20 @@ const StudentManagement = () => {
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="Nome de usuário único (ex: joao_silva)"
-                  className="w-full bg-gray-700 text-white px-4 py-3 md:py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400 text-base"
+                  className="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-poker-red"
                   required
                 />
               </div>
-
+              
               <div className="mb-4">
-                <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-300">Email</label>
+                <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-300">Email</label>
                 <input
                   type="email"
                   id="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full bg-gray-700 text-white px-4 py-3 md:py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400 text-base"
+                  className="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-poker-red"
                   required
                 />
               </div>
@@ -425,23 +370,22 @@ const StudentManagement = () => {
                 </div>
               )}
               
-              <div className="flex flex-col md:flex-row md:justify-end pt-4 border-t border-gray-700 space-y-3 md:space-y-0 md:space-x-2">
-                <button
-                  type="button"
-                  className="w-full md:w-auto bg-gray-600 hover:bg-gray-500 text-gray-200 font-bold py-3 md:py-2 px-4 rounded transition-colors duration-150 order-2 md:order-1"
+              <div className="flex justify-end pt-2 border-t border-gray-700">
+                <button 
+                  type="button" 
+                  className="bg-gray-600 hover:bg-gray-500 text-gray-200 font-bold py-2 px-4 rounded mr-2 transition-colors duration-150"
                   onClick={() => { setShowForm(false); setCurrentStudent(null); }}
                 >
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  className="w-full md:w-auto bg-red-400 hover:bg-red-500 text-white font-bold py-3 md:py-2 px-4 rounded transition-colors duration-150 order-1 md:order-2"
+                <button 
+                  type="submit" 
+                  className="bg-poker-red hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-150"
                 >
                   {currentStudent ? 'Salvar Alterações' : 'Adicionar Aluno'}
                 </button>
               </div>
             </form>
-            </div>
           </div>
         </div>
       )}
