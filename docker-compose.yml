@@ -32,7 +32,11 @@ services:
     restart: unless-stopped
     environment:
       - FLASK_ENV=production
-      - DATABASE_URL=mysql+pymysql://${MYSQL_USER:-poker_user}:${MYSQL_PASSWORD:-poker_pass_2025}@mysql:3306/${MYSQL_DATABASE:-poker_academy}
+      - DB_HOST=mysql
+      - DB_USERNAME=${MYSQL_USER:-poker_user}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-Dojo@Sql159357}
+      - DB_NAME=${MYSQL_DATABASE:-poker_academy}
+      - DB_PORT=3306
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-super-secret-jwt-key-change-in-production}
       - CORS_ORIGINS=http://localhost,http://127.0.0.1,http://frontend
     volumes:
@@ -59,6 +63,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - backend_uploads:/app/uploads:ro
     depends_on:
       - backend
     networks:

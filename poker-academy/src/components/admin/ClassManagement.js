@@ -20,7 +20,7 @@ const ClassManagement = () => {
   const initialFormData = {
     name: '',
     instructor: '',
-    category: '',  // Categoria agora é opcional
+    category: 'preflop',  // Categoria padrão
     date: new Date().toISOString().split('T')[0],
     priority: 5,
     video_path: '',
@@ -38,13 +38,18 @@ const ClassManagement = () => {
   const [importErrors, setImportErrors] = useState([]);
   const [importLoading, setImportLoading] = useState(false);
   const [multiUploadProgress, setMultiUploadProgress] = useState({});
+  const [uploadStatus, setUploadStatus] = useState({}); // Para controlar ícones de sucesso/erro
 
   const fetchClasses = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await classService.getAll();
-      setClasses(data);
+      const response = await classService.getAll();
+      const data = response.data || response; // Compatibilidade com nova estrutura
+      console.log("📊 Resposta do classService:", response);
+      console.log("📊 Dados das aulas:", data);
+      console.log("📊 É array?", Array.isArray(data));
+      setClasses(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error("Erro ao buscar aulas:", e);
       setError(e.message);
@@ -55,8 +60,9 @@ const ClassManagement = () => {
 
   const fetchInstructors = async () => {
     try {
-      const data = await classService.getInstructors();
-      setInstructors(data);
+      const response = await classService.getInstructors();
+      const data = response.data || response; // Compatibilidade com nova estrutura
+      setInstructors(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error("Erro ao buscar instrutores:", e);
     }
@@ -100,7 +106,7 @@ const ClassManagement = () => {
     setFormData({
       name: cls.name || '',
       instructor: cls.instructor || '',
-      category: cls.category || '',  // Categoria pode ser vazia
+      category: cls.category || 'preflop',  // Categoria padrão se vazia
       date: dateValue,
       priority: cls.priority || 5,
       video_path: cls.video_path || '',
@@ -332,6 +338,57 @@ const ClassManagement = () => {
     return categories[category] || category || 'Sem categoria';
   };
 
+  // Função para extrair categoria da terceira parte do nome do arquivo
+  const extractCategoryFromFileName = (fileName) => {
+    console.log(`🔍 FUNÇÃO extractCategoryFromFileName chamada com: "${fileName}"`);
+
+    try {
+      if (!fileName) {
+        console.error(`❌ fileName está vazio ou undefined`);
+        return 'geral';
+      }
+
+      // Remover extensão do arquivo
+      const nameWithoutExtension = fileName.replace(/\.[^/.]+$/, "");
+      console.log(`🔍 Nome sem extensão: "${nameWithoutExtension}"`);
+
+      // Dividir por " - " para obter as partes
+      const parts = nameWithoutExtension.split(' - ');
+      console.log(`🔍 Partes divididas:`, parts);
+
+      // Verificar se temos pelo menos 3 partes (data - instrutor - categoria)
+      if (parts.length >= 3) {
+        // A terceira parte é a categoria
+        let category = parts[2].trim();
+        console.log(`🔍 Categoria bruta (terceira parte): "${category}"`);
+
+        // Limpar e normalizar a categoria
+        category = category
+          .toLowerCase() // Converter para minúsculas
+          .replace(/[^a-zA-Z0-9\s]/g, '') // Remove caracteres especiais
+          .replace(/\s+/g, '_') // Substitui espaços por underscore
+          .substring(0, 50); // Limita a 50 caracteres
+
+        console.log(`🔍 Categoria após limpeza: "${category}"`);
+
+        // Se ficou vazio após limpeza, usar categoria padrão
+        if (!category || category.length < 1) {
+          category = 'geral';
+          console.log(`⚠️ Categoria ficou vazia, usando padrão: "${category}"`);
+        }
+
+        console.log(`📂 Categoria FINAL extraída de "${fileName}": "${category}"`);
+        return category;
+      } else {
+        console.warn(`⚠️ Formato de arquivo inválido: "${fileName}". Esperado: Data - Instrutor - Categoria. Partes encontradas: ${parts.length}`);
+        return 'geral';
+      }
+    } catch (error) {
+      console.error(`❌ Erro ao extrair categoria de "${fileName}":`, error);
+      return 'geral';
+    }
+  };
+
   // Funções para auto-import de vídeos
   const handleAutoImport = () => {
     setShowAutoImport(true);
@@ -436,6 +493,8 @@ const ClassManagement = () => {
     }
 
     setImportLoading(true);
+    setMultiUploadProgress({}); // Limpar progresso anterior
+    setUploadStatus({}); // Limpar status anterior
     const results = [];
 
     for (const classData of parsedClasses) {
@@ -446,7 +505,14 @@ const ClassManagement = () => {
         formData.append('name', classData.name);
         formData.append('instructor', classData.instructor);
         formData.append('date', classData.date);
-        formData.append('category', ''); // Categoria vazia
+        // Debug: verificar estrutura dos dados
+        console.log(`🔍 Debug classData:`, classData);
+        console.log(`🔍 Debug fileName:`, classData.fileName);
+
+        // Extrair categoria da terceira parte do nome do arquivo
+        const extractedCategory = extractCategoryFromFileName(classData.fileName);
+        console.log(`🔍 Debug categoria extraída:`, extractedCategory);
+        formData.append('category', extractedCategory);
         formData.append('priority', '5');
         formData.append('video_type', 'local');
 
@@ -502,18 +568,52 @@ const ClassManagement = () => {
           try {
             const response = JSON.parse(xhr.responseText);
             console.log(`✅ Upload ${fileIndex} concluído:`, response);
+
+            // Definir status de sucesso
+            setUploadStatus(prev => ({
+              ...prev,
+              [fileIndex]: 'success'
+            }));
+
             resolve({ success: true, response });
           } catch (e) {
             console.log(`✅ Upload ${fileIndex} concluído (texto):`, xhr.responseText);
+
+            // Definir status de sucesso
+            setUploadStatus(prev => ({
+              ...prev,
+              [fileIndex]: 'success'
+            }));
+
             resolve({ success: true, response: xhr.responseText });
           }
         } else {
           try {
             const errorResponse = JSON.parse(xhr.responseText);
             console.error(`❌ Erro upload ${fileIndex}:`, errorResponse);
-            reject(new Error(errorResponse.error || `HTTP ${xhr.status}: ${xhr.statusText}`));
+
+            // Definir status de erro
+            setUploadStatus(prev => ({
+              ...prev,
+              [fileIndex]: 'error'
+            }));
+
+            // Verificar se é erro de categoria e mostrar mensagem mais amigável
+            let errorMessage = errorResponse.error || `HTTP ${xhr.status}: ${xhr.statusText}`;
+            if (errorMessage.includes('Data truncated for column \'category\'')) {
+              errorMessage = 'Erro de categoria - tentando criar categoria automaticamente...';
+            }
+
+            reject(new Error(errorMessage));
           } catch (e) {
             console.error(`❌ Erro upload ${fileIndex}:`, xhr.statusText);
+
+            // Definir status de erro
+            setUploadStatus(prev => ({
+              ...prev,
+              [fileIndex]: 'error'
+            }));
+
             reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
           }
         }
@@ -972,12 +1072,28 @@ const ClassManagement = () => {
                             {multiUploadProgress[index] !== undefined && (
                               <div className="mt-3">
                                 <div className="flex justify-between text-sm text-gray-300 mb-1">
-                                  <span>Upload em progresso...</span>
-                                  <span>{multiUploadProgress[index]}%</span>
+                                  <span>
+                                    {uploadStatus[index] === 'success' ? 'Upload concluído!' :
+                                     uploadStatus[index] === 'error' ? 'Erro no upload!' :
+                                     'Upload em progresso...'}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span>{multiUploadProgress[index]}%</span>
+                                    {uploadStatus[index] === 'success' && (
+                                      <i className="fas fa-check-circle text-green-500 text-lg"></i>
+                                    )}
+                                    {uploadStatus[index] === 'error' && (
+                                      <i className="fas fa-times-circle text-red-500 text-lg"></i>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="w-full bg-gray-800 rounded-full h-2">
                                   <div
-                                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                    className={`h-2 rounded-full transition-all duration-300 ${
+                                      uploadStatus[index] === 'success' ? 'bg-green-500' :
+                                      uploadStatus[index] === 'error' ? 'bg-red-500' :
+                                      'bg-blue-500'
+                                    }`}
                                     style={{ width: `${multiUploadProgress[index]}%` }}
                                   ></div>
                                 </div>

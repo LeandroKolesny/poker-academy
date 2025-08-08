@@ -4,7 +4,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUsers, faVideo, faChartBar, faBook,
-  faHeart, faList, faHistory, faSignOutAlt, faKey
+  faHeart, faList, faHistory, faSignOutAlt, faKey,
+  faChartLine, faSearch, faImage
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
 import DojoLogo from './DojoLogo';
@@ -69,6 +70,28 @@ const Sidebar = ({ type }) => {
           <FontAwesomeIcon icon={faChartBar} className="mr-3 w-5 h-5" />
           <span className="font-medium">Analytics</span>
         </div>
+        <div
+          className={`flex items-center px-4 py-3 rounded-modern cursor-pointer transition-all duration-200 ${
+            isActive('/admin/student-graphs')
+              ? 'bg-red-100 text-primary-red border-l-4 border-primary-red'
+              : 'text-white hover:bg-gray-500 hover:text-red-200'
+          }`}
+          onClick={() => navigate('/admin/student-graphs')}
+        >
+          <FontAwesomeIcon icon={faChartLine} className="mr-3 w-5 h-5" />
+          <span className="font-medium">Gráficos dos Alunos</span>
+        </div>
+        <div
+          className={`flex items-center px-4 py-3 rounded-modern cursor-pointer transition-all duration-200 ${
+            isActive('/admin/leak-management')
+              ? 'bg-red-100 text-primary-red border-l-4 border-primary-red'
+              : 'text-white hover:bg-gray-500 hover:text-red-200'
+          }`}
+          onClick={() => navigate('/admin/leak-management')}
+        >
+          <FontAwesomeIcon icon={faSearch} className="mr-3 w-5 h-5" />
+          <span className="font-medium">Caça Leaks</span>
+        </div>
       </div>
     </>
   );
@@ -130,6 +153,28 @@ const Sidebar = ({ type }) => {
         >
           <FontAwesomeIcon icon={faHistory} className="mr-3 w-5 h-5" />
           <span className="font-medium">Histórico</span>
+        </div>
+        <div
+          className={`flex items-center px-4 py-3 rounded-modern cursor-pointer transition-all duration-200 ${
+            isActive('/student/monthly-graphs')
+              ? 'bg-red-100 text-primary-red border-l-4 border-primary-red'
+              : 'text-white hover:bg-gray-500 hover:text-red-200'
+          }`}
+          onClick={() => navigate('/student/monthly-graphs')}
+        >
+          <FontAwesomeIcon icon={faChartLine} className="mr-3 w-5 h-5" />
+          <span className="font-medium">Gráficos Mensais</span>
+        </div>
+        <div
+          className={`flex items-center px-4 py-3 rounded-modern cursor-pointer transition-all duration-200 ${
+            isActive('/student/leak-hunting')
+              ? 'bg-red-100 text-primary-red border-l-4 border-primary-red'
+              : 'text-white hover:bg-gray-500 hover:text-red-200'
+          }`}
+          onClick={() => navigate('/student/leak-hunting')}
+        >
+          <FontAwesomeIcon icon={faSearch} className="mr-3 w-5 h-5" />
+          <span className="font-medium">Caça Leaks</span>
         </div>
         <div
           className={`flex items-center px-4 py-3 rounded-modern cursor-pointer transition-all duration-200 ${

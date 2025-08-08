@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSpinner, faPlay, faRedo } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner, faPlay, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { classService } from '../../services/api';
+import VideoPlayer from '../shared/VideoPlayer';
 
 const History = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Buscar histórico de aulas
   const fetchHistory = async () => {
@@ -26,6 +29,39 @@ const History = () => {
   useEffect(() => {
     fetchHistory();
   }, []);
+
+  // Função para continuar assistindo uma aula
+  const handleContinueWatching = async (classId) => {
+    try {
+      const data = await classService.getById(classId);
+      setSelectedClass(data);
+      setIsModalOpen(true);
+    } catch (e) {
+      console.error("Erro ao buscar detalhes da aula:", e);
+      setError("Não foi possível carregar os detalhes da aula. " + e.message);
+    }
+  };
+
+  // Função para fechar o modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedClass(null);
+  };
+
+  // Função para formatar data
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return 'N/A';
+
+    // Se a data está no formato YYYY-MM-DD, criar Date com timezone local
+    if (typeof dateString === 'string' && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [year, month, day] = dateString.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      return date.toLocaleDateString('pt-BR');
+    }
+
+    // Fallback para outros formatos
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
 
   // Função para formatar data
   const formatLastWatched = (dateString) => {
@@ -124,12 +160,61 @@ const History = () => {
                 <p className="text-xs text-gray-400 mt-1">{item.progress}% completo</p>
               </div>
 
-              <button className="bg-red-400 hover:bg-red-500 text-white py-2 px-4 rounded transition-colors text-sm whitespace-nowrap flex items-center gap-2">
+              <button
+                onClick={() => handleContinueWatching(item.id)}
+                className="bg-red-400 hover:bg-red-500 text-white py-2 px-4 rounded transition-colors text-sm whitespace-nowrap flex items-center gap-2"
+              >
                 <FontAwesomeIcon icon={item.progress === 100 ? faRedo : faPlay} />
                 {item.progress === 100 ? 'Rever Aula' : 'Continuar'}
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal de detalhes da aula */}
+      {isModalOpen && selectedClass && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-2xl shadow-xl transform transition-all relative">
+            <button
+              onClick={closeModal}
+              className="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors"
+              aria-label="Fechar modal"
+            >
+              <FontAwesomeIcon icon={faTimes} size="lg" />
+            </button>
+            <h3 className="text-2xl font-semibold mb-4 text-red-400">{selectedClass.name}</h3>
+            <p className="text-gray-300 mb-1"><span className="font-semibold">Instrutor:</span> {selectedClass.instructor}</p>
+            <p className="text-gray-300 mb-1"><span className="font-semibold">Categoria:</span> {selectedClass.category}</p>
+            <p className="text-gray-300 mb-3"><span className="font-semibold">Data:</span> {formatDateForDisplay(selectedClass.date)}</p>
+
+            {/* Player de vídeo */}
+            <VideoPlayer
+              classData={selectedClass}
+              onViewRegistered={(totalViews) => {
+                console.log(`Visualização registrada. Total: ${totalViews}`);
+                setSelectedClass(prev => ({
+                  ...prev,
+                  views: totalViews
+                }));
+                // Atualizar também no histórico se necessário
+                setHistory(prev => prev.map(item =>
+                  item.id === selectedClass.id
+                    ? { ...item, views: totalViews }
+                    : item
+                ));
+              }}
+            />
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={closeModal}
+                className="bg-gray-600 hover:bg-gray-500 text-gray-200 font-bold py-2 px-4 rounded transition-colors duration-150"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

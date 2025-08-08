@@ -120,17 +120,17 @@ export const AuthProvider = ({ children }) => {
         console.log('Login realizado com sucesso:', data);
         setUser(data.user);
         setIsAuthenticated(true);
-        return true;
+        return { success: true, user: data.user };
       } else {
         setError(data.error || 'Erro ao fazer login');
-        return false;
+        return { success: false, error: data.error };
       }
     } catch (err) {
       console.error('❌ Erro no login:', err);
       console.error('❌ Tipo do erro:', err.name);
       console.error('❌ Mensagem:', err.message);
       setError(`Erro ao conectar com o servidor: ${err.message}`);
-      return false;
+      return { success: false, error: err.message };
     } finally {
       setLoading(false);
     }
@@ -157,7 +157,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const response = await fetch(`${appConfig.API_BASE_URL}${appConfig.API_ENDPOINTS.CHANGE_PASSWORD}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`

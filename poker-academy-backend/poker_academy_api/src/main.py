@@ -8,6 +8,7 @@ from flask import Flask, jsonify, request
 from dotenv import load_dotenv
 from flask_cors import CORS
 from datetime import datetime
+from urllib.parse import quote_plus
 
 project_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(project_folder, ".env"))
@@ -17,22 +18,33 @@ from src.routes.auth_routes import auth_bp
 from src.routes.favorites_routes import favorites_bp
 from src.routes.playlist_routes import playlist_bp
 from src.routes.particao_routes import particao_bp
+from src.routes.graphs_routes import graphs_bp
+from src.routes.admin_graphs_routes import admin_graphs_bp
 from src.models import db, Classes
 from src.routes.class_routes import class_bp
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000", "http://localhost:3001"], supports_credentials=True)
 
-# Configuração do banco de dados MySQL
-DB_USERNAME = os.getenv("DB_USERNAME", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "3306")
-DB_NAME = os.getenv("DB_NAME", "poker_academy")
-SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
+# Configuração do banco de dados
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Configuração do banco de dados MySQL
-app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+if DATABASE_URL:
+    # Usar DATABASE_URL se disponível (Docker/Produção)
+    print(f"🐳 Usando DATABASE_URL: {DATABASE_URL}")
+    app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+else:
+    # MySQL local para desenvolvimento
+    DB_USERNAME = os.getenv("DB_USERNAME", "root")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "")      # Senha vazia por padrão
+    DB_HOST = os.getenv("DB_HOST", "127.0.0.1")     # IP direto
+    DB_PORT = os.getenv("DB_PORT", "3306")
+    DB_NAME = os.getenv("DB_NAME", "poker_academy")
+    connection_string = f"mysql+pymysql://{DB_USERNAME}:{quote_plus(DB_PASSWORD)}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+    print(f"🔧 Usando MySQL local: {connection_string}")
+    app.config["SQLALCHEMY_DATABASE_URI"] = connection_string
+
+SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = SECRET_KEY
 app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500MB max file size
@@ -45,6 +57,8 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(favorites_bp)
 app.register_blueprint(playlist_bp)
 app.register_blueprint(particao_bp)
+app.register_blueprint(graphs_bp)
+app.register_blueprint(admin_graphs_bp)
 
 @app.route("/")
 def home():

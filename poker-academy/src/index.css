@@ -27,7 +27,7 @@ body {
   }
   
   .btn-primary {
-    @apply bg-poker-red text-white py-2 px-4 rounded cursor-pointer inline-block hover:bg-red-800 transition-colors;
+    @apply bg-red-600 text-white py-2 px-4 rounded cursor-pointer inline-block hover:bg-red-800 transition-colors;
   }
   
   .btn-secondary {

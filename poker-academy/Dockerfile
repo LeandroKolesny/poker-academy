@@ -8,8 +8,8 @@ WORKDIR /app
 # Copiar package.json e package-lock.json
 COPY package*.json ./
 
-# Instalar dependências
-RUN npm ci --only=production
+# Instalar dependências (incluindo dev dependencies para build)
+RUN npm ci
 
 # Copiar código fonte
 COPY . .
@@ -33,18 +33,8 @@ COPY nginx.conf /etc/nginx/conf.d/
 # Copiar arquivos buildados do estágio anterior
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# Criar usuário não-root
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx
-
-# Ajustar permissões
-RUN chown -R nginx:nginx /usr/share/nginx/html && \
-    chown -R nginx:nginx /var/cache/nginx && \
-    chown -R nginx:nginx /var/log/nginx && \
-    chown -R nginx:nginx /etc/nginx/conf.d
-
-# Mudar para usuário não-root
-USER nginx
+# Ajustar permissões (usuário nginx já existe na imagem base)
+RUN chown -R nginx:nginx /usr/share/nginx/html
 
 # Expor porta
 EXPOSE 80

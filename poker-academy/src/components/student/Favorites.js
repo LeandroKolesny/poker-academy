@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faHeart } from '@fortawesome/free-solid-svg-icons';
 import { favoritesService, classService } from '../../services/api';
+import VideoPlayer from '../shared/VideoPlayer';
 
 const Favorites = () => {
   const [favorites, setFavorites] = useState([]);
@@ -111,6 +112,46 @@ const Favorites = () => {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal de detalhes da aula */}
+      {isModalOpen && selectedClass && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-2xl shadow-xl transform transition-all relative">
+            <button
+              onClick={closeModal}
+              className="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors"
+              aria-label="Fechar modal"
+            >
+              <FontAwesomeIcon icon={faTimes} size="lg" />
+            </button>
+            <h3 className="text-2xl font-semibold mb-4 text-red-400">{selectedClass.name}</h3>
+            <p className="text-gray-300 mb-1"><span className="font-semibold">Instrutor:</span> {selectedClass.instructor}</p>
+            <p className="text-gray-300 mb-1"><span className="font-semibold">Categoria:</span> {selectedClass.category}</p>
+            <p className="text-gray-300 mb-3"><span className="font-semibold">Data:</span> {formatDateForDisplay(selectedClass.date)}</p>
+
+            {/* Player de vídeo */}
+            <VideoPlayer
+              classData={selectedClass}
+              onViewRegistered={(totalViews) => {
+                console.log(`Visualização registrada. Total: ${totalViews}`);
+                setSelectedClass(prev => ({
+                  ...prev,
+                  views: totalViews
+                }));
+              }}
+            />
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={closeModal}
+                className="bg-gray-600 hover:bg-gray-500 text-gray-200 font-bold py-2 px-4 rounded transition-colors duration-150"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

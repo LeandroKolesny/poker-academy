@@ -164,11 +164,36 @@ def delete_class(class_id):
     cls_to_delete = Classes.query.get(class_id)
     if not cls_to_delete:
         return jsonify(error="Aula não encontrada"), 404
-    
+
     try:
-        db.session.delete(cls_to_delete)
+        print(f"🗑️ Excluindo registros relacionados à aula {class_id}...")
+
+        # Usar SQL direto para excluir registros relacionados
+        # 1. Excluir visualizações da aula
+        result1 = db.session.execute(db.text("DELETE FROM class_views WHERE class_id = :class_id"), {"class_id": class_id})
+        print(f"   ✅ Removidas {result1.rowcount} visualizações")
+
+        # 2. Excluir favoritos da aula
+        result2 = db.session.execute(db.text("DELETE FROM favorites WHERE class_id = :class_id"), {"class_id": class_id})
+        print(f"   ✅ Removidos {result2.rowcount} favoritos")
+
+        # 3. Excluir aula das playlists
+        result3 = db.session.execute(db.text("DELETE FROM playlist_classes WHERE class_id = :class_id"), {"class_id": class_id})
+        print(f"   ✅ Removida de {result3.rowcount} playlists")
+
+        # 4. Excluir progresso dos usuários
+        result4 = db.session.execute(db.text("DELETE FROM user_progress WHERE class_id = :class_id"), {"class_id": class_id})
+        print(f"   ✅ Removido progresso de {result4.rowcount} usuários")
+
+        # 5. Finalmente, excluir a aula
+        db.session.execute(db.text("DELETE FROM classes WHERE id = :class_id"), {"class_id": class_id})
+
+        # Commit todas as alterações
         db.session.commit()
+
+        print(f"✅ Aula {class_id} excluída com sucesso!")
         return jsonify(message="Aula excluída com sucesso"), 200
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Erro ao excluir aula {class_id}: {e}", exc_info=True)
@@ -560,22 +585,55 @@ def upload_complete_class(current_user):
                 return jsonify(error="Formato de data inválido. Use YYYY-MM-DD"), 400
 
         # Criar nova aula no banco
-        # Se categoria estiver vazia, usar um valor padrão
-        final_category = category if category and category.strip() else 'Geral'
+        # SIMPLIFICADO: Sempre usar 'preflop' se categoria não existir no ENUM
 
-        new_class = Classes(
-            name=name,
-            instructor=instructor,
-            date=date_obj,
-            category=final_category,  # Sempre enviar uma categoria válida
-            video_type=video_type,
-            video_path=filename,  # Salvar apenas o nome do arquivo
-            priority=int(priority),
-            views=0
-        )
+        print(f"📂 Categoria recebida: '{category}'")
 
-        db.session.add(new_class)
-        db.session.commit()
+        # Obter valores atuais do ENUM
+        try:
+            result = db.session.execute(db.text("SHOW COLUMNS FROM classes LIKE 'category'")).fetchone()
+            current_enum = result[1]  # Type column
+
+            # Extrair valores atuais do ENUM
+            import re
+            enum_values = re.findall(r"'([^']*)'", current_enum)
+
+            print(f"🔍 Categorias existentes no ENUM: {enum_values}")
+
+            # Verificar se a categoria existe, se não usar 'preflop'
+            if category and category.strip() and category in enum_values:
+                final_category = category
+                print(f"✅ Usando categoria existente: '{final_category}'")
+            else:
+                final_category = 'preflop'
+                print(f"⚠️ Categoria '{category}' não existe ou está vazia. Usando padrão: '{final_category}'")
+
+        except Exception as enum_error:
+            print(f"❌ Erro ao verificar ENUM: {enum_error}")
+            final_category = 'preflop'
+            print(f"🔄 Usando categoria padrão: '{final_category}'")
+
+        # Criar a aula com categoria garantidamente válida
+        try:
+            new_class = Classes(
+                name=name,
+                instructor=instructor,
+                date=date_obj,
+                category=final_category,
+                video_type=video_type,
+                video_path=filename,  # Salvar apenas o nome do arquivo
+                priority=int(priority),
+                views=0
+            )
+            db.session.add(new_class)
+            db.session.commit()
+
+            print(f"✅ Aula criada com sucesso! ID={new_class.id}, Categoria='{final_category}'")
+
+        except Exception as create_error:
+            db.session.rollback()
+            print(f"❌ Erro ao criar aula: {create_error}")
+            raise create_error
 
         print(f"✅ Aula criada com sucesso: ID={new_class.id}")
 
@@ -590,6 +648,32 @@ def upload_complete_class(current_user):
         print(f"❌ Erro no upload completo: {e}")
         current_app.logger.error(f"Erro no upload completo: {e}", exc_info=True)
         return jsonify(error=f"Erro ao criar aula: {str(e)}"), 500
+
+# Rota para obter categorias disponíveis
+@class_bp.route("/api/classes/categories", methods=["GET"])
+@token_required
+def get_categories(current_user):
+    """
+    Retorna todas as categorias disponíveis no ENUM
+    """
+    try:
+        # Obter valores atuais do ENUM
+        result = db.session.execute(db.text("SHOW COLUMNS FROM classes LIKE 'category'")).fetchone()
+        current_enum = result[1]  # Type column
+
+        # Extrair valores atuais do ENUM
+        import re
+        enum_values = re.findall(r"'([^']*)'", current_enum)
+
+        print(f"📋 Categorias disponíveis: {enum_values}")
+
+        return jsonify({
+            'categories': enum_values
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Erro ao buscar categorias: {e}", exc_info=True)
+        return jsonify(error="Erro ao buscar categorias"), 500
 
 # Rota para auto-import de aulas
 @class_bp.route("/api/classes/auto-import", methods=["POST"])

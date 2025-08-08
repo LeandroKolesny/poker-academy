@@ -6,6 +6,8 @@ import Favorites from './Favorites';
 // import Playlists from './Playlists'; // Oculto temporariamente
 import History from './History';
 import ChangePassword from './ChangePassword';
+import MonthlyGraphs from './MonthlyGraphs';
+import LeakHunting from './LeakHunting';
 
 const StudentPanel = () => {
   return (
@@ -19,6 +21,8 @@ const StudentPanel = () => {
             <Route path="favorites" element={<Favorites />} />
             {/* <Route path="playlists" element={<Playlists />} /> */}
             <Route path="history" element={<History />} />
+            <Route path="monthly-graphs" element={<MonthlyGraphs />} />
+            <Route path="leak-hunting" element={<LeakHunting />} />
             <Route path="change-password" element={<ChangePassword />} />
             <Route path="*" element={<Navigate to="catalog" replace />} />
           </Routes>

@@ -156,19 +156,173 @@ def update_user(user_id):
         current_app.logger.error(f"Erro ao atualizar usuário {user_id}: {e}", exc_info=True)
         return jsonify(error=f"Erro ao atualizar usuário: {str(e)}"), 500
 
-# Rota para excluir um usuário
+# Rota para excluir um usuário usando script direto
 @user_bp.route("/api/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
-    user_to_delete = Users.query.get(user_id)
-    if not user_to_delete:
-        return jsonify(error="Usuário não encontrado"), 404
-    
+    """Rota para exclusão de usuário que executa script direto"""
     try:
-        db.session.delete(user_to_delete)
-        db.session.commit()
-        return jsonify(message="Usuário excluído com sucesso"), 200
+        import subprocess
+        import os
+
+        # Verificar se usuário existe primeiro usando query simples
+        try:
+            user = Users.query.get(user_id)
+            if not user:
+                return jsonify(error="Usuário não encontrado"), 404
+            user_name = user.name
+            user_email = user.email
+        except Exception as e:
+            return jsonify(error="Erro ao verificar usuário"), 500
+
+        # Executar script de exclusão direta
+        script_path = "/app/delete_user_direct.py"
+
+        # Verificar se script existe
+        if not os.path.exists(script_path):
+            return jsonify(error="Script de exclusão não encontrado"), 500
+
+        # Executar script
+        result = subprocess.run(
+            ["python3", script_path, str(user_id)],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+
+        if result.returncode == 0:
+            return jsonify(message=f"Usuário {user_name} ({user_email}) excluído com sucesso"), 200
+        else:
+            error_msg = result.stderr or result.stdout or "Erro desconhecido"
+            return jsonify(error=f"Erro ao excluir usuário: {error_msg}"), 500
+
+    except subprocess.TimeoutExpired:
+        return jsonify(error="Timeout na exclusão do usuário"), 500
     except Exception as e:
-        db.session.rollback()
+        return jsonify(error=f"Erro ao excluir usuário: {str(e)}"), 500
+
+# Nova rota para exclusão que não usa SQLAlchemy de forma alguma
+@user_bp.route("/api/admin/delete-user/<int:user_id>", methods=["DELETE"])
+def admin_delete_user(user_id):
+    """Rota especial para exclusão de usuário que bypassa completamente o SQLAlchemy"""
+    try:
+        import pymysql
+
+        # Conectar diretamente ao MySQL
+        connection = pymysql.connect(
+            host='172.18.0.2',  # IP fixo do container MySQL
+            user='root',
+            password='Dojo@Sql159357',
+            database='poker_academy',
+            charset='utf8mb4',
+            autocommit=False
+        )
+
+        cursor = connection.cursor()
+
+        try:
+            # Verificar se usuário existe
+            cursor.execute("SELECT id, name, email FROM users WHERE id = %s", (user_id,))
+            user = cursor.fetchone()
+            if not user:
+                return jsonify(error="Usuário não encontrado"), 404
+
+            # Iniciar transação
+            cursor.execute("START TRANSACTION")
+
+            # Desabilitar foreign key checks
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
+
+            # Deletar registros relacionados em ordem
+            tables_to_clean = [
+                ("user_progress", "user_id"),
+                ("student_graphs", "student_id"),
+                ("student_leaks", "student_id"),
+                ("student_leaks", "uploaded_by"),
+                ("favorites", "user_id"),
+                ("playlists", "user_id")
+            ]
+
+            for table, column in tables_to_clean:
+                cursor.execute(f"DELETE FROM {table} WHERE {column} = %s", (user_id,))
+                print(f"Deletados {cursor.rowcount} registros de {table}")
+
+            # Deletar o usuário
+            cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            print(f"Usuário {user_id} deletado")
+
+            # Reabilitar foreign key checks
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
+
+            # Commit da transação
+            cursor.execute("COMMIT")
+
+            return jsonify(message=f"Usuário {user[1]} ({user[2]}) excluído com sucesso"), 200
+
+        except Exception as e:
+            # Rollback em caso de erro
+            cursor.execute("ROLLBACK")
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
+            raise e
+
+        finally:
+            cursor.close()
+            connection.close()
+
+    except Exception as e:
+        return jsonify(error=f"Erro ao excluir usuário: {str(e)}"), 500
+
+# Nova rota para exclusão que bypassa completamente o ORM
+@user_bp.route("/api/users/<int:user_id>/force-delete", methods=["DELETE"])
+def force_delete_user(user_id):
+    try:
+        # Usar conexão raw do MySQL para evitar completamente o ORM
+        import pymysql
+        from flask import current_app
+
+        # Configurações do banco
+        connection = pymysql.connect(
+            host='db',
+            user='root',
+            password='Dojo@Sql159357',
+            database='poker_academy',
+            charset='utf8mb4'
+        )
+
+        cursor = connection.cursor()
+
+        try:
+            # Verificar se usuário existe
+            cursor.execute(f"SELECT id FROM users WHERE id = {user_id}")
+            if not cursor.fetchone():
+                return jsonify(error="Usuário não encontrado"), 404
+
+            # Desabilitar foreign key checks
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
+
+            # Deletar registros relacionados
+            cursor.execute(f"DELETE FROM user_progress WHERE user_id = {user_id}")
+            cursor.execute(f"DELETE FROM student_graphs WHERE student_id = {user_id}")
+            cursor.execute(f"DELETE FROM student_leaks WHERE student_id = {user_id}")
+            cursor.execute(f"DELETE FROM student_leaks WHERE uploaded_by = {user_id}")
+            cursor.execute(f"DELETE FROM favorites WHERE user_id = {user_id}")
+            cursor.execute(f"DELETE FROM playlists WHERE user_id = {user_id}")
+
+            # Deletar o usuário
+            cursor.execute(f"DELETE FROM users WHERE id = {user_id}")
+
+            # Reabilitar foreign key checks
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
+
+            # Commit das mudanças
+            connection.commit()
+
+            return jsonify(message="Usuário excluído com sucesso"), 200
+
+        finally:
+            cursor.close()
+            connection.close()
+
+    except Exception as e:
         current_app.logger.error(f"Erro ao excluir usuário {user_id}: {e}", exc_info=True)
         return jsonify(error=f"Erro ao excluir usuário: {str(e)}"), 500
 
