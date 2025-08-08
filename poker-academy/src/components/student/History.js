@@ -16,11 +16,22 @@ const History = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await classService.getHistory();
-      setHistory(data);
+      const response = await classService.getHistory();
+      const data = response.data || response;
+
+      // Garantir que data é um array e ordenar por data mais recente
+      const historyArray = Array.isArray(data) ? data : [];
+      const sortedHistory = historyArray.sort((a, b) => {
+        const dateA = a.last_watched ? new Date(a.last_watched).getTime() : 0;
+        const dateB = b.last_watched ? new Date(b.last_watched).getTime() : 0;
+        return dateB - dateA; // Ordem decrescente (mais recente primeiro)
+      });
+
+      setHistory(sortedHistory);
     } catch (e) {
       console.error("Erro ao buscar histórico:", e);
       setError(e.message);
+      setHistory([]); // Garantir que history seja sempre um array
     } finally {
       setLoading(false);
     }

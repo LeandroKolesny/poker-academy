@@ -83,13 +83,20 @@ const Catalog = () => {
     setSelectedClass(null);
   };
 
-  // Filtrar aulas baseado na busca e categoria
-  const filteredClasses = classes.filter(cls => {
-    const matchesSearch = cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cls.instructor.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || cls.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  // Filtrar e ordenar aulas baseado na busca e categoria
+  const filteredClasses = classes
+    .filter(cls => {
+      const matchesSearch = cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           cls.instructor.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = categoryFilter === 'all' || cls.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      // Ordenar por data mais recente primeiro
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateB - dateA; // Ordem decrescente (mais recente primeiro)
+    });
 
   const categories = ['all', 'preflop', 'postflop', 'mental', 'torneos', 'cash'];
 
