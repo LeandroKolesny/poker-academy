@@ -1,6 +1,6 @@
 // src/components/auth/Login.js
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -107,9 +107,12 @@ const Login = () => {
           </div>
 
           <div className="text-center">
-            <a href="#" className="text-gray-400 hover:text-primary-red transition-colors duration-200 text-sm">
+            <Link
+              to="/forgot-password"
+              className="text-gray-400 hover:text-primary-red transition-colors duration-200 text-sm"
+            >
               Esqueceu sua senha?
-            </a>
+            </Link>
           </div>
         </form>
       </div>

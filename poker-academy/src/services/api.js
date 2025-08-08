@@ -27,7 +27,7 @@ export const getToken = () => {
 };
 
 // Função para fazer requisições autenticadas
-const apiRequest = async (endpoint, options = {}) => {
+export const apiRequest = async (endpoint, options = {}) => {
   const token = getToken();
   const url = `${appConfig.API_BASE_URL}${endpoint}`;
 
