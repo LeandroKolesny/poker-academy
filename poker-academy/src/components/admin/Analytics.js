@@ -15,7 +15,9 @@ const Analytics = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const data = await analyticsService.getStats();
+        const response = await analyticsService.getStats();
+        const data = response.data || response; // Compatibilidade com nova estrutura
+        console.log("📊 Dados do Analytics:", data); // Debug
         setAnalyticsData(data);
       } catch (err) {
         console.error('Erro ao carregar estatísticas:', err);

@@ -31,8 +31,10 @@ const StudentManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await userService.getAll();
-      setStudents(data);
+      const response = await userService.getAll();
+      const data = response.data || response; // Compatibilidade com nova estrutura
+      console.log("📊 Dados dos alunos:", data); // Debug
+      setStudents(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error("Erro ao buscar alunos:", e);
       setError(e.message);

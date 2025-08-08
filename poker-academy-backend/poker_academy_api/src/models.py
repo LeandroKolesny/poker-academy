@@ -25,6 +25,20 @@ class VideoType(enum.Enum):
     youtube = "youtube"  # Temporário para compatibilidade
     local = "local"
 
+class MonthEnum(enum.Enum):
+    jan = "jan"
+    fev = "fev"
+    mar = "mar"
+    abr = "abr"
+    mai = "mai"
+    jun = "jun"
+    jul = "jul"
+    ago = "ago"
+    set = "set"
+    out = "out"
+    nov = "nov"
+    dez = "dez"
+
 class Particoes(db.Model):
     __tablename__ = "particoes"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -55,6 +69,7 @@ class Users(db.Model):
     particao_id = db.Column(db.Integer, db.ForeignKey('particoes.id'), nullable=False) # Chave estrangeira obrigatória
     register_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) # Data de registro
     last_login = db.Column(db.DateTime, nullable=True)
+    first_login = db.Column(db.Boolean, nullable=False, default=True) # True = precisa alterar senha no primeiro login
 
     # Relacionamento
     particao_obj = db.relationship('Particoes', backref='users')
@@ -143,5 +158,64 @@ class ClassViews(db.Model):
             'viewed_at': self.viewed_at.isoformat() if self.viewed_at else None,
             'ip_address': self.ip_address,
             'user_agent': self.user_agent
+        }
+
+class StudentGraphs(db.Model):
+    __tablename__ = "student_graphs"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    month = db.Column(SQLAlchemyEnum(MonthEnum), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    image_url = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # Relacionamentos removidos para evitar problemas na exclusão
+
+    # Constraint única para evitar duplicatas
+    __table_args__ = (db.UniqueConstraint('student_id', 'month', 'year', name='unique_student_month_year'),)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'student_id': self.student_id,
+            'student_name': self.student.name if self.student else None,
+            'month': self.month.value if self.month else None,
+            'year': self.year,
+            'image_url': self.image_url,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class StudentLeaks(db.Model):
+    __tablename__ = "student_leaks"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    month = db.Column(SQLAlchemyEnum(MonthEnum), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    image_url = db.Column(db.Text, nullable=True)  # Permitir NULL para quando só há melhorias
+    improvements = db.Column(db.Text, nullable=True)  # Campo para melhorias sugeridas
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # Relacionamentos removidos para evitar problemas na exclusão
+
+    # Constraint única para evitar duplicatas
+    __table_args__ = (db.UniqueConstraint('student_id', 'month', 'year', name='unique_student_leak_month_year'),)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'student_id': self.student_id,
+            'student_name': self.student.name if self.student else None,
+            'month': self.month.value if self.month else None,
+            'year': self.year,
+            'image_url': self.image_url,
+            'improvements': self.improvements,
+            'uploaded_by': self.uploaded_by,
+            'uploaded_by_name': self.admin.name if self.admin else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 

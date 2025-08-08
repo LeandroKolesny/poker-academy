@@ -21,15 +21,18 @@ const Catalog = () => {
       setError(null);
       try {
         // Buscar aulas e favoritos em paralelo
-        const [classesData, favoritesData] = await Promise.all([
+        const [classesResponse, favoritesResponse] = await Promise.all([
           classService.getAll(),
           favoritesService.getAll().catch(() => []) // Se falhar, retorna array vazio
         ]);
 
-        setClasses(classesData);
+        const classesData = classesResponse.data || classesResponse;
+        const favoritesData = favoritesResponse.data || favoritesResponse;
+
+        setClasses(Array.isArray(classesData) ? classesData : []);
 
         // Criar Set com IDs dos favoritos para busca rápida
-        const favoriteIds = new Set(favoritesData.map(fav => fav.id));
+        const favoriteIds = new Set(Array.isArray(favoritesData) ? favoritesData.map(fav => fav.id) : []);
         setFavorites(favoriteIds);
 
       } catch (e) {
