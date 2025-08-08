@@ -3,6 +3,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/auth/Login';
+import ForgotPassword from './components/auth/ForgotPassword';
+import ResetPassword from './components/auth/ResetPassword';
 import AdminPanel from './components/admin/AdminPanel';
 import StudentPanel from './components/student/StudentPanel';
 import Loading from './components/shared/Loading';
@@ -51,8 +53,10 @@ function App() {
       <BrowserRouter>
         <SessionAlert />
         <Routes>
-          {/* Rota de login */}
+          {/* Rotas de autenticação */}
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Rotas do administrador */}
           <Route path="/admin/*" element={
