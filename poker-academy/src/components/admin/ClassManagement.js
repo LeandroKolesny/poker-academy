@@ -873,20 +873,25 @@ const ClassManagement = () => {
                 </div>
               </div>
 
+              {/* Campo de prioridade comentado - não é obrigatório no sistema
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label htmlFor="priority" className="block mb-1 text-sm font-medium text-gray-300">Prioridade (1-10)</label>
-                  <input 
-                    type="number" 
-                    id="priority" 
+                  <input
+                    type="number"
+                    id="priority"
                     name="priority"
-                    min="1" 
-                    max="10" 
+                    min="1"
+                    max="10"
                     value={formData.priority}
                     onChange={handleChange}
                     className="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-poker-red"
                   />
                 </div>
+                <div>
+              */}
+
+              <div className="grid grid-cols-1 gap-4 mb-4">
                 <div>
                   <label className="block mb-1 text-sm font-medium text-gray-300">Tipo de Vídeo</label>
                   <div className="w-full bg-gray-700 text-white px-3 py-2 rounded">
