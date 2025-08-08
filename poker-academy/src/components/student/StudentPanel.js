@@ -13,7 +13,7 @@ const StudentPanel = () => {
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <Sidebar type="student" />
-      <main className="flex-1 ml-64 p-8 overflow-y-auto">
+      <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto pt-16 md:pt-8">
         <div className="max-w-7xl mx-auto">
           <Routes>
             <Route index element={<Navigate to="catalog" replace />} />
