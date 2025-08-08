@@ -1,7 +1,7 @@
 // src/components/admin/StudentManagement.js
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrash, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faTrash, faSpinner, faSort, faSortUp, faSortDown } from '@fortawesome/free-solid-svg-icons';
 import { userService } from '../../services/api';
 import appConfig from '../../config/config';
 
@@ -15,6 +15,10 @@ const StudentManagement = () => {
   const [showForm, setShowForm] = useState(false);
   const [currentStudent, setCurrentStudent] = useState(null); // Para identificar se é edição
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Estado para ordenação
+  const [sortField, setSortField] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' ou 'desc'
 
   // Estado inicial do formulário
   const initialFormData = {
@@ -70,11 +74,57 @@ const StudentManagement = () => {
     fetchParticoes();
   }, []);
 
-  // Filtrar alunos com base no termo de busca
-  const filteredStudents = students.filter(student =>
-    (student.name && student.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (student.username && student.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (student.email && student.email.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Função para lidar com clique na ordenação
+  const handleSort = (field) => {
+    if (sortField === field) {
+      // Se já está ordenando por este campo, inverte a direção
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Se é um novo campo, começa com ordem decrescente (mais recente primeiro)
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  // Função para obter o ícone de ordenação
+  const getSortIcon = (field) => {
+    if (sortField !== field) {
+      return faSort; // Ícone neutro quando não está ordenando por este campo
+    }
+    return sortDirection === 'asc' ? faSortUp : faSortDown;
+  };
+
+  // Função para ordenar os alunos
+  const sortStudents = (students) => {
+    if (!sortField) return students;
+
+    return [...students].sort((a, b) => {
+      let aValue, bValue;
+
+      if (sortField === 'register_date') {
+        // Para datas, converter para timestamp para comparação
+        aValue = a.register_date ? new Date(a.register_date).getTime() : 0;
+        bValue = b.register_date ? new Date(b.register_date).getTime() : 0;
+      } else {
+        aValue = a[sortField] || '';
+        bValue = b[sortField] || '';
+      }
+
+      if (sortDirection === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  };
+
+  // Filtrar e ordenar alunos
+  const filteredAndSortedStudents = sortStudents(
+    students.filter(student =>
+      (student.name && student.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (student.username && student.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (student.email && student.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
   );
 
   // Função para formatar data sem problemas de timezone
@@ -91,6 +141,8 @@ const StudentManagement = () => {
     // Fallback para outros formatos
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
+
+
 
   // Manipular mudanças no formulário
   const handleChange = (e) => {
@@ -222,11 +274,11 @@ const StudentManagement = () => {
         />
       </div>
 
-      {filteredStudents.length === 0 && !loading && (
+      {filteredAndSortedStudents.length === 0 && !loading && (
         <p className="text-gray-400 text-center py-4">Nenhum aluno encontrado.</p>
       )}
 
-      {filteredStudents.length > 0 && (
+      {filteredAndSortedStudents.length > 0 && (
         <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
           <table className="w-full min-w-full">
             <thead className="bg-gray-500">
@@ -235,13 +287,21 @@ const StudentManagement = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Username</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Partição</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Data de Cadastro</th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-gray-400 transition-colors duration-150"
+                  onClick={() => handleSort('register_date')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Data de Cadastro</span>
+                    <FontAwesomeIcon icon={getSortIcon('register_date')} className="text-xs" />
+                  </div>
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Último Login</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-600">
-              {filteredStudents.map(student => (
+              {filteredAndSortedStudents.map(student => (
                 <tr key={student.id} className="hover:bg-gray-600 transition-colors duration-150">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.username}</td>

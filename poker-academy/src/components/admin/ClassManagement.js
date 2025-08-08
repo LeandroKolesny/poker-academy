@@ -2,7 +2,7 @@
 // src/components/admin/ClassManagement.js
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrash, faSpinner, faUpload, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faTrash, faSpinner, faUpload, faTimes, faSort, faSortUp, faSortDown } from '@fortawesome/free-solid-svg-icons';
 import { classService, getToken } from '../../services/api';
 import appConfig from '../../config/config';
 
@@ -16,6 +16,10 @@ const ClassManagement = () => {
   const [showForm, setShowForm] = useState(false);
   const [currentClass, setCurrentClass] = useState(null); // Para identificar se é edição
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Estado para ordenação
+  const [sortField, setSortField] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' ou 'desc'
 
   const initialFormData = {
     name: '',
@@ -73,9 +77,56 @@ const ClassManagement = () => {
     fetchInstructors();
   }, []);
 
-  const filteredClasses = classes.filter(cls =>
-    (cls.name && cls.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (cls.instructor && cls.instructor.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Função para lidar com clique na ordenação
+  const handleSort = (field) => {
+    if (sortField === field) {
+      // Se já está ordenando por este campo, inverte a direção
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Se é um novo campo, começa com ordem decrescente (mais recente primeiro)
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  // Função para obter o ícone de ordenação
+  const getSortIcon = (field) => {
+    if (sortField !== field) {
+      return faSort; // Ícone neutro quando não está ordenando por este campo
+    }
+    return sortDirection === 'asc' ? faSortUp : faSortDown;
+  };
+
+  // Função para ordenar as aulas
+  const sortClasses = (classes) => {
+    if (!sortField) return classes;
+
+    return [...classes].sort((a, b) => {
+      let aValue, bValue;
+
+      if (sortField === 'date') {
+        // Para datas, converter para timestamp para comparação
+        aValue = a.date ? new Date(a.date).getTime() : 0;
+        bValue = b.date ? new Date(b.date).getTime() : 0;
+      } else {
+        aValue = a[sortField] || '';
+        bValue = b[sortField] || '';
+      }
+
+      if (sortDirection === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  };
+
+  // Filtrar e ordenar aulas
+  const filteredAndSortedClasses = sortClasses(
+    classes.filter(cls =>
+      (cls.name && cls.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (cls.instructor && cls.instructor.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
   );
 
   const handleChange = (e) => {
@@ -652,6 +703,8 @@ const ClassManagement = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
+
+
   if (loading) {
     return (
       <div className="p-6 text-white flex justify-center items-center min-h-[300px]">
@@ -696,11 +749,11 @@ const ClassManagement = () => {
         />
       </div>
 
-      {filteredClasses.length === 0 && !loading && (
+      {filteredAndSortedClasses.length === 0 && !loading && (
         <p className="text-gray-400 text-center py-4">Nenhuma aula encontrada.</p>
       )}
 
-      {filteredClasses.length > 0 && (
+      {filteredAndSortedClasses.length > 0 && (
         <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
           <table className="w-full min-w-full">
             <thead className="bg-gray-500">
@@ -708,13 +761,21 @@ const ClassManagement = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Nome</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Instrutor</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Categoria</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Data</th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-gray-400 transition-colors duration-150"
+                  onClick={() => handleSort('date')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Data</span>
+                    <FontAwesomeIcon icon={getSortIcon('date')} className="text-xs" />
+                  </div>
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Visualizações</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-600">
-              {filteredClasses.map(cls => (
+              {filteredAndSortedClasses.map(cls => (
                 <tr key={cls.id} className="hover:bg-gray-600 transition-colors duration-150">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{cls.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{cls.instructor}</td>
