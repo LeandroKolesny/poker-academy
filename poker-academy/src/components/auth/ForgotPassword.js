@@ -18,7 +18,7 @@ const ForgotPassword = () => {
     setError('');
 
     try {
-      const response = await apiRequest('/api/auth/forgot-password', {
+      const response = await apiRequest('/auth/forgot-password', {
         method: 'POST',
         body: JSON.stringify({ email }),
       });
