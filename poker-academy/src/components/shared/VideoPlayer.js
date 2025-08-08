@@ -171,17 +171,17 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
 
     return (
       <div className="my-4">
-        <div className="bg-gray-900 rounded-lg p-4">
+        <div className="bg-gray-900 rounded-lg p-3 md:p-4">
           <div className="mb-4">
-            <h4 className="text-lg font-semibold text-white mb-2">{classData.name}</h4>
+            <h4 className="text-base md:text-lg font-semibold text-white mb-2 leading-tight">{classData.name}</h4>
             <p className="text-gray-400 text-sm mb-4">Instrutor: {classData.instructor}</p>
           </div>
 
-          <div className="aspect-w-16 aspect-h-9 mb-4">
+          <div className="relative w-full mb-4" style={{ paddingBottom: '56.25%' /* 16:9 aspect ratio */ }}>
             <video
               ref={videoRef}
               controls
-              className="w-full h-96 rounded bg-black"
+              className="absolute top-0 left-0 w-full h-full rounded bg-black"
               preload="metadata"
               onLoadedData={handleVideoLoaded}
               onTimeUpdate={handleTimeUpdate}
