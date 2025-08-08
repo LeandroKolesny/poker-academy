@@ -1,6 +1,6 @@
 // src/components/auth/Login.js
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -9,8 +9,35 @@ import DojoLogo from '../shared/DojoLogo';
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const { login, loading, error } = useAuth();
   const navigate = useNavigate();
+
+  // Carregar credenciais salvas ao montar o componente
+  useEffect(() => {
+    const savedCredentials = localStorage.getItem('rememberedCredentials');
+    if (savedCredentials) {
+      try {
+        const { username: savedUsername, password: savedPassword } = JSON.parse(savedCredentials);
+        setUsername(savedUsername || '');
+        setPassword(savedPassword || '');
+        setRememberMe(true);
+      } catch (error) {
+        console.error('Erro ao carregar credenciais salvas:', error);
+        localStorage.removeItem('rememberedCredentials');
+      }
+    }
+  }, []);
+
+  // Função para salvar ou limpar credenciais
+  const handleRememberMe = (checked) => {
+    setRememberMe(checked);
+
+    if (!checked) {
+      // Se desmarcou, limpar credenciais salvas
+      localStorage.removeItem('rememberedCredentials');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,6 +46,18 @@ const Login = () => {
 
     if (loginResult && loginResult.success) {
       console.log('Login bem-sucedido, verificando primeiro login...');
+
+      // Salvar credenciais se "Lembrar senha" estiver marcado
+      if (rememberMe) {
+        const credentialsToSave = {
+          username: username,
+          password: password
+        };
+        localStorage.setItem('rememberedCredentials', JSON.stringify(credentialsToSave));
+      } else {
+        // Limpar credenciais se não estiver marcado
+        localStorage.removeItem('rememberedCredentials');
+      }
 
       // Verificar se é primeiro login
       if (loginResult.user && loginResult.user.first_login) {
@@ -85,6 +124,20 @@ const Login = () => {
             />
           </div>
 
+          {/* Checkbox Lembrar Senha */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              checked={rememberMe}
+              onChange={(e) => handleRememberMe(e.target.checked)}
+              className="h-4 w-4 text-primary-red bg-gray-500 border-gray-400 rounded focus:ring-primary-red focus:ring-2"
+            />
+            <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-300">
+              Lembrar senha
+            </label>
+          </div>
+
           {error && (
             <div className="bg-red-900/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-modern text-sm">
               {error}
@@ -107,9 +160,12 @@ const Login = () => {
           </div>
 
           <div className="text-center">
-            <a href="#" className="text-gray-400 hover:text-primary-red transition-colors duration-200 text-sm">
+            <Link
+              to="/forgot-password"
+              className="text-gray-400 hover:text-primary-red transition-colors duration-200 text-sm"
+            >
               Esqueceu sua senha?
-            </a>
+            </Link>
           </div>
         </form>
       </div>
