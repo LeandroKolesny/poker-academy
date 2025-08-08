@@ -332,8 +332,7 @@ const ClassManagement = () => {
       'preflop': 'Pré-Flop',
       'postflop': 'Pós-Flop',
       'mental': 'Mental Game',
-      'torneos': 'Torneios',
-      'cash': 'Cash Game'
+      'icm': 'ICM'
     };
     return categories[category] || category || 'Sem categoria';
   };
@@ -817,8 +816,7 @@ const ClassManagement = () => {
                     <option value="preflop">Pré-Flop</option>
                     <option value="postflop">Pós-Flop</option>
                     <option value="mental">Mental Game</option>
-                    <option value="torneos">Torneios</option>
-                    <option value="cash">Cash Game</option>
+                    <option value="icm">ICM</option>
                   </select>
                 </div>
               </div>
