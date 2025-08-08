@@ -26,7 +26,6 @@ const ClassManagement = () => {
     instructor: '',
     category: 'preflop',  // Categoria padrão
     date: new Date().toISOString().split('T')[0],
-    priority: 5,
     video_path: '',
     video_type: 'local',
   };
@@ -159,7 +158,6 @@ const ClassManagement = () => {
       instructor: cls.instructor || '',
       category: cls.category || 'preflop',  // Categoria padrão se vazia
       date: dateValue,
-      priority: cls.priority || 5,
       video_path: cls.video_path || '',
       video_type: 'local',
     });
@@ -338,7 +336,7 @@ const ClassManagement = () => {
       category: formData.category,
       video_type: 'local',
       video_path: finalVideoPath,
-      priority: parseInt(formData.priority, 10) || 5,
+      priority: 5, // Valor padrão fixo
     };
 
     console.log('Dados sendo enviados:', classData);
@@ -884,25 +882,10 @@ const ClassManagement = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label htmlFor="priority" className="block mb-1 text-sm font-medium text-gray-300">Prioridade (1-10)</label>
-                  <input 
-                    type="number" 
-                    id="priority" 
-                    name="priority"
-                    min="1" 
-                    max="10" 
-                    value={formData.priority}
-                    onChange={handleChange}
-                    className="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-poker-red"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-300">Tipo de Vídeo</label>
-                  <div className="w-full bg-gray-700 text-white px-3 py-2 rounded">
-                    Vídeo Local (Upload)
-                  </div>
+              <div className="mb-4">
+                <label className="block mb-1 text-sm font-medium text-gray-300">Tipo de Vídeo</label>
+                <div className="w-full bg-gray-700 text-white px-3 py-2 rounded">
+                  Vídeo Local (Upload)
                 </div>
               </div>
               
