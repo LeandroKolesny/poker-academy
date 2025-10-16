@@ -72,17 +72,17 @@ const Analytics = () => {
         icon={faChartBar}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
         {/* Card Total de Alunos */}
         <Card hover className="group">
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">Total de Alunos</h3>
-              <p className="text-4xl font-bold text-red-400">{analyticsData.total_students}</p>
-              <p className="text-sm text-gray-300 mt-1">Estudantes cadastrados</p>
+            <div className="flex-1">
+              <h3 className="text-base md:text-lg font-semibold text-white mb-2">Total de Alunos</h3>
+              <p className="text-2xl md:text-4xl font-bold text-red-400">{analyticsData.total_students}</p>
+              <p className="text-xs md:text-sm text-gray-300 mt-1">Estudantes cadastrados</p>
             </div>
-            <div className="bg-red-400 bg-opacity-20 p-4 rounded-modern group-hover:bg-opacity-30 transition-all duration-200">
-              <FontAwesomeIcon icon={faUsers} className="w-8 h-8 text-red-400" />
+            <div className="bg-red-400 bg-opacity-20 p-3 md:p-4 rounded-modern group-hover:bg-opacity-30 transition-all duration-200">
+              <FontAwesomeIcon icon={faUsers} className="w-6 h-6 md:w-8 md:h-8 text-red-400" />
             </div>
           </div>
         </Card>
@@ -90,13 +90,13 @@ const Analytics = () => {
         {/* Card Total de Aulas */}
         <Card hover className="group">
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">Total de Aulas</h3>
-              <p className="text-4xl font-bold text-blue-300">{analyticsData.total_classes}</p>
-              <p className="text-sm text-gray-300 mt-1">Aulas disponíveis</p>
+            <div className="flex-1">
+              <h3 className="text-base md:text-lg font-semibold text-white mb-2">Total de Aulas</h3>
+              <p className="text-2xl md:text-4xl font-bold text-blue-300">{analyticsData.total_classes}</p>
+              <p className="text-xs md:text-sm text-gray-300 mt-1">Aulas disponíveis</p>
             </div>
-            <div className="bg-blue-300 bg-opacity-20 p-4 rounded-modern group-hover:bg-opacity-30 transition-all duration-200">
-              <FontAwesomeIcon icon={faVideo} className="w-8 h-8 text-blue-300" />
+            <div className="bg-blue-300 bg-opacity-20 p-3 md:p-4 rounded-modern group-hover:bg-opacity-30 transition-all duration-200">
+              <FontAwesomeIcon icon={faVideo} className="w-6 h-6 md:w-8 md:h-8 text-blue-300" />
             </div>
           </div>
         </Card>

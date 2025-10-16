@@ -8,7 +8,7 @@ const DojoLogo = ({ size = 48, className = "" }) => {
   return (
     <div className={`relative ${className}`} style={{ width: size, height: adjustedHeight }}>
       <img
-        src="/logo-dojo-poker.png"
+        src="/logo-dojo-poker_final.png"
         alt="Dojo Poker Logo"
         width={size}
         height={adjustedHeight}
