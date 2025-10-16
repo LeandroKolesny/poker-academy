@@ -329,6 +329,7 @@ const ClassManagement = () => {
   
   const getCategoryName = (category) => {
     const categories = {
+      'iniciantes': 'Iniciantes',
       'preflop': 'Pré-Flop',
       'postflop': 'Pós-Flop',
       'mental': 'Mental Game',
@@ -338,6 +339,39 @@ const ClassManagement = () => {
     return categories[category] || category || 'Sem categoria';
   };
 
+  // Função para normalizar categoria em português para valor do enum
+  const normalizeCategoryName = (categoryName) => {
+    if (!categoryName) return 'preflop';
+
+    const normalized = categoryName.toLowerCase().trim();
+
+    // Mapeamento de nomes em português para valores do enum
+    const categoryMap = {
+      'iniciantes': 'iniciantes',
+      'iniciante': 'iniciantes',
+      'preflop': 'preflop',
+      'pré-flop': 'preflop',
+      'pre-flop': 'preflop',
+      'preflop': 'preflop',
+      'postflop': 'postflop',
+      'pós-flop': 'postflop',
+      'pos-flop': 'postflop',
+      'postflop': 'postflop',
+      'mental': 'mental',
+      'mental game': 'mental',
+      'mentalg': 'mental',
+      'torneos': 'torneos',
+      'torneios': 'torneos',
+      'torneio': 'torneos',
+      'cash': 'cash',
+      'cash game': 'cash',
+      'cashgame': 'cash',
+      'geral': 'preflop'
+    };
+
+    return categoryMap[normalized] || 'preflop';
+  };
+
   // Função para extrair categoria da terceira parte do nome do arquivo
   const extractCategoryFromFileName = (fileName) => {
     console.log(`🔍 FUNÇÃO extractCategoryFromFileName chamada com: "${fileName}"`);
@@ -345,7 +379,7 @@ const ClassManagement = () => {
     try {
       if (!fileName) {
         console.error(`❌ fileName está vazio ou undefined`);
-        return 'geral';
+        return 'preflop';
       }
 
       // Remover extensão do arquivo
@@ -362,30 +396,19 @@ const ClassManagement = () => {
         let category = parts[2].trim();
         console.log(`🔍 Categoria bruta (terceira parte): "${category}"`);
 
-        // Limpar e normalizar a categoria
-        category = category
-          .toLowerCase() // Converter para minúsculas
-          .replace(/[^a-zA-Z0-9\s]/g, '') // Remove caracteres especiais
-          .replace(/\s+/g, '_') // Substitui espaços por underscore
-          .substring(0, 50); // Limita a 50 caracteres
-
-        console.log(`🔍 Categoria após limpeza: "${category}"`);
-
-        // Se ficou vazio após limpeza, usar categoria padrão
-        if (!category || category.length < 1) {
-          category = 'geral';
-          console.log(`⚠️ Categoria ficou vazia, usando padrão: "${category}"`);
-        }
+        // Normalizar a categoria
+        category = normalizeCategoryName(category);
+        console.log(`🔍 Categoria após normalização: "${category}"`);
 
         console.log(`📂 Categoria FINAL extraída de "${fileName}": "${category}"`);
         return category;
       } else {
         console.warn(`⚠️ Formato de arquivo inválido: "${fileName}". Esperado: Data - Instrutor - Categoria. Partes encontradas: ${parts.length}`);
-        return 'geral';
+        return 'preflop';
       }
     } catch (error) {
       console.error(`❌ Erro ao extrair categoria de "${fileName}":`, error);
-      return 'geral';
+      return 'preflop';
     }
   };
 
@@ -814,6 +837,7 @@ const ClassManagement = () => {
                     className="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-poker-red"
                   >
                     <option value="">Sem categoria</option>
+                    <option value="iniciantes">Iniciantes</option>
                     <option value="preflop">Pré-Flop</option>
                     <option value="postflop">Pós-Flop</option>
                     <option value="mental">Mental Game</option>

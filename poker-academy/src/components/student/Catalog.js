@@ -91,11 +91,12 @@ const Catalog = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ['all', 'preflop', 'postflop', 'mental', 'torneos', 'cash'];
+  const categories = ['all', 'iniciantes', 'preflop', 'postflop', 'mental', 'torneos', 'cash'];
 
   const getCategoryDisplayName = (category) => {
     const categoryNames = {
       'all': 'Todas as Categorias',
+      'iniciantes': 'Iniciantes',
       'preflop': 'Pré-Flop',
       'postflop': 'Pós-Flop',
       'mental': 'Mental Game',

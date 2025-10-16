@@ -27,6 +27,39 @@ print(f"Pasta de upload: {UPLOAD_FOLDER}")
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def normalize_category(category_name):
+    """
+    Normaliza nomes de categoria em português para valores do enum
+    """
+    if not category_name:
+        return 'preflop'
+
+    normalized = category_name.lower().strip()
+
+    # Mapeamento de nomes em português para valores do enum
+    category_map = {
+        'iniciantes': 'iniciantes',
+        'iniciante': 'iniciantes',
+        'preflop': 'preflop',
+        'pré-flop': 'preflop',
+        'pre-flop': 'preflop',
+        'postflop': 'postflop',
+        'pós-flop': 'postflop',
+        'pos-flop': 'postflop',
+        'mental': 'mental',
+        'mental game': 'mental',
+        'mentalg': 'mental',
+        'torneos': 'torneos',
+        'torneios': 'torneos',
+        'torneio': 'torneos',
+        'cash': 'cash',
+        'cash game': 'cash',
+        'cashgame': 'cash',
+        'geral': 'preflop'
+    }
+
+    return category_map.get(normalized, 'preflop')
+
 # Rota de teste sem autenticação
 @class_bp.route("/api/test", methods=["GET"])
 def test_route():
@@ -585,33 +618,12 @@ def upload_complete_class(current_user):
                 return jsonify(error="Formato de data inválido. Use YYYY-MM-DD"), 400
 
         # Criar nova aula no banco
-        # SIMPLIFICADO: Sempre usar 'preflop' se categoria não existir no ENUM
-
+        # Normalizar categoria recebida
         print(f"📂 Categoria recebida: '{category}'")
 
-        # Obter valores atuais do ENUM
-        try:
-            result = db.session.execute(db.text("SHOW COLUMNS FROM classes LIKE 'category'")).fetchone()
-            current_enum = result[1]  # Type column
-
-            # Extrair valores atuais do ENUM
-            import re
-            enum_values = re.findall(r"'([^']*)'", current_enum)
-
-            print(f"🔍 Categorias existentes no ENUM: {enum_values}")
-
-            # Verificar se a categoria existe, se não usar 'preflop'
-            if category and category.strip() and category in enum_values:
-                final_category = category
-                print(f"✅ Usando categoria existente: '{final_category}'")
-            else:
-                final_category = 'preflop'
-                print(f"⚠️ Categoria '{category}' não existe ou está vazia. Usando padrão: '{final_category}'")
-
-        except Exception as enum_error:
-            print(f"❌ Erro ao verificar ENUM: {enum_error}")
-            final_category = 'preflop'
-            print(f"🔄 Usando categoria padrão: '{final_category}'")
+        # Normalizar a categoria
+        final_category = normalize_category(category)
+        print(f"✅ Categoria normalizada: '{final_category}'")
 
         # Criar a aula com categoria garantidamente válida
         try:

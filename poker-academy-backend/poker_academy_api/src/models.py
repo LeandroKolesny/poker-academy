@@ -15,6 +15,7 @@ class UserType(enum.Enum):
     student = "student"
 
 class ClassCategory(enum.Enum):
+    iniciantes = "iniciantes"
     preflop = "preflop"
     postflop = "postflop"
     mental = "mental"
