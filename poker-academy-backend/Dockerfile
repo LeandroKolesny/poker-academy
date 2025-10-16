@@ -34,7 +34,8 @@ RUN pip install gunicorn
 COPY poker_academy_api/ .
 
 # Criar diretórios necessários
-RUN mkdir -p uploads/videos logs && \
+# Cache invalidation: 2025-10-16-fix-uploads-dir
+RUN mkdir -p logs && \
     chown -R appuser:appuser /app
 
 # Mudar para usuário não-root
