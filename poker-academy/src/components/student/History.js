@@ -81,6 +81,7 @@ const History = () => {
   // Função para obter cor da categoria
   const getCategoryColor = (category) => {
     const colors = {
+      'iniciantes': '#9B59B6',
       'preflop': '#FF6B6B',
       'postflop': '#4ECDC4',
       'mental': '#45B7D1',

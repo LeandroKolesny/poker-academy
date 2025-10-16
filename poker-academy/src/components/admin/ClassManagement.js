@@ -329,10 +329,10 @@ const ClassManagement = () => {
   
   const getCategoryName = (category) => {
     const categories = {
-      'iniciantes': 'Iniciantes',
+      'iniciantes': 'Iniciante',
       'preflop': 'Pré-Flop',
       'postflop': 'Pós-Flop',
-      'mental': 'Mental Game',
+      'mental': 'Mental Games',
       'icm': 'ICM'
     };
     return categories[category] || category || 'Sem categoria';
@@ -351,20 +351,14 @@ const ClassManagement = () => {
       'preflop': 'preflop',
       'pré-flop': 'preflop',
       'pre-flop': 'preflop',
-      'preflop': 'preflop',
       'postflop': 'postflop',
       'pós-flop': 'postflop',
       'pos-flop': 'postflop',
-      'postflop': 'postflop',
       'mental': 'mental',
       'mental game': 'mental',
+      'mental games': 'mental',
       'mentalg': 'mental',
-      'torneos': 'torneos',
-      'torneios': 'torneos',
-      'torneio': 'torneos',
-      'cash': 'cash',
-      'cash game': 'cash',
-      'cashgame': 'cash',
+      'icm': 'icm',
       'geral': 'preflop'
     };
 
@@ -888,10 +882,10 @@ const ClassManagement = () => {
                     className="w-full bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-poker-red"
                   >
                     <option value="">Sem categoria</option>
-                    <option value="iniciantes">Iniciantes</option>
+                    <option value="iniciantes">Iniciante</option>
                     <option value="preflop">Pré-Flop</option>
                     <option value="postflop">Pós-Flop</option>
-                    <option value="mental">Mental Game</option>
+                    <option value="mental">Mental Games</option>
                     <option value="icm">ICM</option>
                   </select>
                 </div>

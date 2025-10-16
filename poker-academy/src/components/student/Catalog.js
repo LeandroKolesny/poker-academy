@@ -98,17 +98,16 @@ const Catalog = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ['all', 'iniciantes', 'preflop', 'postflop', 'mental', 'torneos', 'cash'];
+  const categories = ['all', 'iniciantes', 'preflop', 'postflop', 'mental', 'icm'];
 
   const getCategoryDisplayName = (category) => {
     const categoryNames = {
       'all': 'Todas as Categorias',
-      'iniciantes': 'Iniciantes',
+      'iniciantes': 'Iniciante',
       'preflop': 'Pré-Flop',
       'postflop': 'Pós-Flop',
-      'mental': 'Mental Game',
-      'torneos': 'Torneios',
-      'cash': 'Cash Game'
+      'mental': 'Mental Games',
+      'icm': 'ICM'
     };
     return categoryNames[category] || category;
   };

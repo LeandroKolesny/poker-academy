@@ -8,8 +8,8 @@ SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = 'classes' AND COLUMN_NAME = 'category';
 
 -- Modificar a coluna category para adicionar 'iniciantes' como primeira opção
-ALTER TABLE classes 
-MODIFY COLUMN category ENUM('iniciantes', 'preflop', 'postflop', 'mental', 'torneos', 'cash') NOT NULL DEFAULT 'preflop';
+ALTER TABLE classes
+MODIFY COLUMN category ENUM('iniciantes', 'preflop', 'postflop', 'mental', 'icm') NOT NULL DEFAULT 'preflop';
 
 -- Verificar se a alteração foi bem-sucedida
 SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS 

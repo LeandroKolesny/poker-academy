@@ -48,13 +48,9 @@ def normalize_category(category_name):
         'pos-flop': 'postflop',
         'mental': 'mental',
         'mental game': 'mental',
+        'mental games': 'mental',
         'mentalg': 'mental',
-        'torneos': 'torneos',
-        'torneios': 'torneos',
-        'torneio': 'torneos',
-        'cash': 'cash',
-        'cash game': 'cash',
-        'cashgame': 'cash',
+        'icm': 'icm',
         'geral': 'preflop'
     }
 
