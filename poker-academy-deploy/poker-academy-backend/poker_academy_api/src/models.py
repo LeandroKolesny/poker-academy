@@ -20,6 +20,7 @@ class ClassCategory(enum.Enum):
     mental = "mental"
     torneos = "torneos"
     cash = "cash"
+    iniciantes = "iniciantes"
 
 class VideoType(enum.Enum):
     youtube = "youtube"  # Temporário para compatibilidade

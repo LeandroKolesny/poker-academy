@@ -20,6 +20,7 @@ class ClassCategory(enum.Enum):
     postflop = "postflop"
     mental = "mental"
     icm = "icm"
+    iniciantes = "iniciantes"
 
 class VideoType(enum.Enum):
     youtube = "youtube"  # Temporário para compatibilidade

@@ -14,6 +14,7 @@ const AdminStudentGraphs = () => {
     const [uploading, setUploading] = useState(false);
     const [uploadingMonth, setUploadingMonth] = useState(null);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [selectedPartition, setSelectedPartition] = useState('');
     const [zoomModal, setZoomModal] = useState({ isOpen: false, imageUrl: '', altText: '' });
 
     const months = [
@@ -47,6 +48,10 @@ const AdminStudentGraphs = () => {
             const response = await api.get('/admin/students-by-partition');
             console.log('📊 Resposta da API:', response.data);
             setPartitions(response.data.partitions || []);
+            // Selecionar a primeira partição por padrão
+            if (response.data.partitions && response.data.partitions.length > 0) {
+                setSelectedPartition(response.data.partitions[0].id.toString());
+            }
         } catch (error) {
             console.error('❌ Erro ao buscar partições:', error);
             alert(`Erro ao carregar partições: ${error.response?.data?.error || error.message}`);
@@ -55,6 +60,11 @@ const AdminStudentGraphs = () => {
             setLoading(false);
         }
     };
+
+    // Filtrar partição selecionada
+    const filteredPartitions = selectedPartition
+        ? partitions.filter(p => p.id.toString() === selectedPartition)
+        : partitions;
 
     const fetchStudentGraphs = async () => {
         if (!selectedStudent) return;
@@ -158,8 +168,24 @@ const AdminStudentGraphs = () => {
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-semibold text-red-400">Gerenciamento de Gráficos dos Alunos</h2>
                 <div className="flex items-center gap-4">
-                    <label className="text-sm font-medium text-gray-300">Ano:</label>
-                    <select 
+                    <label className="text-sm font-medium text-gray-300">Partição:</label>
+                    <select
+                        className="bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
+                        value={selectedPartition}
+                        onChange={(e) => {
+                            setSelectedPartition(e.target.value);
+                            setSelectedStudent(null);
+                        }}
+                    >
+                        <option value="">Todas as partições</option>
+                        {partitions.map(partition => (
+                            <option key={partition.id} value={partition.id.toString()}>
+                                {partition.nome}
+                            </option>
+                        ))}
+                    </select>
+                    <label className="text-sm font-medium text-gray-300 ml-4">Ano:</label>
+                    <select
                         className="bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
@@ -173,7 +199,7 @@ const AdminStudentGraphs = () => {
 
             {/* Tabelas de Alunos por Partição */}
             <div className="mb-6 space-y-6">
-                {partitions.map(partition => (
+                {filteredPartitions.map(partition => (
                     <div key={partition.id} className="partition-section">
                         <h3 className="text-lg font-semibold text-gray-300 mb-4">
                             Partição {partition.nome} ({partition.students.length} alunos)
