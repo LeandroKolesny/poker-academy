@@ -437,10 +437,15 @@ const ClassManagement = () => {
     const parsed = [];
     const errors = [];
 
+    console.log(`\n${'='.repeat(80)}`);
+    console.log(`🎬 AUTO IMPORT - PROCESSANDO ${allFiles.length} ARQUIVO(S)`);
+    console.log(`${'='.repeat(80)}\n`);
+
     allFiles.forEach((file, index) => {
       try {
-        console.log(`\n🔍 DEBUG: Processando arquivo ${index + 1}/${allFiles.length}`);
-        console.log(`📁 Nome original: "${file.name}"`);
+        console.log(`\n${'─'.repeat(80)}`);
+        console.log(`📁 ARQUIVO ${index + 1}/${allFiles.length}: "${file.name}"`);
+        console.log(`${'─'.repeat(80)}`);
 
         // Remover extensão do arquivo
         const fileName = file.name.replace(/\.[^/.]+$/, "");
@@ -521,6 +526,24 @@ const ClassManagement = () => {
         errors.push(`Arquivo ${file.name}: Erro ao processar - ${error.message}`);
       }
     });
+
+    console.log(`\n${'='.repeat(80)}`);
+    console.log(`📊 RESULTADO FINAL:`);
+    console.log(`   ✅ Arquivos processados com sucesso: ${parsed.length}`);
+    console.log(`   ❌ Erros encontrados: ${errors.length}`);
+    console.log(`${'='.repeat(80)}\n`);
+
+    if (errors.length > 0) {
+      console.error(`❌ ERROS ENCONTRADOS:`);
+      errors.forEach((err, i) => console.error(`   ${i + 1}. ${err}`));
+    }
+
+    if (parsed.length > 0) {
+      console.log(`✅ ARQUIVOS PRONTOS PARA UPLOAD:`);
+      parsed.forEach((p, i) => {
+        console.log(`   ${i + 1}. Data: ${p.date}, Instrutor: ${p.instructor}, Categoria: ${p.category}, Nome: ${p.name}`);
+      });
+    }
 
     setParsedClasses(parsed);
     setImportErrors(errors);
@@ -1108,14 +1131,17 @@ const ClassManagement = () => {
               <div className="bg-gray-700 p-4 rounded-lg mb-4">
                 <p className="text-gray-300 mb-2">Nome dos arquivos deve seguir o formato:</p>
                 <code className="text-green-400 bg-gray-900 px-2 py-1 rounded">
-                  Data - Instrutor - Nome da aula.mp4
+                  Data - Instrutor - Categoria - Nome da aula.mp4
                 </code>
                 <p className="text-gray-300 mt-2 mb-2">Exemplos:</p>
                 <div className="text-green-400 bg-gray-900 p-2 rounded font-mono text-sm">
-                  21.01.25 - Eiji - Mystery bounty.mp4<br/>
-                  22.01.25 - João - Estratégias de torneio.avi<br/>
-                  23.01.25 - Maria - Cash game avançado.mov
+                  21.01.25 - Eiji - PreFlop - Mystery bounty.mp4<br/>
+                  22.01.25 - João - Mental - Estratégias de torneio.avi<br/>
+                  23.01.25 - Maria - PosFlop - Cash game avançado.mov
                 </div>
+                <p className="text-blue-400 mt-2 text-sm">
+                  📂 Categorias: PreFlop, PosFlop, Mental, ICM, iniciante
+                </p>
                 <p className="text-yellow-400 mt-2 text-sm">
                   ⚠️ Formatos aceitos: MP4, AVI, MOV, WMV, FLV, WEBM, MKV (máx. 500MB cada)
                 </p>
