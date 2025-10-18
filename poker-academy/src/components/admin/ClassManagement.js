@@ -439,18 +439,26 @@ const ClassManagement = () => {
 
     allFiles.forEach((file, index) => {
       try {
+        console.log(`\n🔍 DEBUG: Processando arquivo ${index + 1}/${allFiles.length}`);
+        console.log(`📁 Nome original: "${file.name}"`);
+
         // Remover extensão do arquivo
         const fileName = file.name.replace(/\.[^/.]+$/, "");
+        console.log(`📝 Sem extensão: "${fileName}"`);
 
         // Suportar ambos os formatos: com espaço " - " ou sem espaço "-"
         // Primeiro tenta com espaço, depois sem espaço
         let parts = fileName.split(' - ');
+        console.log(`🔀 Split com ' - ': ${parts.length} partes`, parts);
+
         if (parts.length < 3) {
           parts = fileName.split('-');
+          console.log(`🔀 Split com '-': ${parts.length} partes`, parts);
         }
 
         // Categorias reconhecidas
         const validCategories = ['preflop', 'posflop', 'mental', 'icm', 'iniciante'];
+        console.log(`📂 Categorias válidas:`, validCategories);
 
         // Procurar pela categoria nos parts
         let categoryIndex = -1;
@@ -458,19 +466,25 @@ const ClassManagement = () => {
 
         for (let i = 0; i < parts.length; i++) {
           const normalized = parts[i].trim().toLowerCase();
+          console.log(`   [${i}] "${parts[i]}" → normalizado: "${normalized}"`);
           if (validCategories.includes(normalized)) {
             categoryIndex = i;
             category = parts[i].trim();
+            console.log(`   ✅ CATEGORIA ENCONTRADA no índice ${i}: "${category}"`);
             break;
           }
         }
 
+        console.log(`🎯 categoryIndex: ${categoryIndex}, category: "${category}"`);
+
         if (categoryIndex === -1) {
+          console.log(`❌ Categoria não encontrada!`);
           errors.push(`Arquivo ${file.name}: Categoria não encontrada. Use uma das: PreFlop, PosFlop, Mental, ICM, iniciante`);
           return;
         }
 
         if (categoryIndex < 2) {
+          console.log(`❌ Categoria em posição inválida! categoryIndex=${categoryIndex}, esperado >= 2`);
           errors.push(`Arquivo ${file.name}: Formato inválido. Use: Data - Instrutor - Categoria - Nome da aula`);
           return;
         }
@@ -479,14 +493,17 @@ const ClassManagement = () => {
         const instructor = parts[1].trim();
         const className = parts.slice(categoryIndex + 1).join('-').trim();
 
+        console.log(`✅ Parseado: Data="${dateStr}", Instrutor="${instructor}", Categoria="${category}", Nome="${className}"`);
+
         // Parse da data (formato: dd.mm.yy ou dd.mm.yyyy)
         const dateObj = parseVideoDate(dateStr);
         if (!dateObj) {
+          console.log(`❌ Data inválida: "${dateStr}"`);
           errors.push(`Arquivo ${file.name}: Data inválida '${dateStr}'. Use formato dd.mm.yy ou dd.mm.yyyy`);
           return;
         }
 
-        console.log(`✅ Arquivo parseado: Data=${dateStr}, Instrutor=${instructor}, Categoria=${category}, Nome=${className}`);
+        console.log(`✅ Arquivo parseado com sucesso!`);
 
         parsed.push({
           file: file,
@@ -500,6 +517,7 @@ const ClassManagement = () => {
         });
 
       } catch (error) {
+        console.error(`❌ Erro ao processar arquivo:`, error);
         errors.push(`Arquivo ${file.name}: Erro ao processar - ${error.message}`);
       }
     });
