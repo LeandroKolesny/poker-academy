@@ -383,9 +383,9 @@ const ClassManagement = () => {
       const parts = nameWithoutExtension.split(' - ');
       console.log(`🔍 Partes divididas:`, parts);
 
-      // Verificar se temos pelo menos 3 partes (data - instrutor - categoria)
-      if (parts.length >= 3) {
-        // A terceira parte é a categoria
+      // Verificar se temos pelo menos 4 partes (data - instrutor - categoria - nome da aula)
+      if (parts.length >= 4) {
+        // A terceira parte (índice 2) é a categoria
         let category = parts[2].trim();
         console.log(`🔍 Categoria bruta (terceira parte): "${category}"`);
 
@@ -396,7 +396,7 @@ const ClassManagement = () => {
         console.log(`📂 Categoria FINAL extraída de "${fileName}": "${category}"`);
         return category;
       } else {
-        console.warn(`⚠️ Formato de arquivo inválido: "${fileName}". Esperado: Data - Instrutor - Categoria. Partes encontradas: ${parts.length}`);
+        console.warn(`⚠️ Formato de arquivo inválido: "${fileName}". Esperado: Data - Instrutor - Categoria - Nome da aula. Partes encontradas: ${parts.length}`);
         return 'preflop';
       }
     } catch (error) {
@@ -442,17 +442,18 @@ const ClassManagement = () => {
         // Remover extensão do arquivo
         const fileName = file.name.replace(/\.[^/.]+$/, "");
 
-        // Parse do formato: Data - Instrutor - Nome da aula
+        // Parse do formato: Data - Instrutor - Categoria - Nome da aula
         const parts = fileName.split(' - ');
 
-        if (parts.length < 3) {
-          errors.push(`Arquivo ${file.name}: Formato inválido. Use: Data - Instrutor - Nome da aula`);
+        if (parts.length < 4) {
+          errors.push(`Arquivo ${file.name}: Formato inválido. Use: Data - Instrutor - Categoria - Nome da aula. Exemplo: 21.01.25 - Eiji - PreFlop - Mystery bounty`);
           return;
         }
 
         const dateStr = parts[0].trim();
         const instructor = parts[1].trim();
-        const className = parts.slice(2).join(' - ').trim();
+        const category = parts[2].trim();
+        const className = parts.slice(3).join(' - ').trim();
 
         // Parse da data (formato: dd.mm.yy ou dd.mm.yyyy)
         const dateObj = parseVideoDate(dateStr);
@@ -461,11 +462,14 @@ const ClassManagement = () => {
           return;
         }
 
+        console.log(`✅ Arquivo parseado: Data=${dateStr}, Instrutor=${instructor}, Categoria=${category}, Nome=${className}`);
+
         parsed.push({
           file: file,
           index: index,
           date: dateObj,
           instructor: instructor,
+          category: category,
           name: className,
           fileName: file.name,
           size: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
@@ -525,10 +529,11 @@ const ClassManagement = () => {
         console.log(`🔍 Debug classData:`, classData);
         console.log(`🔍 Debug fileName:`, classData.fileName);
 
-        // Extrair categoria da terceira parte do nome do arquivo
-        const extractedCategory = extractCategoryFromFileName(classData.fileName);
-        console.log(`🔍 Debug categoria extraída:`, extractedCategory);
-        formData.append('category', extractedCategory);
+        // Usar a categoria parseada do nome do arquivo
+        let category = classData.category || 'preflop';
+        category = normalizeCategoryName(category);
+        console.log(`🔍 Debug categoria normalizada:`, category);
+        formData.append('category', category);
         formData.append('priority', '5');
         formData.append('video_type', 'local');
 
@@ -1136,7 +1141,7 @@ const ClassManagement = () => {
                               <div className="flex-1">
                                 <h6 className="text-white font-medium">{cls.name}</h6>
                                 <p className="text-gray-300 text-sm">
-                                  📅 {formatDateForDisplay(cls.date)} | 👨‍🏫 {cls.instructor} | 📁 {cls.size}
+                                  📅 {formatDateForDisplay(cls.date)} | 👨‍🏫 {cls.instructor} | 📂 {getCategoryName(normalizeCategoryName(cls.category))} | 📁 {cls.size}
                                 </p>
                                 <p className="text-gray-400 text-xs mt-1">{cls.fileName}</p>
                               </div>

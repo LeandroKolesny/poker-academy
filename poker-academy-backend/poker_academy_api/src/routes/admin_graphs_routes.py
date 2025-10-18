@@ -33,10 +33,20 @@ def get_students_by_partition(current_user):
 
         if user_type != 'admin':
             return jsonify({'error': f'Acesso negado. Tipo de usuário: {user_type}'}), 403
-        
+
+        # Obter parâmetro de filtro de partição (opcional)
+        particao_id = request.args.get('particao_id', type=int)
+        print(f"🔍 Parâmetro particao_id recebido: {particao_id}")
+
         # Buscar partições ativas com seus alunos
-        partitions = Particoes.query.filter_by(ativa=True).all()
-        print(f"📊 Encontradas {len(partitions)} partições ativas")
+        if particao_id:
+            # Se particao_id foi fornecido, buscar apenas essa partição
+            partitions = Particoes.query.filter_by(id=particao_id, ativa=True).all()
+            print(f"📊 Filtrando por partição_id={particao_id}, encontradas {len(partitions)} partições")
+        else:
+            # Caso contrário, buscar todas as partições ativas
+            partitions = Particoes.query.filter_by(ativa=True).all()
+            print(f"📊 Encontradas {len(partitions)} partições ativas")
 
         result = []
         for partition in partitions:
@@ -44,7 +54,7 @@ def get_students_by_partition(current_user):
                 particao_id=partition.id,
                 type='student'
             ).all()
-            print(f"📊 Partição {partition.nome}: {len(students)} alunos")
+            print(f"📊 Partição {partition.nome} (id={partition.id}): {len(students)} alunos")
 
             result.append({
                 'id': partition.id,
@@ -58,7 +68,7 @@ def get_students_by_partition(current_user):
             'success': True,
             'partitions': result
         })
-        
+
     except Exception as e:
         print(f"❌ Erro ao buscar alunos por partição: {e}")
         return jsonify({'error': 'Erro interno do servidor'}), 500
