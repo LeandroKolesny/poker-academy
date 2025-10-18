@@ -442,18 +442,42 @@ const ClassManagement = () => {
         // Remover extensão do arquivo
         const fileName = file.name.replace(/\.[^/.]+$/, "");
 
-        // Parse do formato: Data - Instrutor - Categoria - Nome da aula
-        const parts = fileName.split(' - ');
+        // Suportar ambos os formatos: com espaço " - " ou sem espaço "-"
+        // Primeiro tenta com espaço, depois sem espaço
+        let parts = fileName.split(' - ');
+        if (parts.length < 3) {
+          parts = fileName.split('-');
+        }
 
-        if (parts.length < 4) {
-          errors.push(`Arquivo ${file.name}: Formato inválido. Use: Data - Instrutor - Categoria - Nome da aula. Exemplo: 21.01.25 - Eiji - PreFlop - Mystery bounty`);
+        // Categorias reconhecidas
+        const validCategories = ['preflop', 'posflop', 'mental', 'icm', 'iniciante'];
+
+        // Procurar pela categoria nos parts
+        let categoryIndex = -1;
+        let category = null;
+
+        for (let i = 0; i < parts.length; i++) {
+          const normalized = parts[i].trim().toLowerCase();
+          if (validCategories.includes(normalized)) {
+            categoryIndex = i;
+            category = parts[i].trim();
+            break;
+          }
+        }
+
+        if (categoryIndex === -1) {
+          errors.push(`Arquivo ${file.name}: Categoria não encontrada. Use uma das: PreFlop, PosFlop, Mental, ICM, iniciante`);
+          return;
+        }
+
+        if (categoryIndex < 2) {
+          errors.push(`Arquivo ${file.name}: Formato inválido. Use: Data - Instrutor - Categoria - Nome da aula`);
           return;
         }
 
         const dateStr = parts[0].trim();
         const instructor = parts[1].trim();
-        const category = parts[2].trim();
-        const className = parts.slice(3).join(' - ').trim();
+        const className = parts.slice(categoryIndex + 1).join('-').trim();
 
         // Parse da data (formato: dd.mm.yy ou dd.mm.yyyy)
         const dateObj = parseVideoDate(dateStr);
