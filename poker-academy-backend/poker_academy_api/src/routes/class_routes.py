@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Blueprint, jsonify, request, current_app, send_from_directory
-from src.models import db, Classes, UserProgress, ClassViews, Users, UserType
+from src.models import db, Classes, UserProgress, ClassViews, Users, UserType, ClassCategory
 from src.auth import token_required, admin_required
 from datetime import datetime
 from sqlalchemy import desc
@@ -29,32 +29,34 @@ def allowed_file(filename):
 
 def normalize_category(category_name):
     """
-    Normaliza nomes de categoria em português para valores do enum
+    Normaliza nomes de categoria em português para valores do enum ClassCategory
+    Retorna um objeto ClassCategory enum, não uma string!
     """
     if not category_name:
-        return 'preflop'
+        return ClassCategory.preflop
 
     normalized = category_name.lower().strip()
 
     # Mapeamento de nomes em português para valores do enum
     category_map = {
-        'iniciantes': 'iniciantes',
-        'iniciante': 'iniciantes',
-        'preflop': 'preflop',
-        'pré-flop': 'preflop',
-        'pre-flop': 'preflop',
-        'postflop': 'postflop',
-        'pós-flop': 'postflop',
-        'pos-flop': 'postflop',
-        'mental': 'mental',
-        'mental game': 'mental',
-        'mental games': 'mental',
-        'mentalg': 'mental',
-        'icm': 'icm',
-        'geral': 'preflop'
+        'iniciantes': ClassCategory.iniciantes,
+        'iniciante': ClassCategory.iniciantes,
+        'preflop': ClassCategory.preflop,
+        'pré-flop': ClassCategory.preflop,
+        'pre-flop': ClassCategory.preflop,
+        'postflop': ClassCategory.postflop,
+        'pós-flop': ClassCategory.postflop,
+        'pos-flop': ClassCategory.postflop,
+        'posflop': ClassCategory.postflop,
+        'mental': ClassCategory.mental,
+        'mental game': ClassCategory.mental,
+        'mental games': ClassCategory.mental,
+        'mentalg': ClassCategory.mental,
+        'icm': ClassCategory.icm,
+        'geral': ClassCategory.preflop
     }
 
-    return category_map.get(normalized, 'preflop')
+    return category_map.get(normalized, ClassCategory.preflop)
 
 # Rota de teste sem autenticação
 @class_bp.route("/api/test", methods=["GET"])
