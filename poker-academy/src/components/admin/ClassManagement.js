@@ -75,7 +75,7 @@ const ClassManagement = () => {
 
   const filteredClasses = classes.filter(cls =>
     (cls.name && cls.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (cls.instructor && cls.instructor.toLowerCase().includes(searchTerm.toLowerCase()))
+    (cls.instructor_name && cls.instructor_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleChange = (e) => {
@@ -99,13 +99,18 @@ const ClassManagement = () => {
     // Corrigir problema de timezone na data
     let dateValue = new Date().toISOString().split('T')[0];
     if (cls.date) {
-      // A data vem do backend como string YYYY-MM-DD, usar diretamente
-      dateValue = cls.date;
+      // A data vem do backend como string YYYY-MM-DDTHH:MM:SS ou YYYY-MM-DD
+      // Precisamos extrair apenas a parte YYYY-MM-DD
+      if (cls.date.includes('T')) {
+        dateValue = cls.date.split('T')[0];
+      } else {
+        dateValue = cls.date;
+      }
     }
 
     setFormData({
       name: cls.name || '',
-      instructor: cls.instructor || '',
+      instructor: cls.instructor_name || '',
       category: cls.category || 'preflop',  // Categoria padrão se vazia
       date: dateValue,
       priority: cls.priority || 5,
@@ -805,7 +810,7 @@ const ClassManagement = () => {
                 {filteredClasses.map(cls => (
                   <tr key={cls.id} className="hover:bg-gray-600 transition-colors duration-150">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{cls.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{cls.instructor}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{cls.instructor_name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{getCategoryName(cls.category)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{formatDateForDisplay(cls.date)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
@@ -842,7 +847,7 @@ const ClassManagement = () => {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-white mb-1">{cls.name}</h3>
-                    <p className="text-gray-300 text-sm">👨‍🏫 {cls.instructor}</p>
+                    <p className="text-gray-300 text-sm">👨‍🏫 {cls.instructor_name}</p>
                   </div>
                   <div className="flex space-x-3">
                     <button

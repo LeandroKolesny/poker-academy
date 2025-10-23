@@ -49,6 +49,7 @@ const domainConfig = {
     
     // Analytics
     ANALYTICS: '/analytics',
+    ANALYTICS_STATS: '/analytics/stats',
     USER_PROGRESS: '/analytics/user-progress',
     
     // Instructors

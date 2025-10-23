@@ -18,7 +18,7 @@ def get_particoes():
     try:
         particoes = Particoes.query.filter_by(ativa=True).order_by(Particoes.nome).all()
         result = [particao.to_dict() for particao in particoes]
-        return jsonify(result), 200
+        return jsonify({'data': result}), 200
     except Exception as e:
         current_app.logger.error(f"Erro ao buscar partições: {e}", exc_info=True)
         return jsonify(error="Erro ao buscar partições."), 500

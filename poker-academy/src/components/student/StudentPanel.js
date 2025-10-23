@@ -7,6 +7,7 @@ import Favorites from './Favorites';
 import History from './History';
 import ChangePassword from './ChangePassword';
 import MonthlyGraphs from './MonthlyGraphs';
+import MonthlyDatabase from './MonthlyDatabase';
 import LeakHunting from './LeakHunting';
 
 const StudentPanel = () => {
@@ -16,15 +17,16 @@ const StudentPanel = () => {
       <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto pt-16 md:pt-8">
         <div className="max-w-7xl mx-auto">
           <Routes>
-            <Route index element={<Navigate to="catalog" replace />} />
+            <Route index element={<Navigate to="/student/catalog" replace />} />
             <Route path="catalog" element={<Catalog />} />
             <Route path="favorites" element={<Favorites />} />
             {/* <Route path="playlists" element={<Playlists />} /> */}
             <Route path="history" element={<History />} />
             <Route path="monthly-graphs" element={<MonthlyGraphs />} />
+            <Route path="monthly-database" element={<MonthlyDatabase />} />
             <Route path="leak-hunting" element={<LeakHunting />} />
             <Route path="change-password" element={<ChangePassword />} />
-            <Route path="*" element={<Navigate to="catalog" replace />} />
+            <Route path="*" element={<Navigate to="/student/catalog" replace />} />
           </Routes>
         </div>
       </main>

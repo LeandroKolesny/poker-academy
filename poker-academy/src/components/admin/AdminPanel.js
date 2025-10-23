@@ -7,6 +7,7 @@ import InstructorManagement from './InstructorManagement';
 import ClassManagement from './ClassManagement';
 import Analytics from './Analytics';
 import AdminStudentGraphs from './AdminStudentGraphs';
+import AdminMonthlyDatabase from './AdminMonthlyDatabase';
 import AdminLeakManagement from './AdminLeakManagement';
 import ChangePassword from '../student/ChangePassword'; // Reutilizar componente do student
 
@@ -18,16 +19,17 @@ const AdminPanel = () => {
         <div className="max-w-7xl mx-auto">
           <Routes>
             {/* Rota padrão para /admin - renderiza Analytics */}
-            <Route index element={<Navigate to="analytics" replace />} />
+            <Route index element={<Navigate to="/admin/analytics" replace />} />
             <Route path="students" element={<StudentManagement />} />
             <Route path="instructors" element={<InstructorManagement />} />
             <Route path="classes" element={<ClassManagement />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="student-graphs" element={<AdminStudentGraphs />} />
+            <Route path="monthly-database" element={<AdminMonthlyDatabase />} />
             <Route path="leak-management" element={<AdminLeakManagement />} />
             <Route path="change-password" element={<ChangePassword />} />
             {/* Fallback para qualquer outra sub-rota não reconhecida em /admin/* */}
-            <Route path="*" element={<Navigate to="analytics" replace />} />
+            <Route path="*" element={<Navigate to="/admin/analytics" replace />} />
           </Routes>
         </div>
       </main>

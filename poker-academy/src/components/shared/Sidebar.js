@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUsers, faVideo, faChartBar, faBook,
   faHeart, faList, faHistory, faSignOutAlt, faKey,
-  faChartLine, faSearch, faImage, faBars, faTimes, faChalkboardTeacher
+  faChartLine, faSearch, faImage, faBars, faTimes, faChalkboardTeacher, faDatabase
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
 import DojoLogo from './DojoLogo';
@@ -117,6 +117,17 @@ const Sidebar = ({ type }) => {
         </div>
         <div
           className={`flex items-center px-4 py-3 rounded-modern cursor-pointer transition-all duration-200 ${
+            isActive('/admin/monthly-database')
+              ? 'bg-red-100 text-primary-red border-l-4 border-primary-red'
+              : 'text-white hover:bg-gray-500 hover:text-red-200'
+          }`}
+          onClick={() => navigate('/admin/monthly-database')}
+        >
+          <FontAwesomeIcon icon={faDatabase} className="mr-3 w-5 h-5" />
+          <span className="font-medium">Database Mensal</span>
+        </div>
+        <div
+          className={`flex items-center px-4 py-3 rounded-modern cursor-pointer transition-all duration-200 ${
             isActive('/admin/leak-management')
               ? 'bg-red-100 text-primary-red border-l-4 border-primary-red'
               : 'text-white hover:bg-gray-500 hover:text-red-200'
@@ -198,6 +209,17 @@ const Sidebar = ({ type }) => {
         >
           <FontAwesomeIcon icon={faChartLine} className="mr-3 w-5 h-5" />
           <span className="font-medium">Gráficos Mensais</span>
+        </div>
+        <div
+          className={`flex items-center px-4 py-3 rounded-modern cursor-pointer transition-all duration-200 ${
+            isActive('/student/monthly-database')
+              ? 'bg-red-100 text-primary-red border-l-4 border-primary-red'
+              : 'text-white hover:bg-gray-500 hover:text-red-200'
+          }`}
+          onClick={() => navigate('/student/monthly-database')}
+        >
+          <FontAwesomeIcon icon={faDatabase} className="mr-3 w-5 h-5" />
+          <span className="font-medium">Database Mensal</span>
         </div>
         <div
           className={`flex items-center px-4 py-3 rounded-modern cursor-pointer transition-all duration-200 ${

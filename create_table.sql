@@ -1,0 +1,19 @@
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+CREATE TABLE IF NOT EXISTS user_progress (
+    user_id INT NOT NULL,
+    class_id INT NOT NULL,
+    progress INT NOT NULL DEFAULT 0,
+    watched BOOLEAN NOT NULL DEFAULT FALSE,
+    last_watched DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    video_time FLOAT NOT NULL DEFAULT 0.0,
+    completed_at DATETIME NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (user_id, class_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SHOW TABLES LIKE 'user_progress';
+DESCRIBE user_progress;

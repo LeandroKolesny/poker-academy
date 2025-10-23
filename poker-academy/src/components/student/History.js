@@ -17,7 +17,33 @@ const History = () => {
     setError(null);
     try {
       const data = await classService.getHistory();
-      setHistory(data);
+      console.log('📚 History: Dados brutos recebidos:', data);
+      console.log('📚 History: Tipo de data:', typeof data);
+      console.log('📚 History: data.data:', data?.data);
+
+      // Extrair dados corretos
+      // A API retorna um array diretamente, mas apiRequest envolve em { data: [...] }
+      let historyData = data?.data || data;
+
+      // Se ainda não for array, tentar extrair de outras formas
+      if (!Array.isArray(historyData)) {
+        console.warn('📚 History: historyData não é array, tentando extrair...');
+        // Se for um objeto com propriedade que é array
+        for (let key in historyData) {
+          if (Array.isArray(historyData[key])) {
+            historyData = historyData[key];
+            break;
+          }
+        }
+      }
+
+      console.log('📚 History: Dados extraídos:', historyData);
+      console.log('📚 History: É array?', Array.isArray(historyData));
+
+      // Garantir que é um array
+      const historyArray = Array.isArray(historyData) ? historyData : [];
+      console.log('📚 History: Array final:', historyArray);
+      setHistory(historyArray);
     } catch (e) {
       console.error("Erro ao buscar histórico:", e);
       setError(e.message);
@@ -120,7 +146,13 @@ const History = () => {
     <div className="p-6 text-white min-h-screen">
       <h2 className="text-3xl font-bold mb-8 text-red-400">Meu Histórico de Aulas</h2>
 
-      {history.length === 0 ? (
+      {!Array.isArray(history) ? (
+        <div className="text-center text-red-400 py-12">
+          <p className="text-xl">Erro: Dados inválidos recebidos</p>
+          <p className="text-sm mt-2">Tipo recebido: {typeof history}</p>
+          <p className="text-sm mt-2">Conteúdo: {JSON.stringify(history).substring(0, 100)}</p>
+        </div>
+      ) : history.length === 0 ? (
         <div className="text-center text-gray-400 py-12">
           <FontAwesomeIcon icon={faPlay} size="3x" className="mb-4 opacity-50" />
           <p className="text-xl">Você ainda não assistiu nenhuma aula.</p>

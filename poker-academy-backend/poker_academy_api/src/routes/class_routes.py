@@ -6,7 +6,11 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Blueprint, jsonify, request, current_app, send_from_directory
+<<<<<<< Updated upstream
 from src.models import db, Classes, UserProgress, ClassViews, Users, UserType, ClassCategory
+=======
+from src.models import db, Classes, UserProgress, ClassViews, Users, UserType, ClassCategory, VideoType
+>>>>>>> Stashed changes
 from src.auth import token_required, admin_required
 from datetime import datetime
 from sqlalchemy import desc
@@ -21,8 +25,18 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__f
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'}
 
 # Criar pasta de upload se não existir
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-print(f"Pasta de upload: {UPLOAD_FOLDER}")
+try:
+    # Se for um symlink quebrado, remover
+    if os.path.islink(UPLOAD_FOLDER) and not os.path.exists(UPLOAD_FOLDER):
+        os.unlink(UPLOAD_FOLDER)
+
+    # Criar diretório
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+    print(f"Pasta de upload: {UPLOAD_FOLDER}")
+except Exception as e:
+    print(f"Aviso: Não foi possível criar pasta de upload: {e}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -57,6 +71,17 @@ def normalize_category(category_name):
     }
 
     return category_map.get(normalized, ClassCategory.preflop)
+
+# Rota de health check (para Docker healthcheck)
+@class_bp.route("/api/health", methods=["GET"])
+def health_check():
+    try:
+        # Testar conexão com banco
+        db.session.execute(db.text("SELECT 1"))
+        return jsonify({"status": "healthy"}), 200
+    except Exception as e:
+        print(f"❌ Health check falhou: {e}")
+        return jsonify({"status": "unhealthy", "error": str(e)}), 500
 
 # Rota de teste sem autenticação
 @class_bp.route("/api/test", methods=["GET"])
@@ -120,28 +145,23 @@ def create_class(current_user):
         return jsonify(error="Dados não fornecidos"), 400
 
     # Campos obrigatórios básicos
-    required_fields = ["name", "instructor", "date", "category", "video_type"]
+    required_fields = ["name", "instructor_id", "date", "category"]
     for field in required_fields:
         if field not in data or not data[field]:
             return jsonify(error=f"Campo obrigatório ausente ou vazio: {field}"), 400
 
-    # Validação específica para vídeo (apenas para novas aulas)
-    if not data.get("video_path"):
-        return jsonify(error="É obrigatório fazer upload de um vídeo"), 400
-
     try:
-        # Converter data string para objeto date
+        # Converter data string para objeto datetime
         from datetime import datetime
-        date_obj = datetime.strptime(data["date"], "%Y-%m-%d").date()
+        date_obj = datetime.strptime(data["date"], "%Y-%m-%d")
 
         new_class = Classes(
             name=data["name"],
-            instructor=data["instructor"],
+            description=data.get("description"),
+            instructor_id=data.get("instructor_id"),
             date=date_obj,
-            category=data.get("category"),  # Categoria agora é opcional
-            video_type=data.get("video_type", "local"),
-            video_path=data.get("video_path"),
-            priority=data.get("priority", 5),
+            category=data.get("category"),
+            video_url=data.get("video_url"),
             views=data.get("views", 0)
         )
         db.session.add(new_class)
@@ -164,25 +184,62 @@ def update_class(class_id):
         if not cls_to_update:
             return jsonify(error="Aula não encontrada"), 404
 
+        print(f"📝 Atualizando aula {class_id} com dados: {data}")
+
         # Campos que podem ser atualizados
         if "name" in data:
             cls_to_update.name = data["name"]
+        if "description" in data:
+            cls_to_update.description = data["description"]
         if "instructor" in data:
-            cls_to_update.instructor = data["instructor"]
+            # Se for um número, tratar como ID; senão, buscar usuário por nome
+            instructor_value = data["instructor"]
+            if isinstance(instructor_value, int):
+                cls_to_update.instructor_id = instructor_value
+            else:
+                # Buscar usuário por nome
+                user = Users.query.filter_by(name=instructor_value).first()
+                if user:
+                    cls_to_update.instructor_id = user.id
+                else:
+                    print(f"⚠️  Instrutor '{instructor_value}' não encontrado no banco")
+        if "instructor_id" in data:
+            cls_to_update.instructor_id = data["instructor_id"]
         if "date" in data:
-            # Converter data string para objeto date
+            # Converter data string para objeto datetime
             from datetime import datetime
-            cls_to_update.date = datetime.strptime(data["date"], "%Y-%m-%d").date()
+            cls_to_update.date = datetime.strptime(data["date"], "%Y-%m-%d")
         if "category" in data:
-            cls_to_update.category = data["category"]
-        if "video_type" in data:
-            cls_to_update.video_type = data["video_type"]
-        if "video_path" in data: # Adicionado para consistência
+            # Converter string para enum se necessário
+            category_value = data["category"]
+            if isinstance(category_value, str):
+                try:
+                    cls_to_update.category = ClassCategory[category_value]
+                except KeyError:
+                    print(f"⚠️  Categoria '{category_value}' inválida")
+            else:
+                cls_to_update.category = category_value
+        if "video_url" in data:
+            cls_to_update.video_url = data["video_url"]
+        if "video_path" in data:
+            # Atualizar video_path (nome do arquivo)
             cls_to_update.video_path = data["video_path"]
+            print(f"✅ Video path atualizado: {data['video_path']}")
+        if "video_type" in data:
+            # Converter string para enum se necessário
+            video_type_value = data["video_type"]
+            if isinstance(video_type_value, str):
+                try:
+                    cls_to_update.video_type = VideoType[video_type_value]
+                except KeyError:
+                    print(f"⚠️  Video type '{video_type_value}' inválido")
+            else:
+                cls_to_update.video_type = video_type_value
         if "priority" in data:
             cls_to_update.priority = data["priority"]
-        
+
         db.session.commit()
+        print(f"✅ Aula {class_id} atualizada com sucesso!")
         return jsonify(cls_to_update.to_dict()), 200
     except Exception as e:
         db.session.rollback()
@@ -426,7 +483,10 @@ def get_instructors(current_user):
             result.append({
                 'id': instructor.id,
                 'name': instructor.name,
-                'email': instructor.email
+                'username': instructor.username,
+                'email': instructor.email,
+                'register_date': instructor.register_date.isoformat() if instructor.register_date else None,
+                'last_login': instructor.last_login.isoformat() if instructor.last_login else None
             })
 
         return jsonify(result), 200
@@ -500,6 +560,7 @@ def upload_video(current_user):
             return jsonify({
                 'message': 'Vídeo enviado com sucesso',
                 'filename': filename,
+                'video_path': filename,
                 'path': filepath
             }), 200
         else:

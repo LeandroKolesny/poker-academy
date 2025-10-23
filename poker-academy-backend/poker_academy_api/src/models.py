@@ -1,4 +1,5 @@
 # src/models.py
+# Updated: 2025-10-16 22:46:30 - Fixing StudentGraphs relationship issue
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -93,27 +94,37 @@ class Classes(db.Model):
     __tablename__ = "classes"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(200), nullable=False)
-    instructor = db.Column(db.String(100), nullable=False)
-    date = db.Column(db.Date, nullable=False) # Mantido como Date
-    category = db.Column(SQLAlchemyEnum(ClassCategory), nullable=True)  # Categoria agora é opcional
-    video_type = db.Column(SQLAlchemyEnum(VideoType), nullable=False, default=VideoType.local)
+    description = db.Column(db.Text, nullable=True)
+    instructor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    date = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
+    category = db.Column(SQLAlchemyEnum(ClassCategory), nullable=True, default=ClassCategory.preflop)
+    video_url = db.Column(db.String(500), nullable=True)
     video_path = db.Column(db.String(255), nullable=True)
+    video_type = db.Column(SQLAlchemyEnum(VideoType), nullable=True, default=VideoType.local)
     priority = db.Column(db.Integer, nullable=False, default=5)
     views = db.Column(db.Integer, nullable=False, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow) # Data de criação da aula
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    instructor = db.relationship('Users', backref='classes_taught', foreign_keys=[instructor_id])
 
     def to_dict(self):
         return {
             "id": self.id,
             "name": self.name,
-            "instructor": self.instructor,
+            "description": self.description,
+            "instructor_id": self.instructor_id,
+            "instructor_name": self.instructor.name if self.instructor else None,
             "date": self.date.isoformat() if self.date else None,
             "category": self.category.value if self.category else None,
-            "video_type": self.video_type.value if self.video_type else None,
+            "video_url": self.video_url,
             "video_path": self.video_path,
+            "video_type": self.video_type.value if self.video_type else None,
             "priority": self.priority,
             "views": self.views,
-            "created_at": self.created_at.isoformat() if self.created_at else None
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
 
 class UserProgress(db.Model):
@@ -171,22 +182,60 @@ class StudentGraphs(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    # Relacionamentos removidos para evitar problemas na exclusão
+    # Relacionamentos - comentado por enquanto para evitar problemas
+    # student = db.relationship('Users', backref='graphs', foreign_keys=[student_id])
 
     # Constraint única para evitar duplicatas
     __table_args__ = (db.UniqueConstraint('student_id', 'month', 'year', name='unique_student_month_year'),)
 
     def to_dict(self):
-        return {
-            'id': self.id,
-            'student_id': self.student_id,
-            'student_name': self.student.name if self.student else None,
-            'month': self.month.value if self.month else None,
-            'year': self.year,
-            'image_url': self.image_url,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
-        }
+        try:
+            return {
+                'id': self.id,
+                'student_id': self.student_id,
+                'month': self.month.value if self.month else None,
+                'year': self.year,
+                'image_url': self.image_url,
+                'created_at': self.created_at.isoformat() if self.created_at else None,
+                'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            }
+        except AttributeError as e:
+            print(f"❌ AttributeError em StudentGraphs.to_dict(): {e}")
+            print(f"   Atributos disponíveis: {[attr for attr in dir(self) if not attr.startswith('_')]}")
+            raise
+
+class StudentDatabase(db.Model):
+    __tablename__ = "student_database"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    month = db.Column(SQLAlchemyEnum(MonthEnum), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    file_url = db.Column(db.Text, nullable=False)
+    file_size = db.Column(db.Integer, nullable=True)  # Tamanho em bytes
+    status = db.Column(db.String(20), nullable=False, default='ativo')  # 'ativo' ou 'deletado'
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # Constraint única para evitar duplicatas
+    __table_args__ = (db.UniqueConstraint('student_id', 'month', 'year', name='unique_student_db_month_year'),)
+
+    def to_dict(self):
+        try:
+            return {
+                'id': self.id,
+                'student_id': self.student_id,
+                'month': self.month.value if self.month else None,
+                'year': self.year,
+                'file_url': self.file_url,
+                'file_size': self.file_size,
+                'status': self.status,
+                'created_at': self.created_at.isoformat() if self.created_at else None,
+                'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            }
+        except AttributeError as e:
+            print(f"❌ AttributeError em StudentDatabase.to_dict(): {e}")
+            print(f"   Atributos disponíveis: {[attr for attr in dir(self) if not attr.startswith('_')]}")
+            raise
 
 class StudentLeaks(db.Model):
     __tablename__ = "student_leaks"
@@ -200,7 +249,9 @@ class StudentLeaks(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    # Relacionamentos removidos para evitar problemas na exclusão
+    # Relacionamentos - comentado por enquanto para evitar problemas
+    # student = db.relationship('Users', backref='leaks', foreign_keys=[student_id])
+    # admin = db.relationship('Users', backref='uploaded_leaks', foreign_keys=[uploaded_by])
 
     # Constraint única para evitar duplicatas
     __table_args__ = (db.UniqueConstraint('student_id', 'month', 'year', name='unique_student_leak_month_year'),)
@@ -209,13 +260,11 @@ class StudentLeaks(db.Model):
         return {
             'id': self.id,
             'student_id': self.student_id,
-            'student_name': self.student.name if self.student else None,
             'month': self.month.value if self.month else None,
             'year': self.year,
             'image_url': self.image_url,
             'improvements': self.improvements,
             'uploaded_by': self.uploaded_by,
-            'uploaded_by_name': self.admin.name if self.admin else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

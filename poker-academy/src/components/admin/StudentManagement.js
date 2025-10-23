@@ -114,7 +114,7 @@ const StudentManagement = () => {
       username: student.username || '',
       email: student.email || '',
       password: '', // Senha não é pré-preenchida por segurança
-      particao_id: student.particao_id || (particoes.length > 0 ? particoes[0].id : ''), // Preencher partição existente
+      particao_id: student.particao_id ? student.particao_id.toString() : (particoes.length > 0 ? particoes[0].id.toString() : ''), // Preencher partição existente
     });
     setShowForm(true);
     setFormError(null);
@@ -389,7 +389,7 @@ const StudentManagement = () => {
                 >
                   <option value="">Selecione uma partição</option>
                   {particoes.map(particao => (
-                    <option key={particao.id} value={particao.id}>
+                    <option key={particao.id} value={particao.id.toString()}>
                       {particao.nome} {particao.descricao ? `- ${particao.descricao}` : ''}
                     </option>
                   ))}

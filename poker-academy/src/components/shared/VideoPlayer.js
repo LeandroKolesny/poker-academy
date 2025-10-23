@@ -24,6 +24,8 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const videoRef = useRef(null);
+  const hasResumedRef = useRef(false); // Flag para evitar retomar múltiplas vezes
+  const lastSaveTimeRef = useRef(0); // Controlar quando foi o último save
 
   // Detectar se é mobile
   useEffect(() => {
@@ -42,15 +44,25 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
     console.log('🎬 VideoPlayer: useEffect loadProgress iniciado');
     console.log('🎬 VideoPlayer: actualClassData.id:', actualClassData?.id);
 
+    // Resetar flags quando a aula muda
+    hasResumedRef.current = false;
+    lastSaveTimeRef.current = 0;
+
     const loadProgress = async () => {
       try {
         console.log('🎬 VideoPlayer: Carregando progresso para aula ID:', actualClassData.id);
         const progressData = await classService.getProgress(actualClassData.id);
-        console.log('🎬 VideoPlayer: Progresso carregado:', progressData);
-        setProgress(progressData);
+        console.log('🎬 VideoPlayer: Progresso carregado (raw):', progressData);
+
+        // Extrair dados corretos - a API retorna { data: {...} }
+        const actualProgress = progressData?.data || progressData;
+        console.log('🎬 VideoPlayer: Progresso extraído:', actualProgress);
+        console.log('🎬 VideoPlayer: current_time:', actualProgress?.current_time);
+
+        setProgress(actualProgress);
       } catch (error) {
         console.error('🎬 VideoPlayer: Erro ao carregar progresso:', error);
-        setProgress({ progress: 0, watched: false, last_watched: null });
+        setProgress({ progress: 0, watched: false, last_watched: null, current_time: 0 });
       } finally {
         console.log('🎬 VideoPlayer: Finalizando loading');
         setLoading(false);
@@ -65,6 +77,22 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
       setLoading(false);
     }
   }, [actualClassData?.id]);
+
+  // Quando o progresso é carregado, tentar retomar o vídeo
+  useEffect(() => {
+    console.log('🎬 VideoPlayer: useEffect progress mudou:', progress);
+
+    if (videoRef.current && progress && progress.current_time && progress.current_time > 0 && !hasResumedRef.current) {
+      console.log(`🎬 VideoPlayer: Tentando retomar de ${progress.current_time}s (progress effect)`);
+
+      // Se o vídeo já está pronto, retomar imediatamente
+      if (videoRef.current.readyState >= 2) { // HAVE_CURRENT_DATA ou superior
+        videoRef.current.currentTime = progress.current_time;
+        hasResumedRef.current = true;
+        console.log(`✅ Retomado imediatamente em ${progress.current_time}s`);
+      }
+    }
+  }, [progress]);
 
   // Função para registrar visualização
   const registerView = async () => {
@@ -123,10 +151,32 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
 
   // Função para quando o vídeo carrega
   const handleVideoLoaded = () => {
-    if (videoRef.current && progress && progress.current_time) {
+    // Evitar retomar múltiplas vezes
+    if (hasResumedRef.current) {
+      console.log(`🎬 VideoPlayer: handleVideoLoaded - já foi retomado, ignorando`);
+      return;
+    }
+
+    console.log(`🎬 VideoPlayer: handleVideoLoaded chamado`);
+    console.log(`🎬 VideoPlayer: progress:`, progress);
+    console.log(`🎬 VideoPlayer: progress?.current_time:`, progress?.current_time);
+
+    if (videoRef.current && progress && progress.current_time && progress.current_time > 0) {
       // Retomar de onde parou
-      videoRef.current.currentTime = progress.current_time;
-      console.log(`Retomando vídeo em ${progress.current_time}s (${progress.progress}%)`);
+      console.log(`🎬 VideoPlayer: Tentando retomar de ${progress.current_time}s`);
+      console.log(`🎬 VideoPlayer: videoRef.current.duration: ${videoRef.current.duration}`);
+
+      // Usar setTimeout para garantir que o vídeo está pronto
+      setTimeout(() => {
+        if (videoRef.current && !hasResumedRef.current) {
+          videoRef.current.currentTime = progress.current_time;
+          hasResumedRef.current = true; // Marcar como já retomado
+          console.log(`✅ Retomando vídeo em ${progress.current_time}s (${progress.progress}%)`);
+        }
+      }, 100);
+    } else {
+      console.log(`🎬 VideoPlayer: Não há progresso para retomar`);
+      hasResumedRef.current = true; // Marcar como já processado mesmo sem retomar
     }
   };
 
@@ -135,10 +185,12 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
     if (videoRef.current) {
       const currentTime = videoRef.current.currentTime;
       const duration = videoRef.current.duration;
+      const now = Date.now();
 
-      // Salvar progresso a cada 10 segundos
-      if (Math.floor(currentTime) % 10 === 0) {
+      // Salvar progresso apenas a cada 5 segundos (5000ms) para evitar muitas requisições
+      if (now - lastSaveTimeRef.current >= 5000) {
         saveProgress(currentTime, duration);
+        lastSaveTimeRef.current = now;
       }
     }
   };
@@ -229,25 +281,6 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
             <h4 className={`font-semibold text-white mb-2 leading-tight ${isMobile ? 'video-title-mobile' : 'text-sm sm:text-base md:text-lg'}`}>
               {actualClassData.name}
             </h4>
-
-            {/* Informações da aula */}
-            <div className={`text-gray-400 space-y-1 mb-3 md:mb-4 ${isMobile ? 'video-instructor-mobile' : 'text-xs sm:text-sm'}`}>
-              <p>
-                <span className="text-gray-300">Instrutor:</span> {actualClassData.instructor || 'N/A'}
-              </p>
-              <p>
-                <span className="text-gray-300">Categoria:</span> {actualClassData.category || 'N/A'}
-              </p>
-              <p>
-                <span className="text-gray-300">Data:</span> {
-                  actualClassData.date
-                    ? new Date(actualClassData.date).toLocaleDateString('pt-BR')
-                    : actualClassData.upload_date
-                    ? new Date(actualClassData.upload_date).toLocaleDateString('pt-BR')
-                    : 'N/A'
-                }
-              </p>
-            </div>
           </div>
 
           {/* Container responsivo para vídeo */}
@@ -263,7 +296,7 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
                   playsInline // Importante para iOS
                   webkit-playsinline="true" // Para compatibilidade com iOS mais antigos
                   controlsList="nodownload" // Remover opção de download no mobile
-                  onLoadedData={handleVideoLoaded}
+                  onCanPlay={handleVideoLoaded}
                   onTimeUpdate={handleTimeUpdate}
                   onPause={handlePause}
                   onEnded={() => saveProgress(videoRef.current?.duration || 0, videoRef.current?.duration || 0)}
@@ -282,23 +315,25 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
             </div>
           ) : (
             // Layout para desktop
-            <div className="video-container mb-3 md:mb-4">
-              <div className="video-aspect-ratio">
-                <video
-                  ref={videoRef}
-                  controls
-                  className="video-element video-transition"
-                  preload="metadata"
-                  onLoadedData={handleVideoLoaded}
-                  onTimeUpdate={handleTimeUpdate}
-                  onPause={handlePause}
-                  onEnded={() => saveProgress(videoRef.current?.duration || 0, videoRef.current?.duration || 0)}
-                >
-                  <source src={videoUrl} type="video/mp4" />
-                  <source src={videoUrl} type="video/webm" />
-                  <source src={videoUrl} type="video/ogg" />
-                  Seu navegador não suporta o elemento de vídeo.
-                </video>
+            <div className="mb-3 md:mb-4">
+              <div className="video-container">
+                <div className="video-aspect-ratio">
+                  <video
+                    ref={videoRef}
+                    controls
+                    className="video-element video-transition"
+                    preload="metadata"
+                    onCanPlay={handleVideoLoaded}
+                    onTimeUpdate={handleTimeUpdate}
+                    onPause={handlePause}
+                    onEnded={() => saveProgress(videoRef.current?.duration || 0, videoRef.current?.duration || 0)}
+                  >
+                    <source src={videoUrl} type="video/mp4" />
+                    <source src={videoUrl} type="video/webm" />
+                    <source src={videoUrl} type="video/ogg" />
+                    Seu navegador não suporta o elemento de vídeo.
+                  </video>
+                </div>
               </div>
             </div>
           )}

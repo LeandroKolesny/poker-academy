@@ -21,6 +21,7 @@ from src.routes.particao_routes import particao_bp
 from src.routes.password_reset_routes import password_reset_bp
 from src.routes.graphs_routes import graphs_bp
 from src.routes.admin_graphs_routes import admin_graphs_bp
+from src.routes.database_routes import database_bp
 from src.models import db, Classes
 from src.routes.class_routes import class_bp
 
@@ -48,7 +49,17 @@ else:
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = SECRET_KEY
+app.config["JSON_AS_ASCII"] = False  # Permitir caracteres UTF-8 no JSON
 app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500MB max file size
+
+# Configuração de charset UTF-8 para SQLAlchemy
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "connect_args": {
+        "charset": "utf8mb4"
+    },
+    "pool_pre_ping": True,
+    "pool_recycle": 3600
+}
 
 db.init_app(app)
 
@@ -61,6 +72,7 @@ app.register_blueprint(particao_bp)
 app.register_blueprint(password_reset_bp)
 app.register_blueprint(graphs_bp)
 app.register_blueprint(admin_graphs_bp)
+app.register_blueprint(database_bp)
 
 @app.route("/")
 def home():

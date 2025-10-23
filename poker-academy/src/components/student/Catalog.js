@@ -212,10 +212,16 @@ const Catalog = () => {
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-0 md:p-4">
           <div className="bg-gray-800 w-full h-full md:w-full md:max-w-4xl md:h-auto md:rounded-lg shadow-xl transform transition-all relative overflow-y-auto">
             <div className="sticky top-0 bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center">
-              <h3 className="text-xl md:text-2xl font-semibold text-red-400 truncate pr-4">{selectedClass.name}</h3>
+              <div className="flex-1">
+                <h3 className="text-xl md:text-2xl font-semibold text-red-400 truncate pr-4">{selectedClass.name}</h3>
+                <div className="mt-2 space-y-1 text-sm text-gray-400">
+                  <p><span className="text-gray-300 font-semibold">Instrutor:</span> {selectedClass.instructor || 'N/A'}</p>
+                  <p><span className="text-gray-300 font-semibold">Categoria:</span> {getCategoryDisplayName(selectedClass.category)}</p>
+                </div>
+              </div>
               <button
                 onClick={closeModal}
-                className="text-gray-400 hover:text-white transition-colors p-2"
+                className="text-gray-400 hover:text-white transition-colors p-2 ml-4"
                 aria-label="Fechar modal"
               >
                 <FontAwesomeIcon icon={faTimes} size="lg" />
@@ -223,12 +229,6 @@ const Catalog = () => {
             </div>
 
             <div className="p-4 md:p-6">
-              <div className="mb-4 space-y-2">
-                <p className="text-gray-300 text-sm md:text-base"><span className="font-semibold">Instrutor:</span> {selectedClass.instructor}</p>
-                <p className="text-gray-300 text-sm md:text-base"><span className="font-semibold">Categoria:</span> {getCategoryDisplayName(selectedClass.category)}</p>
-                <p className="text-gray-300 text-sm md:text-base"><span className="font-semibold">Data:</span> {formatDateForDisplay(selectedClass.date)}</p>
-              </div>
-
               {/* Player de vídeo com registro de visualização */}
               <VideoPlayer
                 classData={selectedClass}

@@ -1,4 +1,5 @@
 # src/routes/graphs_routes.py
+# Updated: 2025-10-16 22:16:00 - Fixing StudentGraphs relationship issue
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 import os
@@ -27,27 +28,103 @@ def get_upload_folder():
 def get_student_graphs(current_user):
     """Buscar gráficos do aluno logado"""
     try:
+        print(f"\n{'='*80}")
+        print(f"🔍 INICIANDO get_student_graphs")
+        print(f"{'='*80}")
+        print(f"🔍 Verificando se StudentGraphs tem atributo 'student'...")
+        print(f"   StudentGraphs.__dict__: {StudentGraphs.__dict__.keys()}")
+        print(f"   StudentGraphs.__mapper__.columns: {list(StudentGraphs.__mapper__.columns.keys())}")
+        print(f"   StudentGraphs.__mapper__.relationships: {list(StudentGraphs.__mapper__.relationships.keys())}")
+
         year = request.args.get('year', datetime.now().year, type=int)
-        
+        print(f"📅 Year recebido: {year}")
+        print(f"👤 Student ID: {current_user.id}")
+
+        # Verificar se StudentGraphs existe
+        print(f"🔍 Verificando modelo StudentGraphs...")
+        print(f"   Tabela: {StudentGraphs.__tablename__}")
+
+        # Fazer query
+        print(f"🔍 Executando query...")
         graphs = StudentGraphs.query.filter_by(
             student_id=current_user.id,
             year=year
         ).all()
-        
+
+        print(f"✅ Gráficos encontrados: {len(graphs)}")
+
+        if len(graphs) == 0:
+            print(f"⚠️  Nenhum gráfico encontrado para student_id={current_user.id}, year={year}")
+
         # Organizar por mês
         graphs_by_month = {}
-        for graph in graphs:
-            graphs_by_month[graph.month.value] = graph.to_dict()
-        
-        return jsonify({
+        for idx, graph in enumerate(graphs):
+            try:
+                print(f"\n📊 Processando gráfico {idx + 1}/{len(graphs)}")
+                print(f"   ID: {graph.id}")
+                print(f"   Student ID: {graph.student_id}")
+                print(f"   Month: {graph.month}")
+                print(f"   Month type: {type(graph.month)}")
+                print(f"   Year: {graph.year}")
+                print(f"   Image URL: {graph.image_url}")
+
+                # Não tentar acessar o relacionamento aqui
+                print(f"   Pulando acesso ao relacionamento (será feito no to_dict)")
+
+                # Converter month para value
+                month_value = graph.month.value if hasattr(graph.month, 'value') else graph.month
+                print(f"   Month value: {month_value}")
+
+                # Chamar to_dict
+                print(f"   Chamando to_dict()...")
+                try:
+                    print(f"   Verificando atributos antes de to_dict()...")
+                    print(f"   Atributos: {[attr for attr in dir(graph) if not attr.startswith('_')]}")
+                    graph_dict = graph.to_dict()
+                    print(f"   ✅ to_dict() retornou: {graph_dict}")
+                except AttributeError as ae:
+                    print(f"   ❌ AttributeError em to_dict(): {ae}")
+                    print(f"   Atributos do objeto: {[attr for attr in dir(graph) if not attr.startswith('_')]}")
+                    import traceback
+                    print(f"   Traceback completo: {traceback.format_exc()}")
+                    raise
+
+                graphs_by_month[month_value] = graph_dict
+                print(f"   ✅ Gráfico adicionado ao dicionário")
+
+            except Exception as graph_error:
+                import traceback
+                print(f"❌ Erro ao processar gráfico {graph.id}: {graph_error}")
+                print(f"❌ Traceback: {traceback.format_exc()}")
+
+        print(f"\n✅ Total de meses com gráficos: {len(graphs_by_month)}")
+        print(f"✅ Meses: {list(graphs_by_month.keys())}")
+
+        result = {
             'success': True,
             'graphs': graphs_by_month,
             'year': year
-        })
-        
+        }
+        print(f"✅ Retornando resultado: {result}")
+        print(f"{'='*80}\n")
+
+        return jsonify(result)
+
     except Exception as e:
-        print(f"❌ Erro ao buscar gráficos do aluno: {e}")
-        return jsonify({'error': 'Erro interno do servidor'}), 500
+        import traceback
+        print(f"\n{'='*80}")
+        print(f"❌ ERRO CRÍTICO em get_student_graphs")
+        print(f"{'='*80}")
+        print(f"❌ Erro: {e}")
+        print(f"❌ Tipo do erro: {type(e)}")
+        print(f"❌ Traceback completo:")
+        print(traceback.format_exc())
+        print(f"{'='*80}\n")
+
+        return jsonify({
+            'error': 'Erro interno do servidor',
+            'error_type': type(e).__name__
+        }), 500
 
 @graphs_bp.route('/api/student/graphs/upload', methods=['POST'])
 @token_required
@@ -143,27 +220,91 @@ def upload_student_graph(current_user):
 def get_student_leaks(current_user):
     """Buscar análises de leaks do aluno logado"""
     try:
+        print(f"\n{'='*80}")
+        print(f"🔍 INICIANDO get_student_leaks")
+        print(f"{'='*80}")
+
         year = request.args.get('year', datetime.now().year, type=int)
-        
+        print(f"📅 Year recebido: {year}")
+        print(f"👤 Student ID: {current_user.id}")
+        print(f"👤 Student Type: {current_user.type}")
+
+        # Verificar se StudentLeaks existe
+        print(f"🔍 Verificando modelo StudentLeaks...")
+        print(f"   Tabela: {StudentLeaks.__tablename__}")
+
+        # Fazer query
+        print(f"🔍 Executando query...")
         leaks = StudentLeaks.query.filter_by(
             student_id=current_user.id,
             year=year
         ).all()
-        
+
+        print(f"✅ Leaks encontrados: {len(leaks)}")
+
+        if len(leaks) == 0:
+            print(f"⚠️  Nenhum leak encontrado para student_id={current_user.id}, year={year}")
+            print(f"   Retornando lista vazia")
+
         # Organizar por mês
         leaks_by_month = {}
-        for leak in leaks:
-            leaks_by_month[leak.month.value] = leak.to_dict()
-        
-        return jsonify({
+        for idx, leak in enumerate(leaks):
+            try:
+                print(f"\n📊 Processando leak {idx + 1}/{len(leaks)}")
+                print(f"   ID: {leak.id}")
+                print(f"   Student ID: {leak.student_id}")
+                print(f"   Month: {leak.month}")
+                print(f"   Month type: {type(leak.month)}")
+                print(f"   Year: {leak.year}")
+
+                # Não tentar acessar os relacionamentos aqui
+                print(f"   Pulando acesso aos relacionamentos (será feito no to_dict)")
+
+                # Converter month para value
+                month_value = leak.month.value if hasattr(leak.month, 'value') else leak.month
+                print(f"   Month value: {month_value}")
+
+                # Chamar to_dict
+                print(f"   Chamando to_dict()...")
+                leak_dict = leak.to_dict()
+                print(f"   ✅ to_dict() retornou: {leak_dict}")
+
+                leaks_by_month[month_value] = leak_dict
+                print(f"   ✅ Leak adicionado ao dicionário")
+
+            except Exception as leak_error:
+                import traceback
+                print(f"❌ Erro ao processar leak {leak.id}: {leak_error}")
+                print(f"❌ Traceback: {traceback.format_exc()}")
+
+        print(f"\n✅ Total de meses com leaks: {len(leaks_by_month)}")
+        print(f"✅ Meses: {list(leaks_by_month.keys())}")
+
+        result = {
             'success': True,
             'leaks': leaks_by_month,
             'year': year
-        })
-        
+        }
+        print(f"✅ Retornando resultado: {result}")
+        print(f"{'='*80}\n")
+
+        return jsonify(result), 200
+
     except Exception as e:
-        print(f"❌ Erro ao buscar leaks do aluno: {e}")
-        return jsonify({'error': 'Erro interno do servidor'}), 500
+        import traceback
+        print(f"\n{'='*80}")
+        print(f"❌ ERRO CRÍTICO em get_student_leaks")
+        print(f"{'='*80}")
+        print(f"❌ Erro: {e}")
+        print(f"❌ Tipo do erro: {type(e)}")
+        print(f"❌ Traceback completo:")
+        print(traceback.format_exc())
+        print(f"{'='*80}\n")
+
+        return jsonify({
+            'error': f'Erro interno do servidor: {str(e)}',
+            'error_type': type(e).__name__
+        }), 500
 
 @graphs_bp.route('/uploads/graphs/<filename>')
 def serve_graph_file(filename):
