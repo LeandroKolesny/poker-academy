@@ -11,14 +11,16 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
 
   // Extrair dados corretos - verificar se está aninhado em .data
   const actualClassData = classData?.data || classData;
-  console.log('🎬 VideoPlayer: classData original:', classData);
-  console.log('🎬 VideoPlayer: actualClassData:', actualClassData);
+  console.log('🎬 VideoPlayer: classData original:', JSON.stringify(classData, null, 2));
+  console.log('🎬 VideoPlayer: classData.data:', classData?.data);
+  console.log('🎬 VideoPlayer: actualClassData:', JSON.stringify(actualClassData, null, 2));
   console.log('🎬 VideoPlayer: actualClassData.instructor:', actualClassData?.instructor);
   console.log('🎬 VideoPlayer: actualClassData.instructor_name:', actualClassData?.instructor_name);
   console.log('🎬 VideoPlayer: actualClassData.category:', actualClassData?.category);
   console.log('🎬 VideoPlayer: actualClassData.date:', actualClassData?.date);
   console.log('🎬 VideoPlayer: actualClassData.video_url:', actualClassData?.video_url);
   console.log('🎬 VideoPlayer: actualClassData.video_path:', actualClassData?.video_path);
+  console.log('🎬 VideoPlayer: Todas as chaves de actualClassData:', Object.keys(actualClassData || {}));
 
   const [isWatching, setIsWatching] = useState(false);
   const [viewRegistered, setViewRegistered] = useState(false);
