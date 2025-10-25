@@ -263,15 +263,25 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
     );
   }
 
-  // Player para vídeos locais
-  if (actualClassData?.video_path) {
-    console.log('🎬 VideoPlayer: Renderizando player para vídeo local');
+  // Player para vídeos locais ou S3/CloudFront
+  if (actualClassData?.video_path || actualClassData?.video_url) {
+    console.log('🎬 VideoPlayer: Renderizando player para vídeo');
     console.log('🎬 VideoPlayer: video_path:', actualClassData.video_path);
+    console.log('🎬 VideoPlayer: video_url:', actualClassData.video_url);
     console.log('🎬 VideoPlayer: isWatching:', isWatching);
 
-    // Usar rota com token para autenticação
-    const token = getToken();
-    const videoUrl = `${appConfig.API_BASE_URL}/videos/${actualClassData.video_path}?token=${token}`;
+    // Usar CloudFront se disponível, senão usar rota local com token
+    let videoUrl;
+    if (actualClassData.video_url) {
+      // Usar URL do CloudFront (já armazenada no banco)
+      videoUrl = actualClassData.video_url;
+      console.log('🎬 VideoPlayer: Usando URL do CloudFront');
+    } else {
+      // Fallback para rota local com token (para vídeos antigos)
+      const token = getToken();
+      videoUrl = `${appConfig.API_BASE_URL}/videos/${actualClassData.video_path}?token=${token}`;
+      console.log('🎬 VideoPlayer: Usando rota local com token');
+    }
     console.log('🎬 VideoPlayer: URL do vídeo:', videoUrl);
 
     return (

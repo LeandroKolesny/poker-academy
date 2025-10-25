@@ -92,8 +92,9 @@ const Catalog = () => {
 
   // Filtrar aulas baseado na busca e categoria
   const filteredClasses = classes.filter(cls => {
+    const instructorName = cls.instructor_name || cls.instructor || '';
     const matchesSearch = cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cls.instructor.toLowerCase().includes(searchTerm.toLowerCase());
+                         instructorName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || cls.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
@@ -192,7 +193,7 @@ const Catalog = () => {
                   </button>
                 </div>
                 <div className="space-y-1 mb-4">
-                  <p className="text-sm text-gray-400">Instrutor: {cls.instructor}</p>
+                  <p className="text-sm text-gray-400">Instrutor: {cls.instructor_name || cls.instructor || 'N/A'}</p>
                   <p className="text-sm text-gray-400">Categoria: {getCategoryDisplayName(cls.category)}</p>
                   <p className="text-sm text-gray-400">Data: {formatDateForDisplay(cls.date)}</p>
                 </div>
@@ -215,7 +216,7 @@ const Catalog = () => {
               <div className="flex-1">
                 <h3 className="text-xl md:text-2xl font-semibold text-red-400 truncate pr-4">{selectedClass.name}</h3>
                 <div className="mt-2 space-y-1 text-sm text-gray-400">
-                  <p><span className="text-gray-300 font-semibold">Instrutor:</span> {selectedClass.instructor || 'N/A'}</p>
+                  <p><span className="text-gray-300 font-semibold">Instrutor:</span> {selectedClass.instructor_name || selectedClass.instructor || 'N/A'}</p>
                   <p><span className="text-gray-300 font-semibold">Categoria:</span> {getCategoryDisplayName(selectedClass.category)}</p>
                 </div>
               </div>
