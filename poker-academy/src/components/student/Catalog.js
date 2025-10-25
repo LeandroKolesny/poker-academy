@@ -54,10 +54,16 @@ const Catalog = () => {
   const handleViewDetails = async (classId) => {
     try {
       console.log('📚 Catalog: Buscando detalhes da aula ID:', classId);
-      const data = await classService.getById(classId);
-      console.log('📚 Catalog: Dados recebidos do getById:', data);
+      const response = await classService.getById(classId);
+      console.log('📚 Catalog: Resposta completa do getById:', response);
+
+      // Extrair dados - pode estar em response.data ou diretamente em response
+      const data = response?.data || response;
+      console.log('📚 Catalog: Dados extraídos:', data);
       console.log('📚 Catalog: video_url recebido:', data?.video_url);
       console.log('📚 Catalog: video_path recebido:', data?.video_path);
+      console.log('📚 Catalog: instructor_name recebido:', data?.instructor_name);
+
       setSelectedClass(data);
       setIsModalOpen(true);
     } catch (e) {
