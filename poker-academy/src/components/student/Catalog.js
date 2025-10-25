@@ -56,6 +56,8 @@ const Catalog = () => {
       console.log('📚 Catalog: Buscando detalhes da aula ID:', classId);
       const data = await classService.getById(classId);
       console.log('📚 Catalog: Dados recebidos do getById:', data);
+      console.log('📚 Catalog: video_url recebido:', data?.video_url);
+      console.log('📚 Catalog: video_path recebido:', data?.video_path);
       setSelectedClass(data);
       setIsModalOpen(true);
     } catch (e) {
