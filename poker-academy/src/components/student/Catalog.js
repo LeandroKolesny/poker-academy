@@ -239,6 +239,8 @@ const Catalog = () => {
 
             <div className="p-4 md:p-6">
               {/* Player de vídeo com registro de visualização */}
+              {console.log('📚 Catalog: Passando para VideoPlayer:', selectedClass)}
+              {console.log('📚 Catalog: video_url que será passado:', selectedClass?.video_url)}
               <VideoPlayer
                 classData={selectedClass}
                 onViewRegistered={(totalViews) => {
