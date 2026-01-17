@@ -219,10 +219,11 @@ const Catalog = () => {
 
       {isModalOpen && selectedClass && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-0 md:p-4">
-          <div className="bg-gray-800 w-full h-full md:w-full md:max-w-4xl md:h-auto md:rounded-lg shadow-xl transform transition-all relative overflow-y-auto">
-            <div className="sticky top-0 bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center">
-              <div className="flex-1">
-                <h3 className="text-xl md:text-2xl font-semibold text-red-400 truncate pr-4">{selectedClass.name}</h3>
+          <div className="bg-gray-800 w-full h-full md:w-full md:max-w-4xl md:max-h-[95vh] md:rounded-lg shadow-xl transform transition-all relative flex flex-col">
+            {/* Header fixo com botão de fechar sempre visível */}
+            <div className="flex-shrink-0 bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-start md:rounded-t-lg">
+              <div className="flex-1 pr-4">
+                <h3 className="text-xl md:text-2xl font-semibold text-red-400 leading-tight">{selectedClass.name}</h3>
                 <div className="mt-2 space-y-1 text-sm text-gray-400">
                   <p><span className="text-gray-300 font-semibold">Instrutor:</span> {selectedClass.instructor_name || selectedClass.instructor || 'N/A'}</p>
                   <p><span className="text-gray-300 font-semibold">Categoria:</span> {getCategoryDisplayName(selectedClass.category)}</p>
@@ -230,14 +231,16 @@ const Catalog = () => {
               </div>
               <button
                 onClick={closeModal}
-                className="text-gray-400 hover:text-white transition-colors p-2 ml-4"
+                className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white transition-colors p-2 rounded-lg shadow-lg"
                 aria-label="Fechar modal"
+                title="Fechar"
               >
-                <FontAwesomeIcon icon={faTimes} size="lg" />
+                <FontAwesomeIcon icon={faTimes} size="xl" />
               </button>
             </div>
 
-            <div className="p-4 md:p-6">
+            {/* Área de conteúdo scrollável */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
               {/* Player de vídeo com registro de visualização */}
               {console.log('📚 Catalog: Passando para VideoPlayer:', selectedClass)}
               {console.log('📚 Catalog: video_url que será passado:', selectedClass?.video_url)}
@@ -258,17 +261,6 @@ const Catalog = () => {
                   ));
                 }}
               />
-
-              {/* Adicionar mais detalhes da aula aqui se necessário, como descrição, etc. */}
-
-              <div className="mt-6 flex justify-center md:justify-end">
-                <button
-                  onClick={closeModal}
-                  className="w-full md:w-auto bg-gray-600 hover:bg-gray-500 text-gray-200 font-bold py-3 px-6 rounded transition-colors duration-150"
-                >
-                  Fechar
-                </button>
-              </div>
             </div>
           </div>
         </div>

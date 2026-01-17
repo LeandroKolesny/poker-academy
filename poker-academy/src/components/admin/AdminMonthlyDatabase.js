@@ -1,102 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faDatabase, faCalendarAlt, faFile, faUser, faBuilding } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faDatabase, faFile } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
-import Loading from '../shared/Loading';
+import PartitionStudentLayout from './PartitionStudentLayout';
+import { MONTHS } from '../../constants';
+import { formatFileSize } from '../../utils';
 
-const AdminMonthlyDatabase = () => {
-    const [databases, setDatabases] = useState([]);
+// Componente de conteudo do modal para databases
+const DatabaseModalContent = ({ student, year }) => {
+    const [databases, setDatabases] = useState({});
     const [loading, setLoading] = useState(true);
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-    const [selectedParticao, setSelectedParticao] = useState('');
-    const [studentFilter, setStudentFilter] = useState('');
-    const [students, setStudents] = useState([]);
-    const [particoes, setParticoes] = useState([]);
-
-    const months = [
-        { key: 'jan', name: 'Janeiro' },
-        { key: 'fev', name: 'Fevereiro' },
-        { key: 'mar', name: 'Março' },
-        { key: 'abr', name: 'Abril' },
-        { key: 'mai', name: 'Maio' },
-        { key: 'jun', name: 'Junho' },
-        { key: 'jul', name: 'Julho' },
-        { key: 'ago', name: 'Agosto' },
-        { key: 'set', name: 'Setembro' },
-        { key: 'out', name: 'Outubro' },
-        { key: 'nov', name: 'Novembro' },
-        { key: 'dez', name: 'Dezembro' }
-    ];
 
     useEffect(() => {
-        fetchDatabases();
-        fetchStudents();
-        fetchParticoes();
-    }, [selectedYear, selectedParticao]);
+        fetchStudentDatabases();
+    }, [student.id, year]);
 
-    const fetchDatabases = async () => {
+    const fetchStudentDatabases = async () => {
         try {
             setLoading(true);
-            let url = `/student/database?year=${selectedYear}`;
-            if (selectedParticao) {
-                url += `&particao_id=${selectedParticao}`;
-            }
-            const response = await api.get(url);
-
-            // O backend retorna { data: [...] }, então acessar response.data.data
+            // Buscar todos os databases e filtrar pelo student_id
+            const response = await api.get(`/api/student/database?year=${year}`);
             const databasesList = response.data?.data || [];
-            if (Array.isArray(databasesList)) {
-                setDatabases(databasesList);
-            }
-            console.log('📊 Databases carregados (admin):', databasesList);
+
+            // Filtrar pelo student_id e converter para objeto por mes
+            const studentDbs = databasesList.filter(db => db.student_id === student.id);
+            const dbByMonth = {};
+            studentDbs.forEach(db => {
+                dbByMonth[db.month] = db;
+            });
+
+            setDatabases(dbByMonth);
         } catch (error) {
-            console.error('Erro ao buscar databases:', error);
-            alert('Erro ao carregar databases');
+            console.error('Erro ao buscar databases do aluno:', error);
         } finally {
             setLoading(false);
         }
-    };
-
-    const fetchStudents = async () => {
-        try {
-            const response = await api.get('/users?type=student');
-            if (response.data && Array.isArray(response.data)) {
-                setStudents(response.data);
-            }
-        } catch (error) {
-            console.error('Erro ao buscar alunos:', error);
-        }
-    };
-
-    const fetchParticoes = async () => {
-        try {
-            const response = await api.get('/particoes');
-            const particoesList = response.data?.data || [];
-            if (Array.isArray(particoesList)) {
-                setParticoes(particoesList);
-            }
-        } catch (error) {
-            console.error('Erro ao buscar partições:', error);
-        }
-    };
-
-    const formatFileSize = (bytes) => {
-        if (!bytes) return 'N/A';
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-    };
-
-    const getStudentName = (studentId) => {
-        const student = students.find(s => s.id === studentId);
-        return student ? student.name : `Aluno #${studentId}`;
     };
 
     const handleDownload = async (filename) => {
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(
-                `https://cardroomgrinders.com.br/api/student/database/download/${filename}`,
+                `${api.defaults.baseURL}/api/student/database/download/${filename}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -123,154 +68,110 @@ const AdminMonthlyDatabase = () => {
         }
     };
 
-    const filteredDatabases = studentFilter
-        ? databases.filter(db => db.student_id === parseInt(studentFilter))
-        : databases;
-
     if (loading) {
-        return <Loading />;
+        return (
+            <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-400"></div>
+                <p className="text-gray-400 mt-2">Carregando databases...</p>
+            </div>
+        );
     }
 
     return (
-        <div className="p-6 text-white min-h-screen">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-                <h2 className="text-2xl font-semibold text-red-400">Database Mensal - Todos os Alunos</h2>
-                <div className="flex items-center gap-4 flex-wrap">
-                    <div>
-                        <label className="text-sm font-medium text-gray-300 block mb-1">Partição:</label>
-                        <select
-                            className="bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
-                            value={selectedParticao}
-                            onChange={(e) => setSelectedParticao(e.target.value)}
-                        >
-                            <option value="">Todas as partições</option>
-                            {particoes.map(particao => (
-                                <option key={particao.id} value={particao.id}>
-                                    {particao.nome}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-300 block mb-1">Ano:</label>
-                        <select
-                            className="bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                        >
-                            <option value="2024">2024</option>
-                            <option value="2025">2025</option>
-                            <option value="2026">2026</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-300 block mb-1">Filtrar Aluno:</label>
-                        <select
-                            className="bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
-                            value={studentFilter}
-                            onChange={(e) => setStudentFilter(e.target.value)}
-                        >
-                            <option value="">Todos os alunos</option>
-                            {students.map(student => (
-                                <option key={student.id} value={student.id}>
-                                    {student.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            {/* Tabela de Databases */}
-            <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
-                <table className="w-full min-w-full">
-                    <thead className="bg-gray-500">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Aluno</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Mês</th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Tamanho</th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Data de Envio</th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Ações</th>
+        <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
+            <table className="w-full min-w-full">
+                <thead className="bg-gray-600">
+                    <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Mes</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Status</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Tamanho</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Data Envio</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Acoes</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-600">
+                    {MONTHS.map(month => (
+                        <tr key={month.key} className="hover:bg-gray-600 transition-colors duration-150">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-white">
+                                <div className="flex items-center">
+                                    <span className="font-medium">{month.name}</span>
+                                    {databases[month.key] && (
+                                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <FontAwesomeIcon icon={faFile} className="mr-1" />
+                                            Enviado
+                                        </span>
+                                    )}
+                                </div>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-center text-sm">
+                                {databases[month.key] ? (
+                                    databases[month.key].status === 'ativo' ? (
+                                        <span className="inline-block px-2 py-1 rounded bg-green-600 text-white text-xs font-semibold">
+                                            Disponivel
+                                        </span>
+                                    ) : (
+                                        <span className="inline-block px-2 py-1 rounded bg-red-600 text-white text-xs font-semibold">
+                                            Deletado
+                                        </span>
+                                    )
+                                ) : (
+                                    <span className="text-gray-500">-</span>
+                                )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-white">
+                                {databases[month.key] ? (
+                                    <span className="text-gray-300">
+                                        {formatFileSize(databases[month.key].file_size)}
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-500">-</span>
+                                )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-white">
+                                {databases[month.key] ? (
+                                    <span className="text-gray-300">
+                                        {new Date(databases[month.key].created_at).toLocaleDateString('pt-BR')}
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-500">-</span>
+                                )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-medium">
+                                {databases[month.key] ? (
+                                    <button
+                                        onClick={() => handleDownload(databases[month.key].file_url.split('/').pop())}
+                                        disabled={databases[month.key].status === 'deletado'}
+                                        className={`inline-block px-3 py-1.5 rounded text-white transition-colors text-sm ${
+                                            databases[month.key].status === 'deletado'
+                                                ? 'bg-gray-600 cursor-not-allowed opacity-50'
+                                                : 'bg-green-600 hover:bg-green-700'
+                                        }`}
+                                    >
+                                        <FontAwesomeIcon icon={faDownload} className="mr-1" />
+                                        Baixar
+                                    </button>
+                                ) : (
+                                    <span className="text-gray-500 text-xs">Nao enviado</span>
+                                )}
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-600">
-                        {filteredDatabases.length > 0 ? (
-                            filteredDatabases.map((db, index) => (
-                                <tr key={index} className="hover:bg-gray-600 transition-colors duration-150">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                                        <div className="flex items-center">
-                                            <FontAwesomeIcon icon={faUser} className="mr-2 text-gray-400" />
-                                            <span className="font-medium">{getStudentName(db.student_id)}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                                        <div className="flex items-center">
-                                            <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 text-gray-400" />
-                                            <span>{months.find(m => m.key === db.month)?.name || db.month}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
-                                        <span className="text-gray-300">
-                                            {formatFileSize(db.file_size)}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
-                                        <span className="text-gray-300">
-                                            {new Date(db.created_at).toLocaleDateString('pt-BR')}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                        {db.status === 'ativo' ? (
-                                            <span className="inline-block px-3 py-1 rounded bg-green-600 text-white text-xs font-semibold">
-                                                ✓ Disponível
-                                            </span>
-                                        ) : (
-                                            <span className="inline-block px-3 py-1 rounded bg-red-600 text-white text-xs font-semibold">
-                                                ✗ Deletado
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                        <button
-                                            onClick={() => handleDownload(db.file_url.split('/').pop())}
-                                            disabled={db.status === 'deletado'}
-                                            className={`inline-block px-3 py-2 rounded text-white transition-colors ${
-                                                db.status === 'deletado'
-                                                    ? 'bg-gray-600 cursor-not-allowed opacity-50'
-                                                    : 'bg-green-600 hover:bg-green-700'
-                                            }`}
-                                        >
-                                            <FontAwesomeIcon icon={faDownload} className="mr-1" />
-                                            Baixar
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="6" className="px-6 py-4 text-center text-gray-400">
-                                    Nenhum database encontrado para o filtro selecionado
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Resumo */}
-            <div className="mt-6 bg-gray-700 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-red-400 mb-2">Resumo</h3>
-                <ul className="text-gray-300 text-sm space-y-1">
-                    <li>• Total de databases: <span className="font-semibold text-white">{filteredDatabases.length}</span></li>
-                    <li>• Tamanho total: <span className="font-semibold text-white">{formatFileSize(filteredDatabases.reduce((sum, db) => sum + (db.file_size || 0), 0))}</span></li>
-                    <li>• Você pode baixar qualquer database de aluno para análise</li>
-                </ul>
-            </div>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 };
 
-export default AdminMonthlyDatabase;
+// Componente principal
+const AdminMonthlyDatabase = () => {
+    return (
+        <PartitionStudentLayout
+            title="Database Mensal - Todos os Alunos"
+            renderModalContent={({ student, year }) => (
+                <DatabaseModalContent student={student} year={year} />
+            )}
+        />
+    );
+};
 
+export default AdminMonthlyDatabase;

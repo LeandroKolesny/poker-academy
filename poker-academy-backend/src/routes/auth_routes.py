@@ -29,10 +29,10 @@ def login():
         # Authenticate user
         user = AuthService.authenticate_user(username_or_email, password)
         if not user:
-            print(f"❌ Login falhou para: {username_or_email}")
+            print(f"[AUTH] Login falhou para: {username_or_email}")
             return jsonify({"error": "Username/Email ou senha inválidos"}), 401
 
-        print(f"✅ Login bem-sucedido: {user.username} ({user.name})")
+        print(f"[AUTH] Login bem-sucedido: {user.username} ({user.name})")
 
         # Atualizar last_login
         user.last_login = datetime.utcnow()

@@ -137,10 +137,21 @@ const Sidebar = ({ type }) => {
           <FontAwesomeIcon icon={faSearch} className="mr-3 w-5 h-5" />
           <span className="font-medium">Caça Leaks</span>
         </div>
+        <div
+          className={`flex items-center px-4 py-3 rounded-modern cursor-pointer transition-all duration-200 ${
+            isActive('/admin/change-password')
+              ? 'bg-red-100 text-primary-red border-l-4 border-primary-red'
+              : 'text-white hover:bg-gray-500 hover:text-red-200'
+          }`}
+          onClick={() => navigate('/admin/change-password')}
+        >
+          <FontAwesomeIcon icon={faKey} className="mr-3 w-5 h-5" />
+          <span className="font-medium">Senha</span>
+        </div>
       </div>
     </>
   );
-  
+
   // Renderiza a sidebar do aluno
   const renderStudentSidebar = () => (
     <>

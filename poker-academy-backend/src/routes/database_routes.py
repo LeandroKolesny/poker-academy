@@ -1,6 +1,6 @@
 # src/routes/database_routes.py
 # Database mensal routes - Upload e download de arquivos .zip com dados de mãos jogadas
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from werkzeug.utils import secure_filename
 import os
 import uuid
@@ -111,10 +111,11 @@ def upload_student_database(current_user):
             old_file_path = os.path.join(upload_folder, os.path.basename(existing_db.file_url))
             if os.path.exists(old_file_path):
                 os.remove(old_file_path)
-            
+
             # Atualizar registro
             existing_db.file_url = file_url
             existing_db.file_size = file_size
+            existing_db.status = 'ativo'  # Reativar se estava deletado
             existing_db.updated_at = datetime.utcnow()
         else:
             # Criar novo registro
@@ -123,7 +124,8 @@ def upload_student_database(current_user):
                 month=MonthEnum(month),
                 year=year,
                 file_url=file_url,
-                file_size=file_size
+                file_size=file_size,
+                status='ativo'
             )
             db.session.add(new_db)
         
@@ -149,25 +151,35 @@ def download_database(current_user, filename):
     try:
         # Validar nome do arquivo
         filename = secure_filename(filename)
-        
+
         # Buscar registro no banco
         db_record = StudentDatabase.query.filter(
             StudentDatabase.file_url.like(f'%{filename}')
         ).first()
-        
+
         if not db_record:
+            print(f"❌ Arquivo não encontrado no banco: {filename}")
             return jsonify({'error': 'Arquivo não encontrado'}), 404
-        
+
         # Verificar permissões
         if current_user.type.value == 'student' and db_record.student_id != current_user.id:
             return jsonify({'error': 'Acesso negado'}), 403
-        
+
         # Servir arquivo
         upload_folder = get_upload_folder()
-        return current_app.send_from_directory(upload_folder, filename, as_attachment=True)
-    
+        file_path = os.path.join(upload_folder, filename)
+
+        if not os.path.exists(file_path):
+            print(f"❌ Arquivo não existe no disco: {file_path}")
+            return jsonify({'error': 'Arquivo não encontrado no servidor'}), 404
+
+        print(f"✅ Servindo arquivo: {file_path}")
+        return send_from_directory(upload_folder, filename, as_attachment=True)
+
     except Exception as e:
         print(f"❌ Erro ao fazer download de database: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': 'Arquivo não encontrado'}), 404
 
 @database_bp.route('/api/uploads/databases/<filename>')
@@ -175,7 +187,7 @@ def serve_database_file(filename):
     """Servir arquivos de database"""
     try:
         upload_folder = get_upload_folder()
-        return current_app.send_from_directory(upload_folder, filename)
+        return send_from_directory(upload_folder, filename)
     except Exception as e:
         print(f"❌ Erro ao servir arquivo: {e}")
         return jsonify({'error': 'Arquivo não encontrado'}), 404

@@ -94,23 +94,24 @@ class Classes(db.Model):
     name = db.Column(db.String(200), nullable=False)
     instructor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     instructor = db.relationship('Users', foreign_keys=[instructor_id])
-    date = db.Column(db.Date, nullable=False) # Mantido como Date
-    category = db.Column(SQLAlchemyEnum(ClassCategory), nullable=True)  # Categoria agora é opcional
-    video_type = db.Column(SQLAlchemyEnum(VideoType), nullable=False, default=VideoType.local)
-    video_path = db.Column(db.String(255), nullable=True)
+    date = db.Column(db.Date, nullable=False)
+    category = db.Column(db.String(20), nullable=True)  # iniciantes, preflop, postflop, mental, icm
+    video_url = db.Column(db.Text, nullable=True)  # URL do video no R2
+    video_duration = db.Column(db.Integer, nullable=True)  # Duracao em segundos
     priority = db.Column(db.Integer, nullable=False, default=5)
     views = db.Column(db.Integer, nullable=False, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow) # Data de criação da aula
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
         return {
             "id": self.id,
             "name": self.name,
             "instructor_id": self.instructor_id,
+            "instructor_name": self.instructor.name if self.instructor else None,
             "date": self.date.isoformat() if self.date else None,
-            "category": self.category.value if self.category else None,
-            "video_type": self.video_type.value if self.video_type else None,
-            "video_path": self.video_path,
+            "category": self.category,
+            "video_url": self.video_url,
+            "video_duration": self.video_duration,
             "priority": self.priority,
             "views": self.views,
             "created_at": self.created_at.isoformat() if self.created_at else None
@@ -180,13 +181,41 @@ class StudentGraphs(db.Model):
         return {
             'id': self.id,
             'student_id': self.student_id,
-            'student_name': self.student.name if self.student else None,
             'month': self.month.value if self.month else None,
             'year': self.year,
             'image_url': self.image_url,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
+
+class StudentDatabase(db.Model):
+    __tablename__ = "student_databases"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    month = db.Column(SQLAlchemyEnum(MonthEnum), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    file_url = db.Column(db.Text, nullable=False)
+    file_size = db.Column(db.Integer, nullable=True)  # Tamanho em bytes
+    status = db.Column(db.String(20), nullable=False, default='ativo')  # ativo ou deletado
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # Constraint única para evitar duplicatas
+    __table_args__ = (db.UniqueConstraint('student_id', 'month', 'year', name='unique_student_database_month_year'),)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'student_id': self.student_id,
+            'month': self.month.value if self.month else None,
+            'year': self.year,
+            'file_url': self.file_url,
+            'file_size': self.file_size,
+            'status': self.status if self.status else 'ativo',
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
 
 class StudentLeaks(db.Model):
     __tablename__ = "student_leaks"
@@ -209,13 +238,11 @@ class StudentLeaks(db.Model):
         return {
             'id': self.id,
             'student_id': self.student_id,
-            'student_name': self.student.name if self.student else None,
             'month': self.month.value if self.month else None,
             'year': self.year,
             'image_url': self.image_url,
             'improvements': self.improvements,
             'uploaded_by': self.uploaded_by,
-            'uploaded_by_name': self.admin.name if self.admin else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

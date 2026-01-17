@@ -4,27 +4,13 @@ import { faSearch, faImage, faCalendarAlt, faEye } from '@fortawesome/free-solid
 import api from '../../services/api';
 import Loading from '../shared/Loading';
 import ImageZoomModal from '../shared/ImageZoomModal';
+import { MONTHS } from '../../constants';
 
 const LeakHunting = () => {
     const [leaks, setLeaks] = useState({});
     const [loading, setLoading] = useState(true);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [zoomModal, setZoomModal] = useState({ isOpen: false, imageUrl: '', altText: '' });
-
-    const months = [
-        { key: 'jan', name: 'Janeiro' },
-        { key: 'fev', name: 'Fevereiro' },
-        { key: 'mar', name: 'Março' },
-        { key: 'abr', name: 'Abril' },
-        { key: 'mai', name: 'Maio' },
-        { key: 'jun', name: 'Junho' },
-        { key: 'jul', name: 'Julho' },
-        { key: 'ago', name: 'Agosto' },
-        { key: 'set', name: 'Setembro' },
-        { key: 'out', name: 'Outubro' },
-        { key: 'nov', name: 'Novembro' },
-        { key: 'dez', name: 'Dezembro' }
-    ];
 
     useEffect(() => {
         fetchLeaks();
@@ -33,7 +19,7 @@ const LeakHunting = () => {
     const fetchLeaks = async () => {
         try {
             setLoading(true);
-            const response = await api.get(`/student/leaks?year=${selectedYear}`);
+            const response = await api.get(`/api/student/leaks?year=${selectedYear}`);
             setLeaks(response.data.leaks || {});
         } catch (error) {
             console.error('Erro ao buscar análises de leaks:', error);
@@ -46,7 +32,7 @@ const LeakHunting = () => {
     const openZoomModal = (imageUrl, altText) => {
         setZoomModal({
             isOpen: true,
-            imageUrl: `https://cardroomgrinders.com.br${imageUrl}`,
+            imageUrl: `${api.defaults.baseURL}${imageUrl}`,
             altText
         });
     };
@@ -90,7 +76,7 @@ const LeakHunting = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-600">
-                        {months.map(month => (
+                        {MONTHS.map(month => (
                             <tr key={month.key} className="hover:bg-gray-600 transition-colors duration-150">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                                     <div className="flex items-center">
@@ -107,7 +93,7 @@ const LeakHunting = () => {
                                     {leaks[month.key] && leaks[month.key].image_url ? (
                                         <div className="flex justify-center">
                                             <img
-                                                src={`https://cardroomgrinders.com.br${leaks[month.key].image_url}`}
+                                                src={`${api.defaults.baseURL}${leaks[month.key].image_url}`}
                                                 alt={`Análise ${month.name}`}
                                                 className="h-16 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
                                                 onClick={() => openZoomModal(leaks[month.key].image_url, `Análise ${month.name}`)}

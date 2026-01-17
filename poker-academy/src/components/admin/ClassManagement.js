@@ -2,8 +2,9 @@
 // src/components/admin/ClassManagement.js
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrash, faSpinner, faUpload, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { classService, getToken } from '../../services/api';
+import { faPlus, faEdit, faTrash, faSpinner, faUpload, faTimes, faEye } from '@fortawesome/free-solid-svg-icons';
+import { classService, uploadService, getToken } from '../../services/api';
+import api from '../../services/api';
 import appConfig from '../../config/config';
 
 const ClassManagement = () => {
@@ -19,12 +20,11 @@ const ClassManagement = () => {
 
   const initialFormData = {
     name: '',
-    instructor: '',
-    category: 'preflop',  // Categoria padrão
+    instructor_id: '',
+    category: 'preflop',
     date: new Date().toISOString().split('T')[0],
     priority: 5,
-    video_path: '',
-    video_type: 'local',
+    video_url: '',
   };
   const [formData, setFormData] = useState(initialFormData);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -39,6 +39,11 @@ const ClassManagement = () => {
   const [importLoading, setImportLoading] = useState(false);
   const [multiUploadProgress, setMultiUploadProgress] = useState({});
   const [uploadStatus, setUploadStatus] = useState({}); // Para controlar ícones de sucesso/erro
+
+  // Estados para modal de visualizações
+  const [showViewsModal, setShowViewsModal] = useState(false);
+  const [viewsData, setViewsData] = useState(null);
+  const [viewsLoading, setViewsLoading] = useState(false);
 
   const fetchClasses = async () => {
     setLoading(true);
@@ -94,13 +99,11 @@ const ClassManagement = () => {
   };
 
   const handleEditClass = (cls) => {
-    setCurrentClass(cls); // Define a aula atual para edição
+    setCurrentClass(cls);
 
     // Corrigir problema de timezone na data
     let dateValue = new Date().toISOString().split('T')[0];
     if (cls.date) {
-      // A data vem do backend como string YYYY-MM-DDTHH:MM:SS ou YYYY-MM-DD
-      // Precisamos extrair apenas a parte YYYY-MM-DD
       if (cls.date.includes('T')) {
         dateValue = cls.date.split('T')[0];
       } else {
@@ -110,12 +113,11 @@ const ClassManagement = () => {
 
     setFormData({
       name: cls.name || '',
-      instructor: cls.instructor_name || '',
-      category: cls.category || 'preflop',  // Categoria padrão se vazia
+      instructor_id: cls.instructor_id || '',
+      category: cls.category || 'preflop',
       date: dateValue,
       priority: cls.priority || 5,
-      video_path: cls.video_path || '',
-      video_type: 'local',
+      video_url: cls.video_url || '',
     });
     setShowForm(true);
     setFormError(null);
@@ -148,7 +150,7 @@ const ClassManagement = () => {
     return { valid: true };
   };
 
-  // Função para upload de vídeo com barra de progresso
+  // Funcao para upload de video (automatico: R2 em producao, local em desenvolvimento)
   const handleFileUpload = async () => {
     if (!selectedFile) {
       console.error('Nenhum arquivo selecionado para upload');
@@ -166,80 +168,30 @@ const ClassManagement = () => {
     setUploading(true);
     setUploadProgress(0);
 
-    const formDataUpload = new FormData();
-    formDataUpload.append('video', selectedFile);
-
     try {
-      // Usar o token do sistema de API
-      const token = getToken();
-      console.log('Token para upload:', token ? 'Presente' : 'Ausente');
+      // 1. Obter informacoes de upload do backend
+      console.log('Obtendo informacoes de upload...');
+      const presignedResponse = await uploadService.getVideoUploadUrl(selectedFile.name);
+      const uploadInfo = presignedResponse.data;
 
-      if (!token) {
-        throw new Error('Token de autenticação não encontrado. Faça login novamente.');
-      }
+      console.log(`Modo de upload: ${uploadInfo.mode}`);
 
-      // Criar XMLHttpRequest para monitorar progresso
-      const xhr = new XMLHttpRequest();
+      // 2. Fazer upload (automatico: R2 ou local)
+      await uploadService.uploadFile(uploadInfo, selectedFile, (percent) => {
+        setUploadProgress(percent);
+        console.log(`Upload progress: ${percent}%`);
+      });
 
-      return new Promise((resolve, reject) => {
-        // Monitorar progresso do upload
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            const percentComplete = Math.round((e.loaded / e.total) * 100);
-            setUploadProgress(percentComplete);
-            console.log(`Upload progress: ${percentComplete}%`);
-          }
-        });
+      console.log('Upload concluido! URL publica:', uploadInfo.public_url);
+      setUploadProgress(100);
 
-        // Configurar resposta
-        xhr.addEventListener('load', () => {
-          if (xhr.status === 200) {
-            try {
-              const result = JSON.parse(xhr.responseText);
-              console.log('Upload bem-sucedido, filename:', result.filename);
-              setUploadProgress(100);
-
-              // Manter a barra visível por 1 segundo antes de resolver
-              setTimeout(() => {
-                setUploading(false);
-                setUploadProgress(0);
-                resolve(result.filename);
-              }, 1000);
-            } catch (e) {
-              setUploading(false);
-              setUploadProgress(0);
-              reject(new Error('Erro ao processar resposta do servidor'));
-            }
-          } else {
-            try {
-              const errorResult = JSON.parse(xhr.responseText);
-              setUploading(false);
-              setUploadProgress(0);
-              reject(new Error(errorResult.error || 'Erro no upload'));
-            } catch (e) {
-              setUploading(false);
-              setUploadProgress(0);
-              reject(new Error(`Erro no upload: ${xhr.status} ${xhr.statusText}`));
-            }
-          }
-        });
-
-        xhr.addEventListener('error', () => {
+      // Manter a barra visivel por 1 segundo antes de resolver
+      return new Promise((resolve) => {
+        setTimeout(() => {
           setUploading(false);
           setUploadProgress(0);
-          reject(new Error('Erro de conexão durante o upload'));
-        });
-
-        xhr.addEventListener('abort', () => {
-          setUploading(false);
-          setUploadProgress(0);
-          reject(new Error('Upload cancelado'));
-        });
-
-        // Configurar e enviar requisição
-        xhr.open('POST', `${appConfig.API_BASE_URL}${appConfig.API_ENDPOINTS.UPLOAD_VIDEO}`);
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        xhr.send(formDataUpload);
+          resolve(uploadInfo.public_url);
+        }, 1000);
       });
 
     } catch (error) {
@@ -255,43 +207,39 @@ const ClassManagement = () => {
     e.preventDefault();
     setFormError(null);
 
-    if (!formData.name || !formData.instructor || !formData.date || !formData.category) {
-      setFormError("Por favor, preencha todos os campos obrigatórios.");
+    if (!formData.name || !formData.instructor_id || !formData.date) {
+      setFormError("Por favor, preencha todos os campos obrigatorios.");
       return;
     }
 
-    // Upload de vídeo obrigatório para novas aulas
-    let uploadedFilename = null;
+    // Upload de video obrigatorio para novas aulas
+    let uploadedVideoUrl = null;
     if (selectedFile) {
       console.log('Fazendo upload do arquivo:', selectedFile.name);
-      uploadedFilename = await handleFileUpload();
-      if (!uploadedFilename) {
+      uploadedVideoUrl = await handleFileUpload();
+      if (!uploadedVideoUrl) {
         console.error('Falha no upload do arquivo');
-        return; // Erro no upload, não continuar
+        return;
       }
-      console.log('Upload concluído:', uploadedFilename);
-    } else if (!currentClass || !currentClass.video_path) {
-      setFormError("Por favor, selecione um arquivo de vídeo.");
+      console.log('Upload concluido:', uploadedVideoUrl);
+    } else if (!currentClass || !currentClass.video_url) {
+      setFormError("Por favor, selecione um arquivo de video.");
       return;
     }
 
-    // Verificar se temos um video_path válido
-    const finalVideoPath = uploadedFilename || formData.video_path;
-    if (!finalVideoPath) {
-      setFormError("É necessário fazer upload de um vídeo.");
+    // Verificar se temos uma video_url valida
+    const finalVideoUrl = uploadedVideoUrl || formData.video_url;
+    if (!finalVideoUrl) {
+      setFormError("E necessario fazer upload de um video.");
       return;
     }
-
-    // Garantir que a data seja enviada no formato correto
-    const dateToSend = formData.date;
 
     const classData = {
       name: formData.name,
-      instructor: formData.instructor,
-      date: dateToSend, // Enviar a data exatamente como está no input
-      category: formData.category,
-      video_type: 'local',
-      video_path: finalVideoPath,
+      instructor_id: parseInt(formData.instructor_id, 10),
+      date: formData.date,
+      category: formData.category || 'preflop',
+      video_url: finalVideoUrl,
       priority: parseInt(formData.priority, 10) || 5,
     };
 
@@ -728,6 +676,21 @@ const ClassManagement = () => {
     });
   };
 
+  // Função para buscar visualizações de uma aula
+  const fetchClassViews = async (classId) => {
+    setViewsLoading(true);
+    setShowViewsModal(true);
+    try {
+      const response = await api.get(`/api/classes/${classId}/views`);
+      setViewsData(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar visualizações:', error);
+      setViewsData({ error: 'Erro ao carregar visualizações' });
+    } finally {
+      setViewsLoading(false);
+    }
+  };
+
   // Função para formatar data sem problemas de timezone
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return 'N/A';
@@ -814,9 +777,14 @@ const ClassManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{getCategoryName(cls.category)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{formatDateForDisplay(cls.date)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                      <span className="bg-red-100 text-black px-2 py-1 rounded-full text-xs">
+                      <button
+                        onClick={() => fetchClassViews(cls.id)}
+                        className="bg-red-100 text-black px-2 py-1 rounded-full text-xs hover:bg-red-200 transition-colors cursor-pointer"
+                        title="Clique para ver quem assistiu"
+                      >
+                        <FontAwesomeIcon icon={faEye} className="mr-1" />
                         {cls.views || 0} views
-                      </span>
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
@@ -876,11 +844,16 @@ const ClassManagement = () => {
                     <span className="text-gray-400">Data:</span>
                     <span className="text-white">{formatDateForDisplay(cls.date)}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-gray-400">Visualizações:</span>
-                    <span className="bg-red-100 text-black px-2 py-1 rounded-full text-xs">
+                    <button
+                      onClick={() => fetchClassViews(cls.id)}
+                      className="bg-red-100 text-black px-2 py-1 rounded-full text-xs hover:bg-red-200 transition-colors"
+                      title="Clique para ver quem assistiu"
+                    >
+                      <FontAwesomeIcon icon={faEye} className="mr-1" />
                       {cls.views || 0} views
-                    </span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -890,15 +863,25 @@ const ClassManagement = () => {
       )}
 
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-0 md:p-4">
-          <div className="bg-gray-800 w-full h-full md:w-full md:max-w-2xl md:h-auto md:rounded-lg shadow-xl transform transition-all overflow-y-auto">
-            <div className="sticky top-0 bg-gray-800 p-4 md:p-6 border-b border-gray-700 md:border-none">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-2 md:p-4">
+          <div className="bg-gray-800 w-full max-h-[95vh] md:max-w-2xl md:max-h-[90vh] rounded-lg shadow-xl transform transition-all flex flex-col">
+            {/* Header fixo com botão de fechar sempre visível */}
+            <div className="flex-shrink-0 bg-gray-800 p-4 md:p-6 border-b border-gray-700 rounded-t-lg flex justify-between items-center">
               <h3 className="text-lg md:text-xl font-semibold text-red-400">
                 {currentClass ? 'Editar Aula' : 'Adicionar Nova Aula'}
               </h3>
+              <button
+                type="button"
+                onClick={() => { setShowForm(false); setCurrentClass(null); }}
+                className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white transition-colors p-2 rounded-lg shadow-lg"
+                aria-label="Fechar modal"
+                title="Fechar"
+              >
+                <FontAwesomeIcon icon={faTimes} size="lg" />
+              </button>
             </div>
-            <div className="p-4 md:p-6 md:pt-0">
-            
+            {/* Área de conteúdo scrollável */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 md:pt-4">
             <form onSubmit={handleSaveClass}>
               {formError && <p className="text-red-500 mb-4 bg-red-900 bg-opacity-50 p-3 rounded">{formError}</p>}
               <div className="grid grid-cols-1 gap-4 mb-4">
@@ -916,18 +899,18 @@ const ClassManagement = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="instructor" className="block mb-2 text-sm font-medium text-gray-300">Instrutor *</label>
+                  <label htmlFor="instructor_id" className="block mb-2 text-sm font-medium text-gray-300">Instrutor *</label>
                   <select
-                    id="instructor"
-                    name="instructor"
-                    value={formData.instructor}
+                    id="instructor_id"
+                    name="instructor_id"
+                    value={formData.instructor_id}
                     onChange={handleChange}
                     className="w-full bg-gray-700 text-white px-4 py-3 md:py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400 text-base"
                     required
                   >
                     <option value="">Selecione um instrutor</option>
                     {instructors.map(instructor => (
-                      <option key={instructor.id} value={instructor.name}>
+                      <option key={instructor.id} value={instructor.id}>
                         {instructor.name}
                       </option>
                     ))}
@@ -1117,19 +1100,106 @@ const ClassManagement = () => {
         </div>
       )}
 
+      {/* Modal de Visualizações */}
+      {showViewsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-2 md:p-4">
+          <div className="bg-gray-800 w-full max-w-lg max-h-[90vh] rounded-lg shadow-xl flex flex-col">
+            {/* Header */}
+            <div className="flex-shrink-0 bg-gray-800 p-4 md:p-6 border-b border-gray-700 rounded-t-lg flex justify-between items-center">
+              <h3 className="text-lg md:text-xl font-semibold text-red-400">
+                <FontAwesomeIcon icon={faEye} className="mr-2" />
+                Visualizações da Aula
+              </h3>
+              <button
+                type="button"
+                onClick={() => { setShowViewsModal(false); setViewsData(null); }}
+                className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white transition-colors p-2 rounded-lg shadow-lg"
+                aria-label="Fechar modal"
+                title="Fechar"
+              >
+                <FontAwesomeIcon icon={faTimes} size="lg" />
+              </button>
+            </div>
+
+            {/* Conteúdo */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+              {viewsLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <FontAwesomeIcon icon={faSpinner} spin size="2x" className="text-red-400" />
+                  <span className="ml-3 text-white">Carregando visualizações...</span>
+                </div>
+              ) : viewsData?.error ? (
+                <div className="text-red-400 text-center py-8">
+                  <p>{viewsData.error}</p>
+                </div>
+              ) : viewsData ? (
+                <>
+                  {/* Informações da Aula */}
+                  <div className="bg-gray-700 rounded-lg p-4 mb-4">
+                    <h4 className="text-white font-medium mb-2">{viewsData.class_name}</h4>
+                    <div className="flex gap-4 text-sm">
+                      <span className="text-gray-300">
+                        <span className="text-red-400 font-medium">{viewsData.total_views}</span> visualizações
+                      </span>
+                      <span className="text-gray-300">
+                        <span className="text-blue-400 font-medium">{viewsData.unique_users}</span> alunos únicos
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Lista de Visualizações */}
+                  {viewsData.views && viewsData.views.length > 0 ? (
+                    <div className="space-y-2">
+                      <h5 className="text-gray-300 text-sm font-medium mb-2">Alunos que assistiram:</h5>
+                      {viewsData.views.map((view, index) => (
+                        <div key={index} className="bg-gray-700 rounded-lg p-3 flex justify-between items-center">
+                          <div>
+                            <p className="text-white font-medium">{view.student_name || 'Aluno desconhecido'}</p>
+                            {view.student_email && (
+                              <p className="text-gray-400 text-xs">{view.student_email}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="text-gray-300 text-sm">
+                              {new Date(view.viewed_at).toLocaleDateString('pt-BR')}
+                            </p>
+                            <p className="text-gray-400 text-xs">
+                              {new Date(view.viewed_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-gray-400 text-center py-8">
+                      <p>Nenhuma visualização registrada ainda.</p>
+                    </div>
+                  )}
+                </>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal de Auto Import */}
       {showAutoImport && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-xl">
-            <div className="flex justify-between items-center mb-6">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-2 md:p-4">
+          <div className="bg-gray-800 rounded-lg w-full h-full md:h-auto max-w-4xl md:max-h-[90vh] shadow-xl flex flex-col">
+            {/* Header fixo com botão de fechar sempre visível */}
+            <div className="flex-shrink-0 flex justify-between items-center p-4 md:p-6 border-b border-gray-700 md:rounded-t-lg">
               <h3 className="text-xl font-semibold text-red-400">Auto Import de Aulas</h3>
               <button
                 onClick={() => setShowAutoImport(false)}
-                className="text-gray-400 hover:text-white text-2xl"
+                className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white transition-colors p-2 rounded-lg shadow-lg"
+                aria-label="Fechar modal"
+                title="Fechar"
               >
-                <FontAwesomeIcon icon={faTimes} />
+                <FontAwesomeIcon icon={faTimes} size="lg" />
               </button>
             </div>
+            {/* Área de conteúdo scrollável */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
 
             <div className="mb-6">
               <h4 className="text-lg font-medium text-white mb-3">Formato dos Vídeos:</h4>
@@ -1284,6 +1354,7 @@ const ClassManagement = () => {
                 )}
               </div>
             )}
+            </div> {/* Fecha área de conteúdo scrollável */}
           </div>
         </div>
       )}

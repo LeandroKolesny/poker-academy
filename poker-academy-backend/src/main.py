@@ -21,34 +21,50 @@ from src.routes.particao_routes import particao_bp
 from src.routes.password_reset_routes import password_reset_bp
 from src.routes.graphs_routes import graphs_bp
 from src.routes.admin_graphs_routes import admin_graphs_bp
+from src.routes.upload_routes import upload_bp
+from src.routes.database_routes import database_bp
 from src.models import db, Classes
+from src.password_reset_model import PasswordResetToken  # Importar para criar tabela
 from src.routes.class_routes import class_bp
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000", "http://localhost:3001"], supports_credentials=True)
+CORS(app,
+     origins=["http://localhost:3000", "http://localhost:3001"],
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
 
 # Configuração do banco de dados
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
-    # Usar DATABASE_URL se disponível (Docker/Produção)
-    print(f"🐳 Usando DATABASE_URL: {DATABASE_URL}")
+    # Usar DATABASE_URL se disponível (Supabase/Produção)
+    print(f"[DB] Usando DATABASE_URL (PostgreSQL): {DATABASE_URL[:50]}...")
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 else:
-    # MySQL local para desenvolvimento
-    DB_USERNAME = os.getenv("DB_USERNAME", "root")
-    DB_PASSWORD = os.getenv("DB_PASSWORD", "")      # Senha vazia por padrão
-    DB_HOST = os.getenv("DB_HOST", "127.0.0.1")     # IP direto
-    DB_PORT = os.getenv("DB_PORT", "3306")
+    # PostgreSQL local para desenvolvimento (ou SQLite como fallback)
+    DB_USERNAME = os.getenv("DB_USERNAME", "postgres")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
+    DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
+    DB_PORT = os.getenv("DB_PORT", "5432")
     DB_NAME = os.getenv("DB_NAME", "poker_academy")
-    connection_string = f"mysql+pymysql://{DB_USERNAME}:{quote_plus(DB_PASSWORD)}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
-    print(f"🔧 Usando MySQL local: {connection_string}")
+    connection_string = f"postgresql://{DB_USERNAME}:{quote_plus(DB_PASSWORD)}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    print(f"[DB] Usando PostgreSQL local: {connection_string}")
     app.config["SQLALCHEMY_DATABASE_URI"] = connection_string
 
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = SECRET_KEY
 app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500MB max file size
+
+# Configurar pasta de uploads
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(os.path.join(UPLOAD_FOLDER, 'videos'), exist_ok=True)
+os.makedirs(os.path.join(UPLOAD_FOLDER, 'graphs'), exist_ok=True)
+os.makedirs(os.path.join(UPLOAD_FOLDER, 'leaks'), exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 db.init_app(app)
 
@@ -61,6 +77,8 @@ app.register_blueprint(particao_bp)
 app.register_blueprint(password_reset_bp)
 app.register_blueprint(graphs_bp)
 app.register_blueprint(admin_graphs_bp)
+app.register_blueprint(upload_bp)
+app.register_blueprint(database_bp)
 
 @app.route("/")
 def home():

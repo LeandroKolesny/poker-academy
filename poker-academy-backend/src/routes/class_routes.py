@@ -6,8 +6,8 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Blueprint, jsonify, request, current_app, send_from_directory
-from src.models import db, Classes, UserProgress, ClassViews, Users, UserType, ClassCategory
-from src.auth import token_required, admin_required
+from src.models import db, Classes, UserProgress, ClassViews, Users, UserType
+from src.auth import token_required, admin_required, AuthService
 from datetime import datetime
 from sqlalchemy import desc
 import os
@@ -16,47 +16,49 @@ from werkzeug.utils import secure_filename
 
 class_bp = Blueprint("class_bp", __name__)
 
-# Configurações de upload
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'uploads', 'videos')
+# Configuracao de upload
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'uploads', 'videos')
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'}
 
-# Criar pasta de upload se não existir
+# Criar pasta de uploads se nao existir
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-print(f"Pasta de upload: {UPLOAD_FOLDER}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# Categorias validas
+VALID_CATEGORIES = ['iniciantes', 'preflop', 'postflop', 'mental', 'icm']
+
 def normalize_category(category_name):
     """
-    Normaliza nomes de categoria em português para valores do enum ClassCategory
-    Retorna um objeto ClassCategory enum, não uma string!
+    Normaliza nomes de categoria em portugues para valores padronizados.
+    Retorna uma string com o valor da categoria.
     """
     if not category_name:
-        return ClassCategory.preflop
+        return 'preflop'
 
     normalized = category_name.lower().strip()
 
-    # Mapeamento de nomes em português para valores do enum
+    # Mapeamento de nomes em portugues para valores padronizados
     category_map = {
-        'iniciantes': ClassCategory.iniciantes,
-        'iniciante': ClassCategory.iniciantes,
-        'preflop': ClassCategory.preflop,
-        'pré-flop': ClassCategory.preflop,
-        'pre-flop': ClassCategory.preflop,
-        'postflop': ClassCategory.postflop,
-        'pós-flop': ClassCategory.postflop,
-        'pos-flop': ClassCategory.postflop,
-        'posflop': ClassCategory.postflop,
-        'mental': ClassCategory.mental,
-        'mental game': ClassCategory.mental,
-        'mental games': ClassCategory.mental,
-        'mentalg': ClassCategory.mental,
-        'icm': ClassCategory.icm,
-        'geral': ClassCategory.preflop
+        'iniciantes': 'iniciantes',
+        'iniciante': 'iniciantes',
+        'preflop': 'preflop',
+        'pre-flop': 'preflop',
+        'pré-flop': 'preflop',
+        'postflop': 'postflop',
+        'pos-flop': 'postflop',
+        'pós-flop': 'postflop',
+        'posflop': 'postflop',
+        'mental': 'mental',
+        'mental game': 'mental',
+        'mental games': 'mental',
+        'mentalg': 'mental',
+        'icm': 'icm',
+        'geral': 'preflop'
     }
 
-    return category_map.get(normalized, ClassCategory.preflop)
+    return category_map.get(normalized, 'preflop')
 
 # Rota de teste sem autenticação
 @class_bp.route("/api/test", methods=["GET"])
@@ -113,40 +115,54 @@ def get_class_details(class_id):
 @class_bp.route("/api/classes", methods=["POST"])
 @admin_required
 def create_class(current_user):
+    """
+    Cria uma nova aula.
+
+    Request JSON:
+        {
+            "name": "Nome da aula",
+            "instructor_id": 1,  // ID do instrutor
+            "date": "2025-01-14",
+            "category": "preflop",  // opcional
+            "video_url": "https://pub-xxx.r2.dev/videos/...",
+            "priority": 5  // opcional
+        }
+    """
     data = request.get_json()
     print(f"🔍 Dados recebidos para criar aula: {data}")
 
     if not data:
-        return jsonify(error="Dados não fornecidos"), 400
+        return jsonify(error="Dados nao fornecidos"), 400
 
-    # Campos obrigatórios básicos
-    required_fields = ["name", "instructor", "date", "category", "video_type"]
+    # Campos obrigatorios
+    required_fields = ["name", "instructor_id", "date"]
     for field in required_fields:
         if field not in data or not data[field]:
-            return jsonify(error=f"Campo obrigatório ausente ou vazio: {field}"), 400
-
-    # Validação específica para vídeo (apenas para novas aulas)
-    if not data.get("video_path"):
-        return jsonify(error="É obrigatório fazer upload de um vídeo"), 400
+            return jsonify(error=f"Campo obrigatorio ausente ou vazio: {field}"), 400
 
     try:
         # Converter data string para objeto date
-        from datetime import datetime
         date_obj = datetime.strptime(data["date"], "%Y-%m-%d").date()
+
+        # Normalizar categoria
+        category = normalize_category(data.get("category"))
 
         new_class = Classes(
             name=data["name"],
-            instructor=data["instructor"],
+            instructor_id=data["instructor_id"],
             date=date_obj,
-            category=data.get("category"),  # Categoria agora é opcional
-            video_type=data.get("video_type", "local"),
-            video_path=data.get("video_path"),
+            category=category,
+            video_url=data.get("video_url"),
+            video_duration=data.get("video_duration"),
             priority=data.get("priority", 5),
-            views=data.get("views", 0)
+            views=0
         )
         db.session.add(new_class)
         db.session.commit()
+
+        print(f"✅ Aula criada: {new_class.name} (ID: {new_class.id})")
         return jsonify(new_class.to_dict()), 201
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Erro ao criar classe: {e}", exc_info=True)
@@ -154,36 +170,40 @@ def create_class(current_user):
 
 
 @class_bp.route("/api/classes/<int:class_id>", methods=["PUT"])
-def update_class(class_id):
+@admin_required
+def update_class(current_user, class_id):
+    """
+    Atualiza uma aula existente.
+    """
     try:
         data = request.get_json()
         if not data:
-            return jsonify(error="Dados não fornecidos"), 400
+            return jsonify(error="Dados nao fornecidos"), 400
 
         cls_to_update = Classes.query.get(class_id)
         if not cls_to_update:
-            return jsonify(error="Aula não encontrada"), 404
+            return jsonify(error="Aula nao encontrada"), 404
 
         # Campos que podem ser atualizados
         if "name" in data:
             cls_to_update.name = data["name"]
-        if "instructor" in data:
-            cls_to_update.instructor = data["instructor"]
+        if "instructor_id" in data:
+            cls_to_update.instructor_id = data["instructor_id"]
         if "date" in data:
-            # Converter data string para objeto date
-            from datetime import datetime
             cls_to_update.date = datetime.strptime(data["date"], "%Y-%m-%d").date()
         if "category" in data:
-            cls_to_update.category = data["category"]
-        if "video_type" in data:
-            cls_to_update.video_type = data["video_type"]
-        if "video_path" in data: # Adicionado para consistência
-            cls_to_update.video_path = data["video_path"]
+            cls_to_update.category = normalize_category(data["category"])
+        if "video_url" in data:
+            cls_to_update.video_url = data["video_url"]
+        if "video_duration" in data:
+            cls_to_update.video_duration = data["video_duration"]
         if "priority" in data:
             cls_to_update.priority = data["priority"]
-        
+
         db.session.commit()
+        print(f"✅ Aula atualizada: {cls_to_update.name} (ID: {class_id})")
         return jsonify(cls_to_update.to_dict()), 200
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Erro ao atualizar aula {class_id}: {e}", exc_info=True)
@@ -387,19 +407,31 @@ def get_class_views(current_user, class_id):
         if not class_obj:
             return jsonify(error="Aula não encontrada"), 404
 
-        # Buscar todas as visualizações da aula
-        views = ClassViews.query.filter_by(class_id=class_id).order_by(desc(ClassViews.viewed_at)).all()
+        # Buscar todas as visualizações da aula com dados do aluno
+        views = db.session.query(ClassViews, Users).join(
+            Users, ClassViews.user_id == Users.id
+        ).filter(
+            ClassViews.class_id == class_id
+        ).order_by(desc(ClassViews.viewed_at)).all()
 
         # Estatísticas
         total_views = len(views)
-        unique_users = len(set(view.user_id for view in views))
+        unique_users = len(set(view.user_id for view, user in views))
+
+        # Montar lista de views com dados do aluno
+        views_list = []
+        for view, user in views:
+            view_dict = view.to_dict()
+            view_dict['student_name'] = user.name
+            view_dict['student_email'] = user.email
+            views_list.append(view_dict)
 
         result = {
             'class_id': class_id,
             'class_name': class_obj.name,
             'total_views': total_views,
             'unique_users': unique_users,
-            'views': [view.to_dict() for view in views]
+            'views': views_list
         }
 
         return jsonify(result), 200
@@ -426,6 +458,7 @@ def get_instructors(current_user):
             result.append({
                 'id': instructor.id,
                 'name': instructor.name,
+                'username': instructor.username,
                 'email': instructor.email
             })
 
@@ -434,6 +467,136 @@ def get_instructors(current_user):
     except Exception as e:
         current_app.logger.error(f"Erro ao buscar instrutores: {e}", exc_info=True)
         return jsonify(error="Erro ao buscar instrutores"), 500
+
+# Rota para criar novo instrutor (admin)
+@class_bp.route("/api/instructors", methods=["POST"])
+@admin_required
+def create_instructor(current_user):
+    try:
+        data = request.get_json()
+
+        # Validar campos obrigatórios
+        if not data.get('name') or not data.get('username') or not data.get('email') or not data.get('password'):
+            return jsonify(error="Nome, username, email e senha são obrigatórios"), 400
+
+        # Verificar se email já existe
+        existing_email = Users.query.filter_by(email=data['email']).first()
+        if existing_email:
+            return jsonify(error="Email já cadastrado"), 400
+
+        # Verificar se username já existe
+        existing_username = Users.query.filter_by(username=data['username']).first()
+        if existing_username:
+            return jsonify(error="Username já cadastrado"), 400
+
+        # Usar a mesma partição do admin atual
+        particao_id = current_user.particao_id
+
+        # Criar novo instrutor (admin)
+        hashed_password = AuthService.hash_password(data['password'])
+        new_instructor = Users(
+            name=data['name'],
+            username=data['username'],
+            email=data['email'],
+            password_hash=hashed_password,
+            type=UserType.admin,
+            particao_id=particao_id
+        )
+
+        db.session.add(new_instructor)
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Instrutor criado com sucesso',
+            'instructor': {
+                'id': new_instructor.id,
+                'name': new_instructor.name,
+                'username': new_instructor.username,
+                'email': new_instructor.email
+            }
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erro ao criar instrutor: {e}", exc_info=True)
+        return jsonify(error="Erro ao criar instrutor"), 500
+
+# Rota para atualizar instrutor (admin)
+@class_bp.route("/api/instructors/<int:instructor_id>", methods=["PUT"])
+@admin_required
+def update_instructor(current_user, instructor_id):
+    try:
+        instructor = Users.query.filter_by(id=instructor_id, type=UserType.admin).first()
+        if not instructor:
+            return jsonify(error="Instrutor não encontrado"), 404
+
+        data = request.get_json()
+
+        # Atualizar campos
+        if data.get('name'):
+            instructor.name = data['name']
+
+        if data.get('username'):
+            # Verificar se username já existe para outro usuário
+            existing_username = Users.query.filter(Users.username == data['username'], Users.id != instructor_id).first()
+            if existing_username:
+                return jsonify(error="Username já cadastrado para outro usuário"), 400
+            instructor.username = data['username']
+
+        if data.get('email'):
+            # Verificar se email já existe para outro usuário
+            existing_email = Users.query.filter(Users.email == data['email'], Users.id != instructor_id).first()
+            if existing_email:
+                return jsonify(error="Email já cadastrado para outro usuário"), 400
+            instructor.email = data['email']
+
+        if data.get('password'):
+            instructor.password_hash = AuthService.hash_password(data['password'])
+
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Instrutor atualizado com sucesso',
+            'instructor': {
+                'id': instructor.id,
+                'name': instructor.name,
+                'username': instructor.username,
+                'email': instructor.email
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erro ao atualizar instrutor: {e}", exc_info=True)
+        return jsonify(error="Erro ao atualizar instrutor"), 500
+
+# Rota para excluir instrutor (admin)
+@class_bp.route("/api/instructors/<int:instructor_id>", methods=["DELETE"])
+@admin_required
+def delete_instructor(current_user, instructor_id):
+    try:
+        instructor = Users.query.filter_by(id=instructor_id, type=UserType.admin).first()
+        if not instructor:
+            return jsonify(error="Instrutor não encontrado"), 404
+
+        # Não permitir excluir a si mesmo
+        if instructor.id == current_user.id:
+            return jsonify(error="Você não pode excluir sua própria conta"), 400
+
+        # Verificar se instrutor tem aulas associadas
+        classes_count = Classes.query.filter_by(instructor_id=instructor_id).count()
+        if classes_count > 0:
+            return jsonify(error=f"Não é possível excluir. Este instrutor possui {classes_count} aula(s) associada(s)"), 400
+
+        db.session.delete(instructor)
+        db.session.commit()
+
+        return jsonify({'message': 'Instrutor excluído com sucesso'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erro ao excluir instrutor: {e}", exc_info=True)
+        return jsonify(error="Erro ao excluir instrutor"), 500
 
 # Rota para obter estatísticas do painel de analytics (apenas admin)
 @class_bp.route("/api/analytics/stats", methods=["GET"])
@@ -455,7 +618,7 @@ def get_analytics_stats(current_user):
         total_views = db.session.query(db.func.sum(Classes.views)).scalar() or 0
 
         # Aulas com vídeo
-        classes_with_video = Classes.query.filter(Classes.video_path.isnot(None)).count()
+        classes_with_video = Classes.query.filter(Classes.video_url.isnot(None)).count()
 
         # Estudantes que já assistiram pelo menos uma aula
         active_students = db.session.query(UserProgress.user_id).distinct().count()
@@ -561,6 +724,41 @@ def serve_video_public(current_user, filename):
         current_app.logger.error(f"Erro ao servir vídeo: {e}", exc_info=True)
         return jsonify(error="Erro ao carregar vídeo"), 500
 
+# Rota para servir vídeos do diretório uploads (nova estrutura)
+@class_bp.route("/api/uploads/videos/<filename>")
+def serve_uploaded_video(filename):
+    """Serve vídeos do diretório uploads/videos com autenticação via query parameter"""
+    try:
+        # Verificar autenticação via query parameter ou header
+        token = request.args.get('token') or request.headers.get('Authorization')
+
+        if not token:
+            return jsonify(error="Token de acesso necessário"), 401
+
+        # Se o token vem do header, remover 'Bearer '
+        if token.startswith('Bearer '):
+            token = token[7:]
+
+        # Verificar se o token é válido
+        import jwt
+        try:
+            jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+        except:
+            return jsonify(error="Token inválido"), 401
+
+        # Verificar se o arquivo existe
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        if not os.path.exists(file_path):
+            return jsonify(error="Vídeo não encontrado"), 404
+
+        response = send_from_directory(UPLOAD_FOLDER, filename)
+        response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', 'http://localhost:3000')
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        return response
+    except Exception as e:
+        current_app.logger.error(f"Erro ao servir vídeo do uploads: {e}", exc_info=True)
+        return jsonify(error="Erro ao carregar vídeo"), 500
+
 # Rota para upload completo (vídeo + dados da aula)
 @class_bp.route("/api/classes/upload-complete", methods=["POST"])
 @admin_required
@@ -587,7 +785,6 @@ def upload_complete_class(current_user):
         date_str = request.form.get('date')
         category = request.form.get('category', '')  # Categoria opcional
         priority = request.form.get('priority', '5')
-        video_type = request.form.get('video_type', 'local')
 
         print(f"📝 Dados recebidos: name={name}, instructor={instructor}, date={date_str}, category={category}")
 
@@ -635,8 +832,7 @@ def upload_complete_class(current_user):
                 instructor_id=instructor_user.id,
                 date=date_obj,
                 category=final_category,
-                video_type=video_type,
-                video_path=filename,  # Salvar apenas o nome do arquivo
+                video_url=f"/api/uploads/videos/{filename}",
                 priority=int(priority),
                 views=0
             )
@@ -789,14 +985,19 @@ def confirm_import_classes(current_user):
                 # Converter data string para objeto date
                 date_obj = datetime.strptime(class_data["date"], "%Y-%m-%d").date()
 
+                # Buscar instrutor pelo nome
+                instructor_user = Users.query.filter_by(name=class_data["instructor"]).first()
+                if not instructor_user:
+                    errors.append(f"Instrutor '{class_data['instructor']}' nao encontrado")
+                    continue
+
                 # Criar nova aula
                 new_class = Classes(
                     name=class_data["name"],
-                    instructor=class_data["instructor"],
+                    instructor_id=instructor_user.id,
                     date=date_obj,
-                    category=None,  # Categoria vazia por padrão
-                    video_type="local",
-                    video_path=None,
+                    category=None,
+                    video_url=None,
                     priority=5,
                     views=0
                 )

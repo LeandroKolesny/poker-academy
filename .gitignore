@@ -12,19 +12,35 @@ __pycache__/
 
 # Arquivos de configuração sensíveis
 .env
+.env.*
+!.env.example
 *.log
+
+# Arquivos com senhas e credenciais
+senhas.txt
+*senhas*.txt
+*password*.txt
+*credentials*.txt
+*.pem
+*.key
 
 # Arquivos temporários
 *.tmp
 *.temp
 .DS_Store
 Thumbs.db
+nul
 
-# Uploads e arquivos grandes
+# Uploads e arquivos grandes (NUNCA subir videos para o git!)
 uploads/
+poker-academy-backend/uploads/
 *.mp4
 *.avi
 *.mov
+*.wmv
+*.mkv
+*.webm
+*.flv
 
 # Arquivos de deploy temporários
 deploy_*/

@@ -4,6 +4,8 @@ import { faUpload, faDownload, faDatabase, faCalendarAlt, faFile } from '@fortaw
 import api from '../../services/api';
 import Loading from '../shared/Loading';
 import { AuthContext } from '../../context/AuthContext';
+import { MONTHS } from '../../constants';
+import { formatFileSize } from '../../utils';
 
 const MonthlyDatabase = () => {
     console.log('🔍 MonthlyDatabase component renderizado!');
@@ -14,21 +16,6 @@ const MonthlyDatabase = () => {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [uploadingMonth, setUploadingMonth] = useState(null);
 
-    const months = [
-        { key: 'jan', name: 'Janeiro' },
-        { key: 'fev', name: 'Fevereiro' },
-        { key: 'mar', name: 'Março' },
-        { key: 'abr', name: 'Abril' },
-        { key: 'mai', name: 'Maio' },
-        { key: 'jun', name: 'Junho' },
-        { key: 'jul', name: 'Julho' },
-        { key: 'ago', name: 'Agosto' },
-        { key: 'set', name: 'Setembro' },
-        { key: 'out', name: 'Outubro' },
-        { key: 'nov', name: 'Novembro' },
-        { key: 'dez', name: 'Dezembro' }
-    ];
-
     useEffect(() => {
         fetchDatabases();
     }, [selectedYear]);
@@ -36,7 +23,7 @@ const MonthlyDatabase = () => {
     const fetchDatabases = async () => {
         try {
             setLoading(true);
-            const response = await api.get(`/student/database?year=${selectedYear}`);
+            const response = await api.get(`/api/student/database?year=${selectedYear}`);
 
             // Converter array em objeto indexado por mês
             const dbByMonth = {};
@@ -55,13 +42,6 @@ const MonthlyDatabase = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const formatFileSize = (bytes) => {
-        if (!bytes) return 'N/A';
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
     };
 
     const handleFileUpload = async (month, file) => {
@@ -91,7 +71,7 @@ const MonthlyDatabase = () => {
             formData.append('month', month);
             formData.append('year', selectedYear);
 
-            const response = await fetch(`https://cardroomgrinders.com.br/api/student/database/upload`, {
+            const response = await fetch(`${api.defaults.baseURL}/api/student/database/upload`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -132,7 +112,7 @@ const MonthlyDatabase = () => {
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(
-                `https://cardroomgrinders.com.br/api/student/database/download/${filename}`,
+                `${api.defaults.baseURL}/api/student/database/download/${filename}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -195,7 +175,7 @@ const MonthlyDatabase = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-600">
-                        {months.map(month => (
+                        {MONTHS.map(month => (
                             <tr key={month.key} className="hover:bg-gray-600 transition-colors duration-150">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                                     <div className="flex items-center">

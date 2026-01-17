@@ -110,6 +110,106 @@ def get_student_graphs_admin(current_user, student_id):
         print(f"❌ Erro ao buscar gráficos do aluno: {e}")
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
+@admin_graphs_bp.route('/api/admin/student/<int:student_id>/graphs/upload', methods=['POST', 'OPTIONS'])
+@token_required
+def upload_student_graph_admin(current_user, student_id):
+    """Upload de grafico mensal pelo admin para um aluno"""
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        return '', 200
+
+    try:
+        # Verificar se e admin
+        if current_user.type.value != 'admin':
+            return jsonify({'error': 'Acesso negado'}), 403
+
+        # Verificar se o aluno existe
+        student = Users.query.filter_by(id=student_id, type='student').first()
+        if not student:
+            return jsonify({'error': 'Aluno nao encontrado'}), 404
+
+        # Verificar dados
+        month = request.form.get('month')
+        year = request.form.get('year', datetime.now().year, type=int)
+
+        if not month or month not in [m.value for m in MonthEnum]:
+            return jsonify({'error': 'Mes invalido'}), 400
+
+        if 'file' not in request.files:
+            return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'Nenhum arquivo selecionado'}), 400
+
+        if not allowed_file(file.filename):
+            return jsonify({'error': 'Tipo de arquivo nao permitido'}), 400
+
+        # Verificar tamanho do arquivo
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)
+
+        if file_size > MAX_FILE_SIZE:
+            return jsonify({'error': 'Arquivo muito grande (maximo 10MB)'}), 400
+
+        # Gerar nome unico para o arquivo
+        file_extension = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"graph_{student_id}_{month}_{year}_{uuid.uuid4().hex[:8]}.{file_extension}"
+
+        # Salvar arquivo na pasta de graficos
+        upload_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER', '/app/uploads'), 'graphs')
+        os.makedirs(upload_folder, exist_ok=True)
+        file_path = os.path.join(upload_folder, filename)
+        file.save(file_path)
+
+        # URL relativa para o arquivo
+        image_url = f"/api/uploads/graphs/{filename}"
+
+        # Verificar se ja existe grafico para este mes/ano
+        existing_graph = StudentGraphs.query.filter_by(
+            student_id=student_id,
+            month=MonthEnum(month),
+            year=year
+        ).first()
+
+        if existing_graph:
+            # Deletar arquivo antigo
+            old_file_path = os.path.join(upload_folder, os.path.basename(existing_graph.image_url))
+            if os.path.exists(old_file_path):
+                os.remove(old_file_path)
+
+            # Atualizar registro
+            existing_graph.image_url = image_url
+            existing_graph.updated_at = datetime.utcnow()
+        else:
+            # Criar novo registro
+            new_graph = StudentGraphs(
+                student_id=student_id,
+                month=MonthEnum(month),
+                year=year,
+                image_url=image_url
+            )
+            db.session.add(new_graph)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Grafico enviado com sucesso',
+            'graph': {
+                'student_id': student_id,
+                'month': month,
+                'year': year,
+                'image_url': image_url
+            }
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Erro no upload do grafico: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
 @admin_graphs_bp.route('/api/admin/student/<int:student_id>/leaks', methods=['GET'])
 @token_required
 def get_student_leaks_admin(current_user, student_id):
@@ -147,10 +247,14 @@ def get_student_leaks_admin(current_user, student_id):
         print(f"❌ Erro ao buscar leaks do aluno: {e}")
         return jsonify({'error': 'Erro interno do servidor'}), 500
 
-@admin_graphs_bp.route('/api/admin/student/<int:student_id>/leaks/upload', methods=['POST'])
+@admin_graphs_bp.route('/api/admin/student/<int:student_id>/leaks/upload', methods=['POST', 'OPTIONS'])
 @token_required
 def upload_student_leak_admin(current_user, student_id):
     """Upload de análise de leak pelo admin"""
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        return '', 200
+
     try:
         # Verificar se é admin
         if current_user.type.value != 'admin':

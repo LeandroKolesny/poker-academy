@@ -206,45 +206,47 @@ const History = () => {
 
       {/* Modal de detalhes da aula */}
       {isModalOpen && selectedClass && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-2xl shadow-xl transform transition-all relative">
-            <button
-              onClick={closeModal}
-              className="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors"
-              aria-label="Fechar modal"
-            >
-              <FontAwesomeIcon icon={faTimes} size="lg" />
-            </button>
-            <h3 className="text-2xl font-semibold mb-4 text-red-400">{selectedClass.name}</h3>
-            <p className="text-gray-300 mb-1"><span className="font-semibold">Instrutor:</span> {selectedClass.instructor}</p>
-            <p className="text-gray-300 mb-1"><span className="font-semibold">Categoria:</span> {selectedClass.category}</p>
-            <p className="text-gray-300 mb-3"><span className="font-semibold">Data:</span> {formatDateForDisplay(selectedClass.date)}</p>
-
-            {/* Player de vídeo */}
-            <VideoPlayer
-              classData={selectedClass}
-              onViewRegistered={(totalViews) => {
-                console.log(`Visualização registrada. Total: ${totalViews}`);
-                setSelectedClass(prev => ({
-                  ...prev,
-                  views: totalViews
-                }));
-                // Atualizar também no histórico se necessário
-                setHistory(prev => prev.map(item =>
-                  item.id === selectedClass.id
-                    ? { ...item, views: totalViews }
-                    : item
-                ));
-              }}
-            />
-
-            <div className="mt-6 flex justify-end">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-0 md:p-4">
+          <div className="bg-gray-800 w-full h-full md:w-full md:max-w-4xl md:max-h-[95vh] md:rounded-lg shadow-xl transform transition-all flex flex-col">
+            {/* Header fixo com botão de fechar sempre visível */}
+            <div className="flex-shrink-0 bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-start md:rounded-t-lg">
+              <div className="flex-1 pr-4">
+                <h3 className="text-xl md:text-2xl font-semibold text-red-400 leading-tight">{selectedClass.name}</h3>
+                <div className="mt-2 space-y-1 text-sm text-gray-400">
+                  <p><span className="text-gray-300 font-semibold">Instrutor:</span> {selectedClass.instructor}</p>
+                  <p><span className="text-gray-300 font-semibold">Categoria:</span> {selectedClass.category}</p>
+                  <p><span className="text-gray-300 font-semibold">Data:</span> {formatDateForDisplay(selectedClass.date)}</p>
+                </div>
+              </div>
               <button
                 onClick={closeModal}
-                className="bg-gray-600 hover:bg-gray-500 text-gray-200 font-bold py-2 px-4 rounded transition-colors duration-150"
+                className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white transition-colors p-2 rounded-lg shadow-lg"
+                aria-label="Fechar modal"
+                title="Fechar"
               >
-                Fechar
+                <FontAwesomeIcon icon={faTimes} size="xl" />
               </button>
+            </div>
+
+            {/* Área de conteúdo scrollável */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+              {/* Player de vídeo */}
+              <VideoPlayer
+                classData={selectedClass}
+                onViewRegistered={(totalViews) => {
+                  console.log(`Visualização registrada. Total: ${totalViews}`);
+                  setSelectedClass(prev => ({
+                    ...prev,
+                    views: totalViews
+                  }));
+                  // Atualizar também no histórico se necessário
+                  setHistory(prev => prev.map(item =>
+                    item.id === selectedClass.id
+                      ? { ...item, views: totalViews }
+                      : item
+                  ));
+                }}
+              />
             </div>
           </div>
         </div>

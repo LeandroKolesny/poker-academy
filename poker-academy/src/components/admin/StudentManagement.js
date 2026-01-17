@@ -1,7 +1,7 @@
 // src/components/admin/StudentManagement.js
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrash, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faTrash, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { userService } from '../../services/api';
 import appConfig from '../../config/config';
 
@@ -327,13 +327,24 @@ const StudentManagement = () => {
       {/* Formulário de Aluno Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-0 md:p-4">
-          <div className="bg-gray-800 w-full h-full md:w-full md:max-w-lg md:h-auto md:rounded-lg shadow-xl transform transition-all overflow-y-auto">
-            <div className="sticky top-0 bg-gray-800 p-4 md:p-6 border-b border-gray-700 md:border-none">
+          <div className="bg-gray-800 w-full h-full md:w-full md:max-w-lg md:h-auto md:max-h-[90vh] md:rounded-lg shadow-xl transform transition-all flex flex-col">
+            {/* Header fixo com botão de fechar sempre visível */}
+            <div className="flex-shrink-0 bg-gray-800 p-4 md:p-6 border-b border-gray-700 md:rounded-t-lg flex justify-between items-center">
               <h3 className="text-lg md:text-xl font-semibold text-red-400">
                 {currentStudent ? 'Editar Aluno' : 'Adicionar Novo Aluno'}
               </h3>
+              <button
+                type="button"
+                onClick={() => { setShowForm(false); setCurrentStudent(null); }}
+                className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white transition-colors p-2 rounded-lg shadow-lg"
+                aria-label="Fechar modal"
+                title="Fechar"
+              >
+                <FontAwesomeIcon icon={faTimes} size="lg" />
+              </button>
             </div>
-            <div className="p-4 md:p-6 md:pt-0">
+            {/* Área de conteúdo scrollável */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 md:pt-4">
             
             <form onSubmit={handleSaveStudent}>
               {formError && <p className="text-red-500 mb-4 bg-red-900 bg-opacity-50 p-3 rounded">{formError}</p>}

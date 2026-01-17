@@ -33,7 +33,7 @@ const ResetPassword = () => {
       }
 
       try {
-        const response = await apiRequest(`/auth/validate-reset-token?token=${encodeURIComponent(token)}`);
+        const response = await apiRequest(`/api/auth/validate-reset-token?token=${encodeURIComponent(token)}`);
         if (response.data && response.data.valid) {
           setTokenValid(true);
         } else {
@@ -82,7 +82,7 @@ const ResetPassword = () => {
     setError('');
 
     try {
-      const response = await apiRequest('/auth/reset-password', {
+      const response = await apiRequest('/api/auth/reset-password', {
         method: 'POST',
         body: JSON.stringify({
           token,

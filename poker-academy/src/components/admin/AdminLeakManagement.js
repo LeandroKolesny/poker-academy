@@ -1,81 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faUpload, faImage, faUsers, faCalendarAlt, faEye, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faUpload, faImage, faSave } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
-import Loading from '../shared/Loading';
+import PartitionStudentLayout from './PartitionStudentLayout';
 import ImageZoomModal from '../shared/ImageZoomModal';
+import { MONTHS } from '../../constants';
 
-const AdminLeakManagement = () => {
-    const [partitions, setPartitions] = useState([]);
-    const [selectedStudent, setSelectedStudent] = useState(null);
+// Componente de conteudo do modal para leaks
+const LeaksModalContent = ({ student, year }) => {
     const [studentLeaks, setStudentLeaks] = useState({});
     const [loading, setLoading] = useState(true);
-    const [loadingLeaks, setLoadingLeaks] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadingMonth, setUploadingMonth] = useState(null);
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-    const [selectedPartition, setSelectedPartition] = useState('');
     const [improvements, setImprovements] = useState({});
     const [zoomModal, setZoomModal] = useState({ isOpen: false, imageUrl: '', altText: '' });
 
-    const months = [
-        { key: 'jan', name: 'Janeiro' },
-        { key: 'fev', name: 'Fevereiro' },
-        { key: 'mar', name: 'Março' },
-        { key: 'abr', name: 'Abril' },
-        { key: 'mai', name: 'Maio' },
-        { key: 'jun', name: 'Junho' },
-        { key: 'jul', name: 'Julho' },
-        { key: 'ago', name: 'Agosto' },
-        { key: 'set', name: 'Setembro' },
-        { key: 'out', name: 'Outubro' },
-        { key: 'nov', name: 'Novembro' },
-        { key: 'dez', name: 'Dezembro' }
-    ];
-
     useEffect(() => {
-        fetchPartitions();
-    }, []);
-
-    useEffect(() => {
-        if (selectedStudent) {
-            fetchStudentLeaks();
-        }
-    }, [selectedStudent, selectedYear]);
-
-    const fetchPartitions = async () => {
-        try {
-            setLoading(true);
-            const response = await api.get('/admin/students-by-partition');
-            console.log('📊 Resposta da API:', response.data);
-            setPartitions(response.data.partitions || []);
-            // Selecionar a primeira partição por padrão
-            if (response.data.partitions && response.data.partitions.length > 0) {
-                setSelectedPartition(response.data.partitions[0].id.toString());
-            }
-        } catch (error) {
-            console.error('❌ Erro ao buscar partições:', error);
-            alert(`Erro ao carregar partições: ${error.response?.data?.error || error.message}`);
-            setPartitions([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Filtrar partição selecionada
-    const filteredPartitions = selectedPartition
-        ? partitions.filter(p => p.id.toString() === selectedPartition)
-        : partitions;
+        fetchStudentLeaks();
+    }, [student.id, year]);
 
     const fetchStudentLeaks = async () => {
-        if (!selectedStudent) return;
-        
         try {
-            setLoadingLeaks(true);
-            const response = await api.get(`/admin/student/${selectedStudent.id}/leaks?year=${selectedYear}`);
+            setLoading(true);
+            const response = await api.get(`/api/admin/student/${student.id}/leaks?year=${year}`);
             const leaks = response.data.leaks || {};
             setStudentLeaks(leaks);
-            
+
             // Carregar melhorias existentes
             const existingImprovements = {};
             Object.keys(leaks).forEach(month => {
@@ -86,29 +36,22 @@ const AdminLeakManagement = () => {
             setImprovements(existingImprovements);
         } catch (error) {
             console.error('Erro ao buscar leaks do aluno:', error);
-            alert('Erro ao carregar análises do aluno');
         } finally {
-            setLoadingLeaks(false);
+            setLoading(false);
         }
     };
 
-    const handleStudentSelect = (student) => {
-        setSelectedStudent(student);
-        setStudentLeaks({});
-        setImprovements({});
-    };
-
     const handleFileUpload = async (month, file) => {
-        if (!file || !selectedStudent) return;
+        if (!file) return;
 
         const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
-            alert('Tipo de arquivo não permitido. Use PNG, JPG, GIF ou WebP.');
+            alert('Tipo de arquivo nao permitido. Use PNG, JPG, GIF ou WebP.');
             return;
         }
 
         if (file.size > 10 * 1024 * 1024) {
-            alert('Arquivo muito grande. Máximo 10MB.');
+            alert('Arquivo muito grande. Maximo 10MB.');
             return;
         }
 
@@ -117,16 +60,13 @@ const AdminLeakManagement = () => {
             setUploadingMonth(month);
 
             const token = localStorage.getItem('token');
-            console.log('🔐 Token para upload:', token ? 'PRESENTE' : 'AUSENTE');
-            
             const formData = new FormData();
             formData.append('file', file);
             formData.append('month', month);
-            formData.append('year', selectedYear);
+            formData.append('year', year);
             formData.append('improvements', improvements[month] || '');
-            // NÃO adicionar improvements_only=true quando há arquivo
 
-            const response = await fetch(`https://cardroomgrinders.com.br/api/admin/student/${selectedStudent.id}/leaks/upload`, {
+            const response = await fetch(`${api.defaults.baseURL}/api/admin/student/${student.id}/leaks/upload`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -134,21 +74,15 @@ const AdminLeakManagement = () => {
                 body: formData
             });
 
-            console.log('📤 Response status:', response.status);
-            
             if (response.ok) {
-                const data = await response.json();
-                console.log('✅ Upload sucesso:', data);
-                alert('Análise de leak enviada com sucesso!');
+                alert('Analise de leak enviada com sucesso!');
                 fetchStudentLeaks();
             } else {
                 const errorData = await response.text();
-                console.error('❌ Upload erro:', response.status, errorData);
                 alert(`Erro no upload: ${response.status} - ${errorData}`);
             }
         } catch (error) {
-            console.error('❌ Erro no upload:', error);
-            alert(`Erro ao enviar análise: ${error.message}`);
+            alert(`Erro ao enviar analise: ${error.message}`);
         } finally {
             setUploading(false);
             setUploadingMonth(null);
@@ -171,19 +105,17 @@ const AdminLeakManagement = () => {
     };
 
     const saveImprovements = async (month) => {
-        if (!selectedStudent || !improvements[month]) return;
+        if (!improvements[month]) return;
 
         try {
             const token = localStorage.getItem('token');
-
-            // Usar o endpoint existente de upload, mas apenas com melhorias
             const formData = new FormData();
             formData.append('month', month);
-            formData.append('year', selectedYear);
+            formData.append('year', year);
             formData.append('improvements', improvements[month]);
-            formData.append('improvements_only', 'true'); // Flag para indicar que é só melhorias
+            formData.append('improvements_only', 'true');
 
-            const response = await fetch(`https://cardroomgrinders.com.br/api/admin/student/${selectedStudent.id}/leaks/upload`, {
+            const response = await fetch(`${api.defaults.baseURL}/api/admin/student/${student.id}/leaks/upload`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -192,17 +124,13 @@ const AdminLeakManagement = () => {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                console.log('✅ Melhorias salvas com sucesso:', data);
                 alert('Melhorias salvas com sucesso!');
                 fetchStudentLeaks();
             } else {
                 const errorData = await response.text();
-                console.error('❌ Erro ao salvar melhorias:', response.status, errorData);
                 alert(`Erro ao salvar melhorias: ${errorData}`);
             }
         } catch (error) {
-            console.error('❌ Erro ao salvar melhorias:', error);
             alert(`Erro ao salvar melhorias: ${error.message}`);
         }
     };
@@ -210,7 +138,7 @@ const AdminLeakManagement = () => {
     const openZoomModal = (imageUrl, altText) => {
         setZoomModal({
             isOpen: true,
-            imageUrl: `https://cardroomgrinders.com.br${imageUrl}`,
+            imageUrl: `${api.defaults.baseURL}${imageUrl}`,
             altText
         });
     };
@@ -220,227 +148,119 @@ const AdminLeakManagement = () => {
     };
 
     if (loading) {
-        return <Loading />;
+        return (
+            <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-400"></div>
+                <p className="text-gray-400 mt-2">Carregando analises...</p>
+            </div>
+        );
     }
 
     return (
-        <div className="p-6 text-white min-h-screen">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold text-red-400">Gerenciamento de Caça Leaks</h2>
-                <div className="flex items-center gap-4">
-                    <label className="text-sm font-medium text-gray-300">Partição:</label>
-                    <select
-                        className="bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
-                        value={selectedPartition}
-                        onChange={(e) => {
-                            setSelectedPartition(e.target.value);
-                            setSelectedStudent(null);
-                        }}
-                    >
-                        <option value="">Todas as partições</option>
-                        {partitions.map(partition => (
-                            <option key={partition.id} value={partition.id.toString()}>
-                                {partition.nome}
-                            </option>
+        <>
+            <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
+                <table className="w-full min-w-full">
+                    <thead className="bg-gray-600">
+                        <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Mes</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Analise</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Melhorias</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Data</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Acoes</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-600">
+                        {MONTHS.map(month => (
+                            <tr key={month.key} className="hover:bg-gray-600 transition-colors duration-150">
+                                <td className="px-4 py-3 whitespace-nowrap text-sm text-white">
+                                    <div className="flex items-center">
+                                        <span className="font-medium">{month.name}</span>
+                                        {studentLeaks[month.key] && (
+                                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <FontAwesomeIcon icon={faImage} className="mr-1" />
+                                                Analisado
+                                            </span>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap text-sm text-white">
+                                    {studentLeaks[month.key]?.image_url ? (
+                                        <div className="flex justify-center">
+                                            <img
+                                                src={`${api.defaults.baseURL}${studentLeaks[month.key].image_url}`}
+                                                alt={`Analise ${month.name}`}
+                                                className="h-14 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                                onClick={() => openZoomModal(studentLeaks[month.key].image_url, `Analise ${month.name}`)}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-gray-400">
+                                            <FontAwesomeIcon icon={faSearch} className="text-xl" />
+                                            <p className="text-xs">Nao analisado</p>
+                                        </div>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-white min-w-[200px]">
+                                    <textarea
+                                        className="w-full bg-gray-600 text-white px-2 py-1 rounded text-xs focus:outline-none focus:ring-1 focus:ring-red-400 resize-vertical"
+                                        placeholder="Melhorias sugeridas..."
+                                        value={improvements[month.key] || ''}
+                                        onChange={(e) => handleImprovementChange(month.key, e.target.value)}
+                                        rows="2"
+                                    />
+                                    <button
+                                        className="mt-1 px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors disabled:opacity-50"
+                                        onClick={() => saveImprovements(month.key)}
+                                        disabled={!improvements[month.key]?.trim()}
+                                    >
+                                        <FontAwesomeIcon icon={faSave} className="mr-1" />
+                                        Salvar
+                                    </button>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-white">
+                                    {studentLeaks[month.key] ? (
+                                        <span className="text-gray-300 text-xs">
+                                            {new Date(studentLeaks[month.key].created_at).toLocaleDateString('pt-BR')}
+                                        </span>
+                                    ) : (
+                                        <span className="text-gray-500">-</span>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-medium">
+                                    <input
+                                        type="file"
+                                        id={`leak-file-${student.id}-${month.key}`}
+                                        accept="image/*"
+                                        onChange={(e) => handleFileSelect(month.key, e)}
+                                        style={{ display: 'none' }}
+                                        disabled={uploading}
+                                    />
+                                    <label
+                                        htmlFor={`leak-file-${student.id}-${month.key}`}
+                                        className={`inline-block px-3 py-1.5 rounded cursor-pointer transition-colors text-sm ${
+                                            studentLeaks[month.key]
+                                                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                                : 'bg-red-500 hover:bg-red-600 text-white'
+                                        } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                        {uploadingMonth === month.key ? (
+                                            <>
+                                                <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                                                Enviando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FontAwesomeIcon icon={faUpload} className="mr-1" />
+                                                {studentLeaks[month.key] ? 'Substituir' : 'Enviar'}
+                                            </>
+                                        )}
+                                    </label>
+                                </td>
+                            </tr>
                         ))}
-                    </select>
-                    <label className="text-sm font-medium text-gray-300 ml-4">Ano:</label>
-                    <select
-                        className="bg-gray-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400"
-                        value={selectedYear}
-                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                    >
-                        <option value="2024">2024</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                    </select>
-                </div>
+                    </tbody>
+                </table>
             </div>
-
-            {/* Tabelas de Alunos por Partição */}
-            <div className="mb-6 space-y-6">
-                {filteredPartitions.map(partition => (
-                    <div key={partition.id} className="partition-section">
-                        <h3 className="text-lg font-semibold text-gray-300 mb-4">
-                            Partição {partition.nome} ({partition.students.length} alunos)
-                        </h3>
-                        <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
-                            <table className="w-full min-w-full">
-                                <thead className="bg-gray-500">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Nome</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email</th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-600">
-                                    {partition.students.map(student => (
-                                        <tr
-                                            key={student.id}
-                                            className={`hover:bg-gray-600 transition-colors duration-150 ${
-                                                selectedStudent?.id === student.id ? 'bg-red-900 bg-opacity-50' : ''
-                                            }`}
-                                        >
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.name}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{student.email}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                                <button
-                                                    className={`px-4 py-2 rounded transition-colors duration-150 ${
-                                                        selectedStudent?.id === student.id
-                                                            ? 'bg-green-600 hover:bg-green-700 text-white'
-                                                            : 'bg-red-400 hover:bg-red-500 text-white'
-                                                    }`}
-                                                    onClick={() => handleStudentSelect(student)}
-                                                >
-                                                    {selectedStudent?.id === student.id ? 'Selecionado' : 'Selecionar'}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Análises do Aluno Selecionado */}
-            {selectedStudent ? (
-                <div className="student-leaks">
-                    <div className="flex justify-between items-center mb-4">
-                        <div>
-                            <h3 className="text-lg font-semibold text-red-400">Análises de {selectedStudent.name}</h3>
-                            <p className="text-gray-400 text-sm">{selectedStudent.email}</p>
-                        </div>
-                    </div>
-
-                    {loadingLeaks ? (
-                        <div className="text-center py-8">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-400"></div>
-                            <p className="text-gray-400 mt-2">Carregando análises...</p>
-                        </div>
-                    ) : (
-                        <div className="bg-gray-700 rounded-lg overflow-x-auto shadow-lg">
-                            <table className="w-full min-w-full">
-                                <thead className="bg-gray-500">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Mês</th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Análise</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Melhorias Sugeridas</th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Data</th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-600">
-                                    {months.map(month => (
-                                        <tr key={month.key} className="hover:bg-gray-600 transition-colors duration-150">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                                                <div className="flex items-center">
-                                                    <span className="font-medium">{month.name}</span>
-                                                    {studentLeaks[month.key] && (
-                                                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                            <FontAwesomeIcon icon={faImage} className="mr-1" />
-                                                            Analisado
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                                                {studentLeaks[month.key] ? (
-                                                    <div className="flex justify-center">
-                                                        <img
-                                                            src={`https://cardroomgrinders.com.br${studentLeaks[month.key].image_url}`}
-                                                            alt={`Análise ${month.name}`}
-                                                            className="h-16 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                                            onClick={() => openZoomModal(studentLeaks[month.key].image_url, `Análise ${month.name}`)}
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-center text-gray-400">
-                                                        <FontAwesomeIcon icon={faSearch} className="text-2xl mb-1" />
-                                                        <p className="text-xs">Não analisado</p>
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-white">
-                                                <textarea
-                                                    className="w-full bg-gray-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-400 resize-vertical"
-                                                    placeholder="Digite as principais melhorias que o aluno deve focar..."
-                                                    value={improvements[month.key] || ''}
-                                                    onChange={(e) => handleImprovementChange(month.key, e.target.value)}
-                                                    rows="3"
-                                                />
-                                                <div className="mt-2 flex gap-2">
-                                                    <button
-                                                        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
-                                                        onClick={() => saveImprovements(month.key)}
-                                                        disabled={!improvements[month.key]?.trim()}
-                                                    >
-                                                        <FontAwesomeIcon icon={faSave} className="mr-1" />
-                                                        Salvar
-                                                    </button>
-                                                </div>
-                                                {studentLeaks[month.key]?.improvements && (
-                                                    <div className="mt-2 p-2 bg-gray-600 rounded">
-                                                        <p className="text-xs font-medium text-green-400 mb-1">💾 Salvo:</p>
-                                                        <p className="text-xs text-gray-300">{studentLeaks[month.key].improvements}</p>
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-white">
-                                                {studentLeaks[month.key] ? (
-                                                    <span className="text-gray-300">
-                                                        {new Date(studentLeaks[month.key].created_at).toLocaleDateString('pt-BR')}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-gray-500">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                                <input
-                                                    type="file"
-                                                    id={`leak-file-${month.key}`}
-                                                    accept="image/*"
-                                                    onChange={(e) => handleFileSelect(month.key, e)}
-                                                    style={{ display: 'none' }}
-                                                    disabled={uploading}
-                                                />
-                                                <label 
-                                                    htmlFor={`leak-file-${month.key}`}
-                                                    className={`px-3 py-2 rounded cursor-pointer transition-colors ${
-                                                        studentLeaks[month.key] 
-                                                            ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                                                            : 'bg-red-400 hover:bg-red-500 text-white'
-                                                    } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                >
-                                                    {uploadingMonth === month.key ? (
-                                                        <>
-                                                            <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                            Enviando...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <FontAwesomeIcon icon={faUpload} className="mr-1" />
-                                                            {studentLeaks[month.key] ? 'Substituir' : 'Enviar'}
-                                                        </>
-                                                    )}
-                                                </label>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            ) : (
-                <div className="text-center py-12">
-                    <FontAwesomeIcon icon={faUsers} className="text-6xl text-gray-500 mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-400 mb-2">Selecione um aluno</h3>
-                    <p className="text-gray-500">Escolha um aluno da tabela acima para gerenciar suas análises de leaks</p>
-                </div>
-            )}
 
             {/* Modal de Zoom */}
             <ImageZoomModal
@@ -449,7 +269,19 @@ const AdminLeakManagement = () => {
                 imageUrl={zoomModal.imageUrl}
                 altText={zoomModal.altText}
             />
-        </div>
+        </>
+    );
+};
+
+// Componente principal
+const AdminLeakManagement = () => {
+    return (
+        <PartitionStudentLayout
+            title="Gerenciamento de Caca Leaks"
+            renderModalContent={({ student, year }) => (
+                <LeaksModalContent student={student} year={year} />
+            )}
+        />
     );
 };
 

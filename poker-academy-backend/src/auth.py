@@ -1,21 +1,24 @@
 # src/auth.py
 import jwt
+import bcrypt
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import request, jsonify, current_app
-from werkzeug.security import generate_password_hash, check_password_hash
 from src.models import Users, db
 
 class AuthService:
     @staticmethod
     def hash_password(password):
-        """Hash a password using werkzeug"""
-        return generate_password_hash(password, method='pbkdf2:sha256')
+        """Hash a password using bcrypt"""
+        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
     @staticmethod
     def verify_password(password, hashed_password):
-        """Verify a password against its hash"""
-        return check_password_hash(hashed_password, password)
+        """Verify a password against its hash using bcrypt"""
+        try:
+            return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+        except Exception:
+            return False
     
     @staticmethod
     def generate_token(user_id, user_type):
@@ -60,8 +63,17 @@ def token_required(f):
     """Decorator to require valid JWT token"""
     @wraps(f)
     def decorated(*args, **kwargs):
+        # Allow OPTIONS requests to pass through for CORS preflight
+        if request.method == 'OPTIONS':
+            response = current_app.make_default_options_response()
+            response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
+            return response
+
         token = None
-        
+
         # Check for token in Authorization header
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
@@ -93,8 +105,17 @@ def admin_required(f):
     """Decorator to require admin role"""
     @wraps(f)
     def decorated(*args, **kwargs):
+        # Allow OPTIONS requests to pass through for CORS preflight
+        if request.method == 'OPTIONS':
+            response = current_app.make_default_options_response()
+            response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
+            return response
+
         token = None
-        
+
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
             try:

@@ -1,7 +1,7 @@
 // src/components/admin/InstructorManagement.js
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrash, faSpinner, faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faTrash, faSpinner, faChalkboardTeacher, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { instructorService } from '../../services/api';
 
 const InstructorManagement = () => {
@@ -288,12 +288,25 @@ const InstructorManagement = () => {
 
       {/* Modal do formulário */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-0 md:p-4 z-50">
+          <div className="bg-gray-800 w-full h-full md:w-full md:max-w-md md:h-auto md:max-h-[90vh] md:rounded-lg shadow-xl flex flex-col">
+            {/* Header fixo com botão de fechar sempre visível */}
+            <div className="flex-shrink-0 p-4 md:p-6 border-b border-gray-700 md:rounded-t-lg flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-red-400">
                 {currentInstructor ? 'Editar Instrutor' : 'Novo Instrutor'}
               </h3>
+              <button
+                type="button"
+                onClick={() => { setShowForm(false); setCurrentInstructor(null); }}
+                className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white transition-colors p-2 rounded-lg shadow-lg"
+                aria-label="Fechar modal"
+                title="Fechar"
+              >
+                <FontAwesomeIcon icon={faTimes} size="lg" />
+              </button>
+            </div>
+            {/* Área de conteúdo scrollável */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
 
               {formError && (
                 <div className="mb-4 p-3 bg-red-900 border border-red-700 rounded text-red-200 text-sm">

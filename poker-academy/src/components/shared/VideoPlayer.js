@@ -274,17 +274,25 @@ const VideoPlayer = ({ classData, onViewRegistered }) => {
     console.log('🎬 VideoPlayer: video_url:', actualClassData.video_url);
     console.log('🎬 VideoPlayer: isWatching:', isWatching);
 
-    // Usar CloudFront se disponível, senão usar rota local com token
+    // Determinar URL do vídeo
     let videoUrl;
+    const token = getToken();
+
     if (actualClassData.video_url) {
-      // Usar URL do CloudFront (já armazenada no banco)
-      videoUrl = actualClassData.video_url;
-      console.log('🎬 VideoPlayer: Usando URL do CloudFront');
-    } else {
-      // Fallback para rota local com token (para vídeos antigos)
-      const token = getToken();
+      // Verificar se é uma URL completa (CloudFront, R2, etc.) ou relativa
+      if (actualClassData.video_url.startsWith('http://') || actualClassData.video_url.startsWith('https://')) {
+        // URL completa do CloudFront/R2
+        videoUrl = actualClassData.video_url;
+        console.log('🎬 VideoPlayer: Usando URL completa (CloudFront/R2)');
+      } else {
+        // URL relativa - precisa adicionar base URL da API
+        videoUrl = `${appConfig.API_BASE_URL}${actualClassData.video_url}?token=${token}`;
+        console.log('🎬 VideoPlayer: Usando URL relativa da API local');
+      }
+    } else if (actualClassData.video_path) {
+      // Fallback para formato antigo com video_path
       videoUrl = `${appConfig.API_BASE_URL}/videos/${actualClassData.video_path}?token=${token}`;
-      console.log('🎬 VideoPlayer: Usando rota local com token');
+      console.log('🎬 VideoPlayer: Usando rota local com token (video_path)');
     }
     console.log('🎬 VideoPlayer: URL do vídeo:', videoUrl);
 

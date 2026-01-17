@@ -4,6 +4,7 @@ import { faUpload, faImage, faCalendarAlt, faChartLine } from '@fortawesome/free
 import api from '../../services/api';
 import Loading from '../shared/Loading';
 import ImageZoomModal from '../shared/ImageZoomModal';
+import { MONTHS } from '../../constants';
 
 const MonthlyGraphs = () => {
     const [graphs, setGraphs] = useState({});
@@ -13,21 +14,6 @@ const MonthlyGraphs = () => {
     const [uploadingMonth, setUploadingMonth] = useState(null);
     const [zoomModal, setZoomModal] = useState({ isOpen: false, imageUrl: '', altText: '' });
 
-    const months = [
-        { key: 'jan', name: 'Janeiro' },
-        { key: 'fev', name: 'Fevereiro' },
-        { key: 'mar', name: 'Março' },
-        { key: 'abr', name: 'Abril' },
-        { key: 'mai', name: 'Maio' },
-        { key: 'jun', name: 'Junho' },
-        { key: 'jul', name: 'Julho' },
-        { key: 'ago', name: 'Agosto' },
-        { key: 'set', name: 'Setembro' },
-        { key: 'out', name: 'Outubro' },
-        { key: 'nov', name: 'Novembro' },
-        { key: 'dez', name: 'Dezembro' }
-    ];
-
     useEffect(() => {
         fetchGraphs();
     }, [selectedYear]);
@@ -35,7 +21,7 @@ const MonthlyGraphs = () => {
     const fetchGraphs = async () => {
         try {
             setLoading(true);
-            const response = await api.get(`/student/graphs?year=${selectedYear}`);
+            const response = await api.get(`/api/student/graphs?year=${selectedYear}`);
             setGraphs(response.data.graphs || {});
         } catch (error) {
             console.error('Erro ao buscar gráficos:', error);
@@ -73,7 +59,7 @@ const MonthlyGraphs = () => {
             formData.append('month', month);
             formData.append('year', selectedYear);
 
-            const response = await fetch(`https://cardroomgrinders.com.br/api/student/graphs/upload`, {
+            const response = await fetch(`${api.defaults.baseURL}/api/student/graphs/upload`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -114,7 +100,7 @@ const MonthlyGraphs = () => {
     const openZoomModal = (imageUrl, altText) => {
         setZoomModal({
             isOpen: true,
-            imageUrl: `https://cardroomgrinders.com.br${imageUrl}`,
+            imageUrl: `${api.defaults.baseURL}${imageUrl}`,
             altText
         });
     };
@@ -158,7 +144,7 @@ const MonthlyGraphs = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-600">
-                        {months.map(month => (
+                        {MONTHS.map(month => (
                             <tr key={month.key} className="hover:bg-gray-600 transition-colors duration-150">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                                     <div className="flex items-center">
@@ -175,7 +161,7 @@ const MonthlyGraphs = () => {
                                     {graphs[month.key] ? (
                                         <div className="flex justify-center">
                                             <img
-                                                src={`https://cardroomgrinders.com.br${graphs[month.key].image_url}`}
+                                                src={`${api.defaults.baseURL}${graphs[month.key].image_url}`}
                                                 alt={`Gráfico ${month.name}`}
                                                 className="h-16 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
                                                 onClick={() => openZoomModal(graphs[month.key].image_url, `Gráfico ${month.name}`)}

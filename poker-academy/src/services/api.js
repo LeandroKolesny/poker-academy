@@ -162,6 +162,114 @@ export const analyticsService = {
   getStats: () => apiRequest(appConfig.API_ENDPOINTS.ANALYTICS_STATS),
 };
 
+// Servicos de Upload (R2 em producao, local em desenvolvimento)
+export const uploadService = {
+  // Verificar status do servico de upload
+  getStatus: () => apiRequest('/api/upload/status'),
+
+  // Obter URL/info para upload de video
+  getVideoUploadUrl: (filename) => apiRequest('/api/upload/presigned-url/video', {
+    method: 'POST',
+    body: JSON.stringify({ filename }),
+  }),
+
+  // Obter URL/info para upload de imagem
+  getImageUploadUrl: (filename) => apiRequest('/api/upload/presigned-url/image', {
+    method: 'POST',
+    body: JSON.stringify({ filename }),
+  }),
+
+  // Upload automatico - detecta modo (R2 ou local) e faz upload apropriado
+  uploadFile: async (uploadInfo, file, onProgress) => {
+    const { upload_url, filename, mode } = uploadInfo;
+
+    if (mode === 'r2') {
+      // Modo R2 - PUT direto para URL pre-assinada
+      return uploadService.uploadToR2(upload_url, file, onProgress);
+    } else {
+      // Modo LOCAL - POST para backend
+      return uploadService.uploadToLocal(filename, file, onProgress);
+    }
+  },
+
+  // Upload direto para R2 usando URL pre-assinada
+  uploadToR2: async (uploadUrl, file, onProgress) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable && onProgress) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          onProgress(percent);
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve({ success: true });
+        } else {
+          reject(new Error(`Upload falhou: ${xhr.status}`));
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Erro de rede durante upload'));
+      });
+
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.send(file);
+    });
+  },
+
+  // Upload para pasta local (desenvolvimento)
+  uploadToLocal: async (filename, file, onProgress) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('filename', filename);
+
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable && onProgress) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          onProgress(percent);
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve({ success: true });
+        } else {
+          reject(new Error(`Upload falhou: ${xhr.status}`));
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Erro de rede durante upload'));
+      });
+
+      // Obter token para autenticacao
+      const token = localStorage.getItem('token');
+      xhr.open('POST', `${appConfig.API_BASE_URL}/api/upload/local`);
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+      xhr.send(formData);
+    });
+  },
+
+  // Deletar arquivo
+  deleteFile: (filename) => apiRequest('/api/upload/delete', {
+    method: 'DELETE',
+    body: JSON.stringify({ filename }),
+  }),
+
+  // Listar arquivos
+  listFiles: (folder = 'videos', limit = 50) =>
+    apiRequest(`/api/upload/list?folder=${folder}&limit=${limit}`),
+};
+
 // Serviços de Usuários
 export const userService = {
   // Listar todos os usuários (admin)
@@ -291,6 +399,10 @@ export const authService = {
 
 // Exportar funções básicas da API também
 const api = {
+  // Compatibilidade com axios-style api.defaults.baseURL
+  defaults: {
+    baseURL: appConfig.API_BASE_URL
+  },
   get: (url, options = {}) => apiRequest(url, { method: 'GET', ...options }),
   post: (url, data, options = {}) => {
     const isFormData = data instanceof FormData;
@@ -322,6 +434,7 @@ const api = {
   playlistService,
   authService,
   analyticsService,
+  uploadService,
 };
 
 export { apiRequest };

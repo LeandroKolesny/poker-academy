@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash, faSpinner, faCheck, faKey } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
 import PageHeader from '../shared/PageHeader';
+import api from '../../services/api';
 
 const ChangePassword = () => {
   const [formData, setFormData] = useState({
@@ -88,22 +89,12 @@ const ChangePassword = () => {
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/auth/change-password', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          current_password: formData.current_password,
-          new_password: formData.new_password
-        })
+      const response = await api.put('/api/auth/change-password', {
+        current_password: formData.current_password,
+        new_password: formData.new_password
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.status === 200) {
         setSuccess(true);
         setFormData({
           current_password: '',
@@ -111,11 +102,9 @@ const ChangePassword = () => {
           confirm_password: ''
         });
         setValidations({ length: false, match: false });
-      } else {
-        setError(data.error || 'Erro ao alterar senha');
       }
     } catch (err) {
-      setError('Erro ao conectar com o servidor');
+      setError(err.response?.data?.error || 'Erro ao conectar com o servidor');
     } finally {
       setLoading(false);
     }
