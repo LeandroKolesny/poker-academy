@@ -28,8 +28,18 @@ from src.password_reset_model import PasswordResetToken  # Importar para criar t
 from src.routes.class_routes import class_bp
 
 app = Flask(__name__)
+
+# CORS - Permitir origens do frontend
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
+CORS_ORIGINS.extend([
+    "https://cardroomgrinders.vercel.app",
+    "https://cardroomgrinders-*.vercel.app",
+    "https://cardroomgrinders.com.br",
+    "https://www.cardroomgrinders.com.br"
+])
+
 CORS(app,
-     origins=["http://localhost:3000", "http://localhost:3001"],
+     origins=CORS_ORIGINS,
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
