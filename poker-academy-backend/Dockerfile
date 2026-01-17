@@ -42,8 +42,8 @@ RUN mkdir -p logs && \
 # Mudar para usuário não-root
 USER appuser
 
-# Expor porta
-EXPOSE 5000
+# Expor porta (Railway usa PORT dinâmico)
+EXPOSE ${PORT:-5000}
 
-# Comando para iniciar a aplicação
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "src.main:app"]
+# Comando para iniciar a aplicação (usa $PORT do Railway ou 5000 como fallback)
+CMD gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 2 --timeout 120 --access-logfile - --error-logfile - src.main:app
