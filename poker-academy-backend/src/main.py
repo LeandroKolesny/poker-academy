@@ -132,8 +132,19 @@ def init_database():
         db.create_all()
 
         # Verificar se já existe um admin
-        from src.models import Users, UserType
+        from src.models import Users, UserType, Particoes
         from src.auth import AuthService
+
+        # Criar partição Admin se não existir
+        admin_particao = Particoes.query.filter_by(nome='Admin').first()
+        if not admin_particao:
+            admin_particao = Particoes(
+                nome='Admin',
+                descricao='Partição para administradores',
+                ativa=True
+            )
+            db.session.add(admin_particao)
+            db.session.commit()
 
         admin = Users.query.filter_by(type=UserType.admin).first()
         if not admin:
@@ -145,6 +156,7 @@ def init_database():
                 email='admin@cardroomgrinders.com',
                 password_hash=AuthService.hash_password(admin_password),
                 type=UserType.admin,
+                particao_id=admin_particao.id,
                 register_date=datetime.utcnow()
             )
             db.session.add(admin)
