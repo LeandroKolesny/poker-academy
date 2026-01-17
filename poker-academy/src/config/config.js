@@ -30,6 +30,12 @@ const environments = {
     FRONTEND_URL: 'https://cardroomgrinders.com.br',
     WEBSOCKET_URL: 'wss://cardroomgrinders.com.br',
     ENVIRONMENT: 'domain'
+  },
+  vercel: {
+    API_BASE_URL: 'https://backend-production-56c4.up.railway.app',
+    FRONTEND_URL: 'https://cardroomgrinders.vercel.app',
+    WEBSOCKET_URL: 'wss://backend-production-56c4.up.railway.app',
+    ENVIRONMENT: 'vercel'
   }
 };
 
@@ -39,12 +45,14 @@ const getCurrentEnvironment = () => {
   if (process.env.REACT_APP_ENV) {
     return process.env.REACT_APP_ENV;
   }
-  
+
   // Detectar baseado no hostname
   const hostname = window.location.hostname;
-  
+
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'development';
+  } else if (hostname.includes('vercel.app')) {
+    return 'vercel';
   } else if (hostname === 'cardroomgrinders.com.br' || hostname.includes('cardroomgrinders')) {
     return 'domain';
   } else if (hostname === 'grinders.com.br' || hostname.includes('grinders')) {
@@ -52,7 +60,7 @@ const getCurrentEnvironment = () => {
   } else if (hostname === '142.93.206.128') {
     return 'production';
   }
-  
+
   // Fallback para development
   return 'development';
 };
