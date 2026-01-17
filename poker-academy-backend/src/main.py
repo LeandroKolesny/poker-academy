@@ -116,6 +116,58 @@ def health_check():
             'message': 'API com problemas!'
         }), 500
 
+@app.route("/api/init-db", methods=["POST"])
+def init_database():
+    """Endpoint para inicializar o banco de dados (criar tabelas e admin)"""
+    try:
+        data = request.get_json() or {}
+        init_key = data.get('init_key')
+
+        # Verificar chave de inicialização
+        expected_key = os.getenv('SECRET_KEY', 'supersecretkey')
+        if init_key != expected_key:
+            return jsonify({'error': 'Chave de inicialização inválida'}), 403
+
+        # Criar todas as tabelas
+        db.create_all()
+
+        # Verificar se já existe um admin
+        from src.models import Users, UserType
+        from src.auth import AuthService
+
+        admin = Users.query.filter_by(type=UserType.admin).first()
+        if not admin:
+            # Criar usuário admin padrão
+            admin_password = data.get('admin_password', 'Admin@123')
+            admin = Users(
+                name='admin',
+                username='admin',
+                email='admin@cardroomgrinders.com',
+                password_hash=AuthService.hash_password(admin_password),
+                type=UserType.admin,
+                register_date=datetime.utcnow()
+            )
+            db.session.add(admin)
+            db.session.commit()
+            admin_created = True
+        else:
+            admin_created = False
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Banco de dados inicializado com sucesso!',
+            'tables_created': True,
+            'admin_created': admin_created,
+            'admin_email': 'admin@cardroomgrinders.com' if admin_created else None
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'status': 'error',
+            'message': f'Erro ao inicializar banco: {str(e)}'
+        }), 500
+
 
 
 if __name__ == "__main__":
