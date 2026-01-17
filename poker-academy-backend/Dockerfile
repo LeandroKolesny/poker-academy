@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copiar requirements primeiro (para cache do Docker)
-COPY poker_academy_api/requirements.txt .
+COPY requirements.txt .
 
 # Instalar dependências Python
 RUN pip install --no-cache-dir --upgrade pip && \
@@ -32,7 +32,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 RUN pip install gunicorn
 
 # Copiar código da aplicação
-COPY poker_academy_api/ .
+COPY src/ ./src/
 
 # Criar diretórios necessários
 # Cache invalidation: 2025-10-17-fix-send-file
