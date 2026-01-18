@@ -6,6 +6,17 @@ import PartitionStudentLayout from './PartitionStudentLayout';
 import ImageZoomModal from '../shared/ImageZoomModal';
 import { MONTHS } from '../../constants';
 
+// Helper para construir URL de imagem (suporta URLs absolutas do R2 e relativas)
+const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return '';
+    // Se ja e uma URL absoluta (http ou https), retorna como esta
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+    }
+    // Caso contrario, concatena com a URL base da API
+    return `${api.defaults.baseURL}${imageUrl}`;
+};
+
 // Componente de conteudo do modal para leaks
 const LeaksModalContent = ({ student, year }) => {
     const [studentLeaks, setStudentLeaks] = useState({});
@@ -138,7 +149,7 @@ const LeaksModalContent = ({ student, year }) => {
     const openZoomModal = (imageUrl, altText) => {
         setZoomModal({
             isOpen: true,
-            imageUrl: `${api.defaults.baseURL}${imageUrl}`,
+            imageUrl: getImageUrl(imageUrl),
             altText
         });
     };
@@ -187,7 +198,7 @@ const LeaksModalContent = ({ student, year }) => {
                                     {studentLeaks[month.key]?.image_url ? (
                                         <div className="flex justify-center">
                                             <img
-                                                src={`${api.defaults.baseURL}${studentLeaks[month.key].image_url}`}
+                                                src={getImageUrl(studentLeaks[month.key].image_url)}
                                                 alt={`Analise ${month.name}`}
                                                 className="h-14 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
                                                 onClick={() => openZoomModal(studentLeaks[month.key].image_url, `Analise ${month.name}`)}

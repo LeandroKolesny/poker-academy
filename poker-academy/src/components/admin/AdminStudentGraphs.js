@@ -6,6 +6,17 @@ import PartitionStudentLayout from './PartitionStudentLayout';
 import ImageZoomModal from '../shared/ImageZoomModal';
 import { MONTHS } from '../../constants';
 
+// Helper para construir URL de imagem (suporta URLs absolutas do R2 e relativas)
+const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return '';
+    // Se ja e uma URL absoluta (http ou https), retorna como esta
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+    }
+    // Caso contrario, concatena com a URL base da API
+    return `${api.defaults.baseURL}${imageUrl}`;
+};
+
 // Componente de conteudo do modal para graficos
 const GraphsModalContent = ({ student, year }) => {
     const [studentGraphs, setStudentGraphs] = useState({});
@@ -89,7 +100,7 @@ const GraphsModalContent = ({ student, year }) => {
     const openZoomModal = (imageUrl, altText) => {
         setZoomModal({
             isOpen: true,
-            imageUrl: `${api.defaults.baseURL}${imageUrl}`,
+            imageUrl: getImageUrl(imageUrl),
             altText
         });
     };
@@ -137,7 +148,7 @@ const GraphsModalContent = ({ student, year }) => {
                                     {studentGraphs[month.key] ? (
                                         <div className="flex justify-center">
                                             <img
-                                                src={`${api.defaults.baseURL}${studentGraphs[month.key].image_url}`}
+                                                src={getImageUrl(studentGraphs[month.key].image_url)}
                                                 alt={`Grafico ${month.name}`}
                                                 className="h-14 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
                                                 onClick={() => openZoomModal(studentGraphs[month.key].image_url, `Grafico ${month.name}`)}

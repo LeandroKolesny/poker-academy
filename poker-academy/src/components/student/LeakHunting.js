@@ -6,6 +6,15 @@ import Loading from '../shared/Loading';
 import ImageZoomModal from '../shared/ImageZoomModal';
 import { MONTHS } from '../../constants';
 
+// Helper para construir URL de imagem (suporta URLs absolutas do R2 e relativas)
+const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return '';
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+    }
+    return `${api.defaults.baseURL}${imageUrl}`;
+};
+
 const LeakHunting = () => {
     const [leaks, setLeaks] = useState({});
     const [loading, setLoading] = useState(true);
@@ -32,7 +41,7 @@ const LeakHunting = () => {
     const openZoomModal = (imageUrl, altText) => {
         setZoomModal({
             isOpen: true,
-            imageUrl: `${api.defaults.baseURL}${imageUrl}`,
+            imageUrl: getImageUrl(imageUrl),
             altText
         });
     };
@@ -93,7 +102,7 @@ const LeakHunting = () => {
                                     {leaks[month.key] && leaks[month.key].image_url ? (
                                         <div className="flex justify-center">
                                             <img
-                                                src={`${api.defaults.baseURL}${leaks[month.key].image_url}`}
+                                                src={getImageUrl(leaks[month.key].image_url)}
                                                 alt={`Análise ${month.name}`}
                                                 className="h-16 w-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
                                                 onClick={() => openZoomModal(leaks[month.key].image_url, `Análise ${month.name}`)}
