@@ -16,6 +16,7 @@ from flask import current_app, url_for
 # Extensoes permitidas
 ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'wmv', 'webm', 'mkv', 'flv'}
 ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+ALLOWED_DATABASE_EXTENSIONS = {'zip'}
 
 # Pasta para uploads locais (desenvolvimento)
 LOCAL_UPLOAD_FOLDER = os.path.join(
@@ -47,7 +48,15 @@ class StorageService:
         self.access_key = os.getenv('R2_ACCESS_KEY_ID')
         self.secret_key = os.getenv('R2_SECRET_ACCESS_KEY')
         self.bucket_name = os.getenv('R2_BUCKET_NAME', 'cardroomgrinders-videos')
-        self.public_url = os.getenv('R2_PUBLIC_URL', '')
+        raw_public_url = os.getenv('R2_PUBLIC_URL', '')
+        # Sanitizar URL publica: corrigir protocolo malformado (https// -> https://)
+        if raw_public_url and not raw_public_url.startswith('http://') and not raw_public_url.startswith('https://'):
+            if raw_public_url.startswith('https//'):
+                raw_public_url = raw_public_url.replace('https//', 'https://', 1)
+            elif raw_public_url.startswith('http//'):
+                raw_public_url = raw_public_url.replace('http//', 'http://', 1)
+        # Remover barra final se existir
+        self.public_url = raw_public_url.rstrip('/')
 
         # Verificar se R2 esta configurado
         self._use_r2 = all([self.account_id, self.access_key, self.secret_key])
@@ -118,6 +127,7 @@ class StorageService:
             'png': 'image/png',
             'gif': 'image/gif',
             'webp': 'image/webp',
+            'zip': 'application/zip',
         }
         return content_types.get(ext, 'application/octet-stream')
 
@@ -134,6 +144,61 @@ class StorageService:
             return False
         ext = filename.rsplit('.', 1)[-1].lower()
         return ext in ALLOWED_IMAGE_EXTENSIONS
+
+    def is_allowed_database(self, filename: str) -> bool:
+        """Verifica se e um arquivo de database permitido (.zip)."""
+        if '.' not in filename:
+            return False
+        ext = filename.rsplit('.', 1)[-1].lower()
+        return ext in ALLOWED_DATABASE_EXTENSIONS
+
+    def upload_file_directly(self, file, folder: str, original_filename: str) -> dict:
+        """
+        Faz upload de arquivo diretamente para o R2 (usado para arquivos do backend).
+
+        Args:
+            file: Objeto file do Flask (request.files['file'])
+            folder: Pasta destino (ex: 'databases', 'graphs', 'leaks')
+            original_filename: Nome original do arquivo
+
+        Returns:
+            dict com filename e public_url
+        """
+        unique_filename = self._generate_unique_filename(original_filename)
+        key = f"{folder}/{unique_filename}"
+        content_type = self._get_content_type(original_filename)
+
+        if self._use_r2:
+            from botocore.exceptions import ClientError
+            try:
+                # Upload direto para R2
+                self.s3_client.upload_fileobj(
+                    file,
+                    self.bucket_name,
+                    key,
+                    ExtraArgs={'ContentType': content_type}
+                )
+                public_url = f"{self.public_url}/{key}" if self.public_url else None
+                print(f"[R2] Arquivo enviado: {key}")
+                return {
+                    'filename': key,
+                    'public_url': public_url,
+                    'mode': 'r2'
+                }
+            except ClientError as e:
+                print(f"[ERROR] Erro ao fazer upload para R2: {e}")
+                raise
+        else:
+            # Modo local
+            filepath = os.path.join(LOCAL_UPLOAD_FOLDER, key)
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            file.save(filepath)
+            print(f"[LOCAL] Arquivo salvo: {filepath}")
+            return {
+                'filename': key,
+                'public_url': f'/api/uploads/{key}',
+                'mode': 'local'
+            }
 
     def generate_upload_url(self, original_filename: str, folder: str = "videos", expires_in: int = 3600) -> dict:
         """

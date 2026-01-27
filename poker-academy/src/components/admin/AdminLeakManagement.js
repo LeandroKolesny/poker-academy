@@ -9,11 +9,18 @@ import { MONTHS } from '../../constants';
 // Helper para construir URL de imagem (suporta URLs absolutas do R2 e relativas)
 const getImageUrl = (imageUrl) => {
     if (!imageUrl) return '';
-    // Se ja e uma URL absoluta (http ou https), retorna como esta
+    // URL absoluta correta
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
         return imageUrl;
     }
-    // Caso contrario, concatena com a URL base da API
+    // URL com protocolo malformado (sem dois pontos, ex: https//...)
+    if (imageUrl.startsWith('https//')) {
+        return imageUrl.replace('https//', 'https://');
+    }
+    if (imageUrl.startsWith('http//')) {
+        return imageUrl.replace('http//', 'http://');
+    }
+    // URL relativa - concatenar com base
     return `${api.defaults.baseURL}${imageUrl}`;
 };
 
