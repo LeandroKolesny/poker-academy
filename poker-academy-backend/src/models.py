@@ -10,6 +10,16 @@ from datetime import datetime # Para default=datetime.utcnow ou similar se db.fu
 
 db = SQLAlchemy()
 
+def _sanitize_url(url):
+    """Corrige URLs com protocolo malformado (ex: https// -> https://)"""
+    if not url:
+        return url
+    if url.startswith('https//'):
+        return url.replace('https//', 'https://', 1)
+    if url.startswith('http//'):
+        return url.replace('http//', 'http://', 1)
+    return url
+
 class UserType(enum.Enum):
     admin = "admin"
     student = "student"
@@ -110,7 +120,7 @@ class Classes(db.Model):
             "instructor_name": self.instructor.name if self.instructor else None,
             "date": self.date.isoformat() if self.date else None,
             "category": self.category,
-            "video_url": self.video_url,
+            "video_url": _sanitize_url(self.video_url),
             "video_duration": self.video_duration,
             "priority": self.priority,
             "views": self.views,
@@ -183,7 +193,7 @@ class StudentGraphs(db.Model):
             'student_id': self.student_id,
             'month': self.month.value if self.month else None,
             'year': self.year,
-            'image_url': self.image_url,
+            'image_url': _sanitize_url(self.image_url),
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
@@ -209,7 +219,7 @@ class StudentDatabase(db.Model):
             'student_id': self.student_id,
             'month': self.month.value if self.month else None,
             'year': self.year,
-            'file_url': self.file_url,
+            'file_url': _sanitize_url(self.file_url),
             'file_size': self.file_size,
             'status': self.status if self.status else 'ativo',
             'created_at': self.created_at.isoformat() if self.created_at else None,
@@ -240,7 +250,7 @@ class StudentLeaks(db.Model):
             'student_id': self.student_id,
             'month': self.month.value if self.month else None,
             'year': self.year,
-            'image_url': self.image_url,
+            'image_url': _sanitize_url(self.image_url),
             'improvements': self.improvements,
             'uploaded_by': self.uploaded_by,
             'created_at': self.created_at.isoformat() if self.created_at else None,
