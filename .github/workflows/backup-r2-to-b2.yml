@@ -1,0 +1,108 @@
+name: Backup R2 para Backblaze B2 (Semanal)
+
+# Executa todo domingo às 05:00 UTC (02:00 BRT)
+# Também pode ser executado manualmente pelo GitHub
+on:
+  schedule:
+    - cron: '0 5 * * 0'
+  workflow_dispatch:
+
+jobs:
+  sync-r2-to-b2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Instalar rclone
+        run: |
+          curl -s https://rclone.org/install.sh | sudo bash
+          rclone version
+
+      - name: Configurar rclone (R2 + B2)
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          B2_KEY_ID: ${{ secrets.B2_KEY_ID }}
+          B2_APP_KEY: ${{ secrets.B2_APP_KEY }}
+        run: |
+          mkdir -p ~/.config/rclone
+          cat > ~/.config/rclone/rclone.conf << EOF
+          [r2]
+          type = s3
+          provider = Cloudflare
+          access_key_id = ${R2_ACCESS_KEY_ID}
+          secret_access_key = ${R2_SECRET_ACCESS_KEY}
+          endpoint = https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+          acl = private
+          no_check_bucket = true
+
+          [b2]
+          type = b2
+          account = ${B2_KEY_ID}
+          key = ${B2_APP_KEY}
+          EOF
+
+          echo "rclone configurado com sucesso"
+
+      - name: Sincronizar R2 para Backblaze B2
+        env:
+          R2_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+          B2_BUCKET: ${{ secrets.B2_BUCKET_NAME }}
+        run: |
+          echo "Iniciando sincronizacao R2 -> Backblaze B2..."
+          echo "Origem: r2:${R2_BUCKET}"
+          echo "Destino: b2:${B2_BUCKET}"
+
+          rclone sync "r2:${R2_BUCKET}" "b2:${B2_BUCKET}" \
+            --progress \
+            --transfers 8 \
+            --checkers 16 \
+            --stats-one-line \
+            --stats 30s \
+            --log-level INFO \
+            --fast-list
+
+          echo "Sincronizacao concluida com sucesso"
+
+      - name: Verificar integridade do backup
+        env:
+          R2_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+          B2_BUCKET: ${{ secrets.B2_BUCKET_NAME }}
+        run: |
+          echo "=== Contagem de arquivos ==="
+
+          R2_COUNT=$(rclone ls "r2:${R2_BUCKET}" 2>/dev/null | wc -l)
+          B2_COUNT=$(rclone ls "b2:${B2_BUCKET}" 2>/dev/null | wc -l)
+
+          echo "Arquivos no R2: ${R2_COUNT}"
+          echo "Arquivos no B2: ${B2_COUNT}"
+
+          R2_SIZE=$(rclone size "r2:${R2_BUCKET}" 2>/dev/null | grep "Total size" || echo "N/A")
+          B2_SIZE=$(rclone size "b2:${B2_BUCKET}" 2>/dev/null | grep "Total size" || echo "N/A")
+
+          echo "Tamanho R2: ${R2_SIZE}"
+          echo "Tamanho B2: ${B2_SIZE}"
+
+          if [ "$R2_COUNT" -eq "$B2_COUNT" ]; then
+            echo "Verificacao OK - contagem de arquivos igual"
+          else
+            echo "AVISO: contagem diferente! R2=${R2_COUNT} vs B2=${B2_COUNT}"
+            echo "Isso pode ser normal se arquivos foram adicionados/removidos durante a sync"
+          fi
+
+# =============================================================
+# COMO RESTAURAR ARQUIVOS DO BACKBLAZE B2:
+#
+# 1. Instalar rclone: https://rclone.org/install/
+#
+# 2. Configurar rclone com as credenciais B2:
+#    rclone config
+#    -> New remote -> Name: b2 -> Type: b2 -> Account + Key
+#
+# 3. Restaurar todos os arquivos para o R2:
+#    rclone sync b2:BUCKET_B2 r2:BUCKET_R2
+#
+# 4. Ou baixar localmente:
+#    rclone copy b2:BUCKET_B2 ./backup-local/
+# =============================================================
