@@ -46,4 +46,4 @@ USER appuser
 EXPOSE ${PORT:-5000}
 
 # Comando para iniciar a aplicação (usa $PORT do Railway ou 5000 como fallback)
-CMD gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 2 --timeout 120 --access-logfile - --error-logfile - src.main:app
+CMD gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 4 --threads 2 --timeout 120 --access-logfile - --error-logfile - src.main:app
