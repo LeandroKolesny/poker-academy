@@ -18,6 +18,18 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client
 
+      - name: Testar conexao com o banco
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          # Extrair hostname da URL para testar DNS
+          HOST=$(echo "$DATABASE_URL" | sed -E 's|.*@([^:]+):.*|\1|')
+          echo "Testando DNS para: $HOST"
+          nslookup "$HOST" || echo "DNS falhou, tentando dig..."
+          dig +short "$HOST" || echo "dig tambem falhou"
+          echo "Testando conexao com psql..."
+          psql "$DATABASE_URL" -c "SELECT 1 AS connection_ok;" || echo "Conexao falhou"
+
       - name: Criar backup do banco de dados
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -26,10 +38,26 @@ jobs:
           FILENAME="backup_${TIMESTAMP}.sql.gz"
 
           echo "Iniciando backup do banco de dados..."
-          pg_dump "$DATABASE_URL" --no-owner --no-privileges | gzip > "$FILENAME"
+          pg_dump "$DATABASE_URL" --no-owner --no-privileges 2>&1 | gzip > "$FILENAME"
 
           FILE_SIZE=$(du -h "$FILENAME" | cut -f1)
           echo "Backup criado: $FILENAME ($FILE_SIZE)"
+
+          # Verificar se o backup tem conteudo real (mais de 1KB)
+          FILE_BYTES=$(stat --format=%s "$FILENAME")
+          if [ "$FILE_BYTES" -lt 1000 ]; then
+            echo "ERRO: Backup muito pequeno ($FILE_BYTES bytes). Provavelmente falhou."
+            echo "Tentando com sslmode=require..."
+            pg_dump "${DATABASE_URL}?sslmode=require" --no-owner --no-privileges 2>&1 | gzip > "$FILENAME"
+            FILE_SIZE=$(du -h "$FILENAME" | cut -f1)
+            FILE_BYTES=$(stat --format=%s "$FILENAME")
+            echo "Segunda tentativa: $FILENAME ($FILE_SIZE, $FILE_BYTES bytes)"
+            if [ "$FILE_BYTES" -lt 1000 ]; then
+              echo "ERRO: Backup ainda falhou. Verifique o DATABASE_URL nos secrets."
+              exit 1
+            fi
+          fi
+
           echo "BACKUP_FILE=$FILENAME" >> $GITHUB_ENV
 
       - name: Upload backup para Cloudflare R2
