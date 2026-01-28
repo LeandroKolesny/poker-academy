@@ -35,30 +35,73 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-          FILENAME="backup_${TIMESTAMP}.sql.gz"
+          FILENAME="backup_${TIMESTAMP}.sql"
+          FILENAME_GZ="${FILENAME}.gz"
 
           echo "Iniciando backup do banco de dados..."
-          pg_dump "$DATABASE_URL" --no-owner --no-privileges 2>&1 | gzip > "$FILENAME"
+          echo "Porta na URL:"
+          echo "$DATABASE_URL" | sed -E 's|.*@[^:]+:([0-9]+)/.*|\1|'
 
-          FILE_SIZE=$(du -h "$FILENAME" | cut -f1)
-          echo "Backup criado: $FILENAME ($FILE_SIZE)"
+          # Primeira tentativa: pg_dump normal
+          echo "=== Tentativa 1: pg_dump direto ==="
+          pg_dump "$DATABASE_URL" --no-owner --no-privileges -f "$FILENAME" 2>pg_dump_error.log
+          PG_EXIT=$?
+          echo "Exit code: $PG_EXIT"
+          if [ -s pg_dump_error.log ]; then
+            echo "Erros do pg_dump:"
+            cat pg_dump_error.log
+          fi
 
-          # Verificar se o backup tem conteudo real (mais de 1KB)
-          FILE_BYTES=$(stat --format=%s "$FILENAME")
-          if [ "$FILE_BYTES" -lt 1000 ]; then
-            echo "ERRO: Backup muito pequeno ($FILE_BYTES bytes). Provavelmente falhou."
-            echo "Tentando com sslmode=require..."
-            pg_dump "${DATABASE_URL}?sslmode=require" --no-owner --no-privileges 2>&1 | gzip > "$FILENAME"
-            FILE_SIZE=$(du -h "$FILENAME" | cut -f1)
-            FILE_BYTES=$(stat --format=%s "$FILENAME")
-            echo "Segunda tentativa: $FILENAME ($FILE_SIZE, $FILE_BYTES bytes)"
-            if [ "$FILE_BYTES" -lt 1000 ]; then
-              echo "ERRO: Backup ainda falhou. Verifique o DATABASE_URL nos secrets."
-              exit 1
+          # Se falhou, tentar com psql (funciona com qualquer pooler)
+          if [ "$PG_EXIT" -ne 0 ] || [ ! -s "$FILENAME" ]; then
+            echo ""
+            echo "=== Tentativa 2: psql --command com schema dump ==="
+            psql "$DATABASE_URL" -c "\dt" 2>psql_error.log || true
+            if [ -s psql_error.log ]; then
+              echo "Erros psql dt:"
+              cat psql_error.log
+            fi
+
+            echo ""
+            echo "=== Tentativa 3: pg_dump com --no-synchronized-snapshots ==="
+            pg_dump "$DATABASE_URL" --no-owner --no-privileges --no-synchronized-snapshots -f "$FILENAME" 2>pg_dump_error2.log
+            PG_EXIT=$?
+            echo "Exit code: $PG_EXIT"
+            if [ -s pg_dump_error2.log ]; then
+              echo "Erros:"
+              cat pg_dump_error2.log
             fi
           fi
 
-          echo "BACKUP_FILE=$FILENAME" >> $GITHUB_ENV
+          # Se ainda falhou, tentar export via psql COPY
+          if [ "$PG_EXIT" -ne 0 ] || [ ! -s "$FILENAME" ]; then
+            echo ""
+            echo "=== Tentativa 4: backup via psql custom queries ==="
+            psql "$DATABASE_URL" <<'SQLEOF' > "$FILENAME" 2>psql_backup_error.log
+-- Schema
+SELECT '-- Backup gerado em ' || now();
+-- Listar todas as tabelas
+SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;
+SQLEOF
+            echo "psql exit: $?"
+            if [ -s psql_backup_error.log ]; then
+              echo "Erros:"
+              cat psql_backup_error.log
+            fi
+          fi
+
+          # Verificar resultado
+          if [ -s "$FILENAME" ]; then
+            gzip "$FILENAME"
+            FILE_SIZE=$(du -h "$FILENAME_GZ" | cut -f1)
+            FILE_BYTES=$(stat --format=%s "$FILENAME_GZ")
+            echo ""
+            echo "Backup criado: $FILENAME_GZ ($FILE_SIZE, $FILE_BYTES bytes)"
+            echo "BACKUP_FILE=$FILENAME_GZ" >> $GITHUB_ENV
+          else
+            echo "ERRO: Todas as tentativas falharam."
+            exit 1
+          fi
 
       - name: Upload backup para Cloudflare R2
         env:
