@@ -11,10 +11,13 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Instalar cliente PostgreSQL
+      - name: Instalar cliente PostgreSQL 17
         run: |
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee /etc/apt/trusted.gpg.d/pgdg.asc
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
+          sudo apt-get install -y -qq postgresql-client-17
+          pg_dump --version
 
       - name: Testar conexao com o banco
         env:
@@ -37,32 +40,11 @@ jobs:
 
           echo "Iniciando backup..."
 
-          # Tentar pg_dump direto
-          pg_dump "$DATABASE_URL" --no-owner --no-privileges -f "$FILENAME" 2>pg_error.log || true
+          pg_dump "$DATABASE_URL" --no-owner --no-privileges -f "$FILENAME" 2>pg_error.log
 
           if [ -s pg_error.log ]; then
-            echo "Erros pg_dump:"
+            echo "Avisos/erros do pg_dump:"
             cat pg_error.log
-          fi
-
-          # Se falhou ou arquivo vazio, tentar com --no-synchronized-snapshots
-          if [ ! -s "$FILENAME" ]; then
-            echo "Tentando com --no-synchronized-snapshots..."
-            pg_dump "$DATABASE_URL" --no-owner --no-privileges --no-synchronized-snapshots -f "$FILENAME" 2>pg_error2.log || true
-            if [ -s pg_error2.log ]; then
-              echo "Erros:"
-              cat pg_error2.log
-            fi
-          fi
-
-          # Se ainda falhou, usar psql para dump basico
-          if [ ! -s "$FILENAME" ]; then
-            echo "pg_dump falhou. Usando psql para backup das tabelas..."
-            psql "$DATABASE_URL" -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public';" > "$FILENAME" 2>psql_error.log || true
-            if [ -s psql_error.log ]; then
-              echo "Erros psql:"
-              cat psql_error.log
-            fi
           fi
 
           if [ -s "$FILENAME" ]; then
@@ -72,7 +54,7 @@ jobs:
             echo "Backup criado: $FILENAME_GZ ($FILE_SIZE, $FILE_BYTES bytes)"
             echo "BACKUP_FILE=$FILENAME_GZ" >> $GITHUB_ENV
           else
-            echo "ERRO: Todas as tentativas falharam."
+            echo "ERRO: pg_dump falhou. Verifique os logs acima."
             exit 1
           fi
 
