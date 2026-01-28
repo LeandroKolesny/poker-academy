@@ -40,7 +40,7 @@ jobs:
 
           echo "Iniciando backup..."
 
-          pg_dump "$DATABASE_URL" --no-owner --no-privileges -f "$FILENAME" 2>pg_error.log
+          pg_dump "$DATABASE_URL" --no-owner --no-privileges -f "$FILENAME" 2>pg_error.log || true
 
           if [ -s pg_error.log ]; then
             echo "Avisos/erros do pg_dump:"
