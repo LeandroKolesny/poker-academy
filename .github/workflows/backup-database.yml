@@ -17,7 +17,10 @@ jobs:
           wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee /etc/apt/trusted.gpg.d/pgdg.asc
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17
+          echo "Versao padrao:"
           pg_dump --version
+          echo "Versao 17:"
+          /usr/lib/postgresql/17/bin/pg_dump --version
 
       - name: Testar conexao com o banco
         env:
@@ -40,7 +43,7 @@ jobs:
 
           echo "Iniciando backup..."
 
-          pg_dump "$DATABASE_URL" --no-owner --no-privileges -f "$FILENAME" 2>pg_error.log || true
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" --no-owner --no-privileges -f "$FILENAME" 2>pg_error.log || true
 
           if [ -s pg_error.log ]; then
             echo "Avisos/erros do pg_dump:"
