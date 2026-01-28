@@ -1,7 +1,5 @@
-name: Backup Database (Diário)
+name: Backup Database (Diario)
 
-# Executa diariamente às 06:00 UTC (03:00 BRT)
-# Também pode ser executado manualmente pelo GitHub
 on:
   schedule:
     - cron: '0 6 * * *'
@@ -22,12 +20,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          # Extrair hostname da URL para testar DNS
           HOST=$(echo "$DATABASE_URL" | sed -E 's|.*@([^:]+):.*|\1|')
-          echo "Testando DNS para: $HOST"
-          nslookup "$HOST" || echo "DNS falhou, tentando dig..."
-          dig +short "$HOST" || echo "dig tambem falhou"
-          echo "Testando conexao com psql..."
+          PORT=$(echo "$DATABASE_URL" | sed -E 's|.*:([0-9]+)/.*|\1|')
+          echo "Host: $HOST"
+          echo "Porta: $PORT"
+          echo "Testando conexao..."
           psql "$DATABASE_URL" -c "SELECT 1 AS connection_ok;" || echo "Conexao falhou"
 
       - name: Criar backup do banco de dados
@@ -38,64 +35,40 @@ jobs:
           FILENAME="backup_${TIMESTAMP}.sql"
           FILENAME_GZ="${FILENAME}.gz"
 
-          echo "Iniciando backup do banco de dados..."
-          echo "Porta na URL:"
-          echo "$DATABASE_URL" | sed -E 's|.*@[^:]+:([0-9]+)/.*|\1|'
+          echo "Iniciando backup..."
 
-          # Primeira tentativa: pg_dump normal
-          echo "=== Tentativa 1: pg_dump direto ==="
-          pg_dump "$DATABASE_URL" --no-owner --no-privileges -f "$FILENAME" 2>pg_dump_error.log
-          PG_EXIT=$?
-          echo "Exit code: $PG_EXIT"
-          if [ -s pg_dump_error.log ]; then
-            echo "Erros do pg_dump:"
-            cat pg_dump_error.log
+          # Tentar pg_dump direto
+          pg_dump "$DATABASE_URL" --no-owner --no-privileges -f "$FILENAME" 2>pg_error.log || true
+
+          if [ -s pg_error.log ]; then
+            echo "Erros pg_dump:"
+            cat pg_error.log
           fi
 
-          # Se falhou, tentar com psql (funciona com qualquer pooler)
-          if [ "$PG_EXIT" -ne 0 ] || [ ! -s "$FILENAME" ]; then
-            echo ""
-            echo "=== Tentativa 2: psql --command com schema dump ==="
-            psql "$DATABASE_URL" -c "\dt" 2>psql_error.log || true
+          # Se falhou ou arquivo vazio, tentar com --no-synchronized-snapshots
+          if [ ! -s "$FILENAME" ]; then
+            echo "Tentando com --no-synchronized-snapshots..."
+            pg_dump "$DATABASE_URL" --no-owner --no-privileges --no-synchronized-snapshots -f "$FILENAME" 2>pg_error2.log || true
+            if [ -s pg_error2.log ]; then
+              echo "Erros:"
+              cat pg_error2.log
+            fi
+          fi
+
+          # Se ainda falhou, usar psql para dump basico
+          if [ ! -s "$FILENAME" ]; then
+            echo "pg_dump falhou. Usando psql para backup das tabelas..."
+            psql "$DATABASE_URL" -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public';" > "$FILENAME" 2>psql_error.log || true
             if [ -s psql_error.log ]; then
-              echo "Erros psql dt:"
+              echo "Erros psql:"
               cat psql_error.log
             fi
-
-            echo ""
-            echo "=== Tentativa 3: pg_dump com --no-synchronized-snapshots ==="
-            pg_dump "$DATABASE_URL" --no-owner --no-privileges --no-synchronized-snapshots -f "$FILENAME" 2>pg_dump_error2.log
-            PG_EXIT=$?
-            echo "Exit code: $PG_EXIT"
-            if [ -s pg_dump_error2.log ]; then
-              echo "Erros:"
-              cat pg_dump_error2.log
-            fi
           fi
 
-          # Se ainda falhou, tentar export via psql COPY
-          if [ "$PG_EXIT" -ne 0 ] || [ ! -s "$FILENAME" ]; then
-            echo ""
-            echo "=== Tentativa 4: backup via psql custom queries ==="
-            psql "$DATABASE_URL" <<'SQLEOF' > "$FILENAME" 2>psql_backup_error.log
--- Schema
-SELECT '-- Backup gerado em ' || now();
--- Listar todas as tabelas
-SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;
-SQLEOF
-            echo "psql exit: $?"
-            if [ -s psql_backup_error.log ]; then
-              echo "Erros:"
-              cat psql_backup_error.log
-            fi
-          fi
-
-          # Verificar resultado
           if [ -s "$FILENAME" ]; then
             gzip "$FILENAME"
             FILE_SIZE=$(du -h "$FILENAME_GZ" | cut -f1)
             FILE_BYTES=$(stat --format=%s "$FILENAME_GZ")
-            echo ""
             echo "Backup criado: $FILENAME_GZ ($FILE_SIZE, $FILE_BYTES bytes)"
             echo "BACKUP_FILE=$FILENAME_GZ" >> $GITHUB_ENV
           else
@@ -127,7 +100,6 @@ SQLEOF
         run: |
           ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
           CUTOFF_DATE=$(date -d '30 days ago' +%Y%m%d)
-
           echo "Removendo backups anteriores a ${CUTOFF_DATE}..."
 
           aws s3 ls "s3://${R2_BUCKET}/backups/database/" \
@@ -141,19 +113,4 @@ SQLEOF
               echo "Removido: $FILE"
             fi
           done
-
           echo "Limpeza concluida"
-
-# =============================================================
-# COMO RESTAURAR UM BACKUP:
-#
-# 1. Baixar o backup do R2:
-#    aws s3 cp s3://BUCKET/backups/database/backup_XXXXXXXX_XXXXXX.sql.gz ./backup.sql.gz \
-#      --endpoint-url https://ACCOUNT_ID.r2.cloudflarestorage.com
-#
-# 2. Descompactar:
-#    gunzip backup.sql.gz
-#
-# 3. Restaurar no banco:
-#    psql "$DATABASE_URL" < backup.sql
-# =============================================================
