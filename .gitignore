@@ -45,3 +45,5 @@ poker-academy-backend/uploads/
 # Arquivos de deploy temporários
 deploy_*/
 backup_*/
+.vercel
+.env*.local
