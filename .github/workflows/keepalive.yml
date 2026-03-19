@@ -1,0 +1,38 @@
+name: Keep Services Alive
+
+on:
+  schedule:
+    # Roda a cada 5 dias (às 08:00 UTC = 05:00 BRT)
+    # Evita que Supabase pause (pausa após 7 dias sem uso)
+    - cron: '0 8 */5 * *'
+  workflow_dispatch: # Permite rodar manualmente pelo GitHub
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    name: Ping Backend & Supabase
+
+    steps:
+      - name: Ping Railway Backend (health check)
+        run: |
+          echo "🏓 Fazendo ping no backend Railway..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            https://backend-production-56c4.up.railway.app/api/health)
+          echo "Status HTTP: $RESPONSE"
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Backend Railway está online!"
+          else
+            echo "⚠️ Backend retornou status $RESPONSE (pode estar com cold start)"
+          fi
+
+      - name: Aguardar backend acordar (cold start)
+        run: |
+          echo "⏳ Aguardando 60s para garantir que o servidor acordou..."
+          sleep 60
+
+      - name: Ping novamente para confirmar
+        run: |
+          echo "🏓 Ping de confirmação..."
+          RESPONSE=$(curl -s https://backend-production-56c4.up.railway.app/api/health)
+          echo "Resposta: $RESPONSE"
+          echo "✅ Serviços pingados com sucesso! Supabase permanecerá ativo."
